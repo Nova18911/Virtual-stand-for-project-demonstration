@@ -2,9 +2,31 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Title</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/mainpage.css') }}">
 </head>
 <body>
+  <div class="searchContainer">
+      <h1>Virtual Stand</h1>
+    <form action="/search" method="get">
+    <input type="text" name="query" placeholder="Поиск...">
+    <button type="submit">Искать</button>
+    </form>
+    </div>
+    <div class="main-container">
+        <div class="sidebar">
+            <button name="main">На главную</button>
+            <button name="curses">Мои курсы</button>
+            <button name="dedlines">Календарь сдач</button>
+        </div>
+
+        <div class="cards-wrapper">
+            <section id="cardsContainer"></section>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/cardscourses.js') }}"></script>
 
 </body>
 </html>

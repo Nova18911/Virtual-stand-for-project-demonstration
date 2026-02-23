@@ -18,3 +18,7 @@ def register():
             return redirect(url_for('login_page'))
 
     return render_template('registration.html')
+
+@app.route('/mainpage')
+def main_page():
+    return render_template('mainpage.html')
