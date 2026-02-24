@@ -1,10 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, Blueprint, render_template, request, redirect, url_for
 
-app = Flask(__name__,
-            template_folder='../frontend/templates',
-            static_folder='../frontend/static')
+register_bp = Blueprint('register', __name__)
 
-@app.route('/register', methods=['get', 'post'])
+@register_bp.route('/register', methods=['get', 'post'])
 def register():
     if request.method == 'post':
         email = request.form.get('email')
@@ -15,10 +13,6 @@ def register():
         if role == 'teacher':
             return "<h3>Заявка отправлена. Ожидайте одобрения администратором.</h3>"
         else:
-            return redirect(url_for('login_page'))
+            return redirect(url_for('login'))
 
     return render_template('registration.html')
-
-@app.route('/mainpage')
-def main_page():
-    return render_template('mainpage.html')

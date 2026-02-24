@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import check_password_hash, generate_password_hash
 
-auth = Blueprint('auth', __name__)
+auth_bp = Blueprint('auth', __name__)
 
 # Тестовые пользователи (заглушка вместо БД)
 MOCK_USERS = {
@@ -22,7 +22,7 @@ MOCK_USERS = {
 }
 
 
-@auth.route('/login', methods=['GET', 'POST'])
+@auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
@@ -54,7 +54,7 @@ def login():
     return render_template('login.html')
 
 
-@auth.route('/logout')
+auth_bp.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('auth.login'))

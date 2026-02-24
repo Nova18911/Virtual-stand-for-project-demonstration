@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="/static/auth.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
 </head>
 <body>
     <div class="auth-card">
@@ -21,12 +21,12 @@
                 <label>Пароль</label>
                 <input type="password" name="password">
             </div>
-            <button class="btn-login" type="submit">Войти</button>
+            <button class="btn-login" type="submit" onclick="window.location.href='{{ url_for('main_page') }}'">Войти</button>
         </form>
 
         <div class="auth-links">
             <a href="#">Забыли пароль?</a>
-            <a href="#">Зарегистрироваться</a>
+            <a href="{{ url_for('register_page') }}">Зарегистрироваться</a>
         </div>
     </div>
 </body>
