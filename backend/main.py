@@ -1,24 +1,13 @@
-<<<<<<< Updated upstream
-from flask import Flask, render_template
-=======
 from flask import Flask,redirect, render_template, url_for
 from auth import auth_bp
 from core.registration import register_bp
 from core.mainpage import mainpage_bp
-
->>>>>>> Stashed changes
 
 # Указываем Flask, где искать папки со страницами и стилями
 app = Flask(__name__,
             template_folder='../frontend/templates',
             static_folder='../frontend/static')
 
-<<<<<<< Updated upstream
-@app.route('/register')
-def register_page():
-    return render_template('registration.html')
-
-=======
 app.register_blueprint(auth_bp)
 app.register_blueprint(register_bp)
 app.register_blueprint(mainpage_bp)
@@ -47,6 +36,5 @@ def main_page():
 def main_redirect():
     return redirect(url_for('main_page'))
 
->>>>>>> Stashed changes
 if __name__ == '__main__':
     app.run(debug=True)
