@@ -1,6 +1,8 @@
 from flask import Flask,redirect, render_template, url_for
 from auth import auth_bp
 from core.registration import register_bp
+from core.mainpage import mainpage_bp
+
 
 # Указываем Flask, где искать папки со страницами и стилями
 app = Flask(__name__,
@@ -9,6 +11,7 @@ app = Flask(__name__,
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(register_bp)
+app.register_blueprint(mainpage_bp)
 
 @app.route('/')
 def login_page():

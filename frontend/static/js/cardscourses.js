@@ -1,21 +1,14 @@
-const cardsData = [
-    {
-        course: "МДК 07.02",
-        work: "Лабораторная работа №2",
-        description: "Задание смотреть в прикреплённом файле",
-        teacher: "Самоделкин П.А. Преподаватель университета"
-    },
-    {
-        course: "Информационные системы и технологии",
-        work: "Практическая №1",
-        deadline: "Сдать до 05.02.26!",
-        teacher: "Жилова Ю.А. Преподаватель университета"
-    }
-];
+let cardsData = [];
+
+// Функция загрузки данных с сервера
+async function loadCoursesFromServer() {
+    const response = await fetch('/api/courses');
+    cardsData = await response.json();
+    renderCards();
+}
 
 function handleAddAnswer(courseName, workName) {
     alert(`Добавить ответ для: ${courseName} - ${workName}`);
-
     console.log('Добавить ответ:', courseName, workName);
 }
 
@@ -68,4 +61,4 @@ function renderCards() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', renderCards);
+document.addEventListener('DOMContentLoaded', loadCoursesFromServer);
