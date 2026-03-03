@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход Админ</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/adminlogin.css') }}">
+</head>
+<body>
+<div class="top-bar">
+    <h1>Панель Администратора</h1>
+    </div>
+     <div class="content">
+        <div class="LoginAdmin">
+            <h2>Добро пожаловать!</h2>
+            <form method="POST">
+                <div class="form-group">
+                    <label>Логин</label>
+                    <input type="email" name="email">
+                </div>
+                <div class="form-group">
+                    <label>Пароль</label>
+                    <input type="password" name="password">
+                </div>
+                <button class="btn-login" type="submit">Войти</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

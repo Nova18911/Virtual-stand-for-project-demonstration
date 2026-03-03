@@ -15,7 +15,7 @@ app.register_blueprint(mainpage_bp)
 
 @app.route('/')
 def login_page():
-    return render_template('login.html')
+    return render_template('adminexport.html')
 
 @app.route('/reg')
 def register():
