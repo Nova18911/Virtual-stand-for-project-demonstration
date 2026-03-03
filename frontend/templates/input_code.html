@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Подтверждение учетной записи</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/input_code.css') }}">
+</head>
+<body>
+    <div class="input_code_container">
+        <h2>Подтверждение учетной записи</h2>>
+        <label>Введите код</label>
+        <form action="/inputcode" method="post" id="codeForm">
+            <div class="form-row">
+                <div class="form-group" id="code-inputs">
+                    <input type="text"
+                           inputmode="\d*"
+                           maxlength="1"
+                           id="code1"
+                           name="input_code1"
+                           class="code-input"
+                           autofocus>
+                    <input type="text"
+                           inputmode="\d*"
+                           maxlength="1"
+                           id="code2"
+                           name="input_code2"
+                           class="code-input"
+                           autofocus>
+                    <input type="text"
+                           inputmode="\d*"
+                           maxlength="1"
+                           id="code3"
+                           name="input_code3"
+                           class="code-input"
+                           autofocus>
+                    <input type="text"
+                           inputmode="\d*"
+                           maxlength="1"
+                           id="code4"
+                           name="input_code4"
+                           class="code-input"
+                           autofocus>
+                    <input type="text"
+                           inputmode="\d*"
+                           maxlength="1"
+                           id="code5"
+                           name="input_code5"
+                           class="code-input"
+                           autofocus>
+                    <input type="text"
+                           inputmode="\d*"
+                           maxlength="1"
+                           id="code6"
+                           name="input_code6"
+                           class="code-input"
+                           autofocus>
+                </div>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

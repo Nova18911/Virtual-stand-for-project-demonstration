@@ -1,0 +1,12 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\backend",
+    "\\frontend",
+    "\\frontend\\static",
+    "\\frontend\\static\\js",
+    "\\frontend\\templates"
+  ],
+  "SelectedNode": "\\frontend\\templates\\login.html",
+  "PreviewInSolutionExplorer": false
+}
