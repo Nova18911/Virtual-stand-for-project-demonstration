@@ -7,7 +7,7 @@ conn = pg8000.connect(
     port=5432,
     database="course_management",
     user="postgres",
-    password="endermen"
+    password="12345678"
 )
 cursor = conn.cursor()
 
@@ -23,11 +23,12 @@ if tables:
     print(f"Найдено таблиц: {len(tables)}")
     print("-" * 30)
     for i, table in enumerate(tables, 1):
+        table_name = table[0]
         print(f"{i}. {table[0]}")
     print("Количество записей в таблицах:")
-        cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
-        count = cursor.fetchone()[0]
-        print(f"{table_name}: {count} записей")
+    cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+    count = cursor.fetchone()[0]
+    print(f"{table_name}: {count} записей")
 else:
     print("Таблицы не найдены")
 
