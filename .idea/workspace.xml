@@ -5,10 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a9f2118f-6225-45af-a185-d29dacc9e5e2" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/backend/test_inputcode.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/static/css/input_code.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/templates/input_code.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/static/js/input_code.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/static/js/input_code.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/templates/input_code.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/templates/input_code.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -46,22 +45,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultHtmlFileTemplate": "HTML File",
-    "Python.auth.executor": "Run",
-    "Python.main.executor": "Run",
-    "Python.registration.executor": "Run",
-    "Python.test_inputcode.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "input__code",
-    "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "C:/projects/college/Virtual-stand-for-project-demonstration",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;Python.auth.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.registration.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_inputcode.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;input__code&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/projects/college/Virtual-stand-for-project-demonstration&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration name="test_inputcode" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Virtual-stand-for-project-demonstration" />
