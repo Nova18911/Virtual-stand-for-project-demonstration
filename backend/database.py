@@ -5,7 +5,7 @@ conn = pg8000.connect(
     port=5432,
     database="course_management",
     user="postgres",
-    password="endermen"
+    password="12345678"
 )
 
 create_queries = [
