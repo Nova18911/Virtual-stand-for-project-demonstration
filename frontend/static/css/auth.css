@@ -1,0 +1,117 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 15px;
+    color: #2d2d2d;
+    background: #f0f2f5;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Карточка формы */
+.auth-card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.10);
+    padding: 40px 48px;
+    width: 100%;
+    max-width: 400px;
+}
+
+.auth-title {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a56db;
+    margin-bottom: 24px;
+}
+
+/* Поля */
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    background: #f9fafb;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus {
+    border-color: #1a56db;
+    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.12);
+    background: #fff;
+}
+
+/* Кнопка */
+.btn-login {
+    width: 100%;
+    padding: 11px;
+    margin-top: 6px;
+    background: #1a56db;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-login:hover { background: #1648c0; }
+.btn-login:active { background: #1240a8; }
+
+/* Ссылки */
+.auth-links {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 16px;
+    font-size: 13px;
+}
+
+.auth-links a {
+    color: #1a56db;
+    text-decoration: none;
+}
+
+.auth-links a:hover { text-decoration: underline; }
+
+/* Флеш-сообщение */
+.flash {
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 14px;
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+}
+
+/* Адаптив */
+@media (max-width: 480px) {
+    .auth-card {
+        padding: 28px 20px;
+        border-radius: 0;
+        box-shadow: none;
+    }
+}
