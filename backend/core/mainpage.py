@@ -1,51 +1,89 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Blueprint, jsonify
+import pg8000
 
 mainpage_bp = Blueprint('mainpage', __name__)
 
-# Тестовые курсы (заглушка вместо БД)
-courses = [
-    {
-        "id": 1,
-        "course": "МДК 07.02",
-        "work": "Лабораторная работа №2",
-        "description": "Задание смотреть в прикреплённом файле",
-        "teacher": "Самоделкин П.А. Преподаватель университета",
-        "teacher_id": 2,
-        "created_at": "2026-02-20",
-        "attachments": ["file1.pdf", "file2.docx"]
-    },
-    {
-        "id": 2,
-        "course": "Информационные системы и технологии",
-        "work": "Практическая №1",
-        "deadline": "Сдать до 05.02.26!",
-        "teacher": "Жилова Ю.А. Преподаватель университета",
-        "teacher_id": 3,
-        "created_at": "2026-02-21",
-        "attachments": []
-    }
-]
-
+def get_db_connection():
+    return pg8000.connect(
+        host="localhost",
+        port=5432,
+        database="course_management",
+        user="postgres",
+        password="12345"
+    )
 
 @mainpage_bp.route('/api/courses')
 def get_courses():
+    conn = None
+    cursor = None
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+                SELECT 
+                    course_id,
+                    name,
+                    teacher
+                FROM courses
+                ORDER BY course_id
+            """)
+
+    courses = cursor.fetchall()
 
     formatted_courses = []
+
     for course in courses:
-        formatted_course = {
-            "course": course["course"],
-            "work": course["work"],
-            "teacher": course["teacher"]
-        }
+        course_id, course_name, teacher = course
 
-        if "description" in course:
-            formatted_course["description"] = course["description"]
-        if "deadline" in course:
-            formatted_course["deadline"] = course["deadline"]
+        cursor.execute("""
+                    SELECT 
+                        name,
+                        task,
+                        end_date
+                    FROM labs
+                    WHERE course_id = %s
+                    ORDER BY start_date DESC
+                """, (course_id,))
 
-        formatted_courses.append(formatted_course)
+        labs = cursor.fetchall()
 
+        if labs:
+            for lab in labs:
+                lab_name, task, end_date = lab
+
+                deadline_str = end_date.strftime('%Y-%m-%d') if end_date else None
+
+                course_item = {
+                    "course": course_name,
+                    "work": lab_name,
+                    "teacher": teacher
+                }
+
+                if task:
+                    course_item["description"] = task
+                if deadline_str:
+                    course_item["deadline"] = deadline_str
+
+                formatted_courses.append(course_item)
+        else:
+            course_item = {
+                "course": course_name,
+                "work": "Нет работ",
+                "teacher": teacher
+            }
+            formatted_courses.append(course_item)
+            cursor.close()
+            conn.close()
     return jsonify(formatted_courses)
+
+
+
+
+
+
+
+
+
 
 
 
