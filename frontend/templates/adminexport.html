@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход Админ</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/adminexport.css') }}">
+</head>
+<body>
+    <div class="page">
+        <div class="top-bar">
+            <h1>Панель Администратора</h1>
+            <h1>Вы вошли как администратор</h1>
+        </div>
+    <div class="sidebar">
+        <button class="btn-login" type="submit">Главная</button>
+         <button class="btn-login" type="submit">Экспорт</button>
+         <button class="btn-login" type="submit">Импорт</button>
+    </div>
+     <div class="content">
+        <div class="leftsidebar">
+            <h2>Экспорт данных</h2>
+            <form>
+                <label>
+                <input type="checkbox" id="fullBackupCheckbox">
+                Экспортировать все данные
+                </label>
+            </form>
+            <form>
+                <label>
+                <input type="checkbox" id="customExportCheckbox">
+                Настроить экспорт
+                </label>
+            </form>
+                <button class="btn-login" type="submit" id="exportBtn">Экспорт</button>
+        </div>
+         <div class="midsidebar">
+             <h2>Выберите необходимые таблицы</h2>
+                 <div id="tables"></div>
+                 <div id="result"></div>
+                 <script src="{{ url_for('static', filename='js/tables.js') }}"></script>
+         </div>
+         <div class="rightsidebar">
+             <h2>Выберите формат файла</h2>
+             <select name="select" id="fileFormat">
+                 <option value="value1">MySQL</option>
+                 <option value="value2">PostgreSQL</option>
+             </select>
+             <form>
+                <label>
+                Сохранить в виде zip архива
+                <input type="checkbox" id="zipCheckbox">
+                </label>
+            </form>
+             <h2>Название файла</h2>
+             <input  type="text" name="namefile" id="fileName" placeholder="backup">
+         </div>
+     </div>
+    </div>
+</body>
+</html>

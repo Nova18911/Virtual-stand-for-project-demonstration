@@ -1,11 +1,32 @@
 import pg8000
 
+#подключение к системной бд для создания бд сайта (параметры user и password у каждого свои)
 conn = pg8000.connect(
-    host="127.0.0.1",
+    user='postgres',
+    password='12345',
+    host='localhost',
     port=5432,
-    database="course_management",
-    user="postgres",
-    password="12345678"
+    database='postgres'
+)
+
+
+with conn.cursor() as cursor:
+    conn.autocommit = True
+    cursor.execute("SELECT 1 FROM pg_database WHERE datname = 'course_management'")
+    exists = cursor.fetchone()
+
+    if not exists:
+        cursor.execute("CREATE DATABASE course_management")
+    conn.autocommit = False
+conn.close()
+
+#подключение к созданной бд (параметры user и password у каждого свои)
+conn = pg8000.connect(
+    user='postgres',
+    password='12345',
+    host='localhost',
+    port=5432,
+    database='course_management'
 )
 
 create_queries = [
@@ -83,15 +104,116 @@ create_queries = [
     """
 ]
 
+admin_data = {
+    'access_rights': 'admin',
+    'login': '12',
+    'password': '11',
+    'full_name': 'Aдминистратор'
+}
+
+
+def insert_test_data():
+    conn = None
+    cursor = None
+    try:
+        conn = pg8000.connect(
+            user='postgres',
+            password='12345',
+            host='localhost',
+            port=5432,
+            database='course_management'
+        )
+        cursor = conn.cursor()
+
+        # Вставляем курсы
+        courses_data = [
+            ('МДК 07.02', 'Самоделкин П.А. Преподаватель университета'),
+            ('Информационные системы и технологии', 'Жилова Ю.А. Преподаватель университета')
+        ]
+
+        for course_name, teacher in courses_data:
+            cursor.execute("""
+                INSERT INTO courses (name, teacher) 
+                VALUES (%s, %s)
+                ON CONFLICT (name) DO NOTHING
+            """, (course_name, teacher))
+
+        # Вставляем лабораторные работы
+        labs_data = [
+            ('Лабораторная работа №2', 'МДК 07.02', 'Задание смотреть в прикреплённом файле',
+             '2026-02-20 00:00:00', '2026-03-20 23:59:59'),
+            ('Практическая №1', 'Информационные системы и технологии', 'Сдать до 05.02.26!',
+             '2026-02-21 00:00:00', '2026-02-05 23:59:59')
+        ]
+
+        for lab_name, course_name, task, start_date, end_date in labs_data:
+            cursor.execute("""
+                INSERT INTO labs (name, course_id, task, task_file, start_date, end_date)
+                SELECT %s, course_id, %s, %s, %s::timestamp, %s::timestamp
+                FROM courses 
+                WHERE name = %s
+            """, (lab_name, task, b'', start_date, end_date, course_name))
+
+        conn.commit()
+        print("✅ Тестовые данные успешно добавлены!")
+
+    except Exception as e:
+        print(f"❌ Ошибка: {e}")
+        if conn:
+            conn.rollback()
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+# Вызываем функцию
+insert_test_data()
+
 try:
-   
     cursor = conn.cursor()
     for i, query in enumerate(create_queries, 1):
         cursor.execute(query)
         print(f" Таблица {i} успешно создана")
-    
+
     conn.commit()
     print("\n Все 7 таблиц успешно созданы в базе данных 'course_management'!")
+
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT access_id FROM roles WHERE access_rights = %s", (admin_data['access_rights'],))
+    role = cursor.fetchone()
+
+    if not role:
+        cursor.execute("INSERT INTO roles (access_rights) VALUES (%s) RETURNING access_id",
+                       (admin_data['access_rights'],))
+        access_id = cursor.fetchone()[0]
+    else:
+        access_id = role[0]
+
+    cursor.execute("SELECT login_id FROM passwords WHERE login = %s", (admin_data['login'],))
+    login = cursor.fetchone()
+
+    if not login:
+        cursor.execute("INSERT INTO passwords (login, password) VALUES (%s, %s) RETURNING login_id",
+                       (admin_data['login'], admin_data['password']))
+        login_id = cursor.fetchone()[0]
+    else:
+        login_id = login[0]
+
+    cursor.execute("""
+            SELECT user_id FROM users 
+            WHERE full_name = %s AND access_id = %s AND login_id = %s
+        """, (admin_data['full_name'], access_id, login_id))
+
+    if not cursor.fetchone():
+        cursor.execute("""
+                INSERT INTO users (full_name, access_id, login_id) 
+                VALUES (%s, %s, %s)
+            """, (admin_data['full_name'], access_id, login_id))
+        conn.commit()
+        print("\n✅ Все операции успешно выполнены!")
     
 except Exception as e:
     print(f"Ошибка при работе с базой данных: {e}")
