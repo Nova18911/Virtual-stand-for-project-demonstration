@@ -1,0 +1,185 @@
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 0;
+}
+
+.top-bar {
+    background-color: #333;
+    color: white;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 3px solid #666;
+}
+
+.top-bar h1 {
+    font-size: 18px;
+    font-weight: normal;
+}
+
+.page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar {
+    background-color: #444;
+    padding: 10px 30px;
+    display: flex;
+    gap: 20px;
+    border-bottom: 1px solid #555;
+}
+
+.sidebar button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 16px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.sidebar button:hover {
+    background-color: #555;
+}
+
+.content {
+    display: flex;
+    flex: 1;
+    padding: 20px;
+    gap: 20px;
+    background-color: #fff;
+}
+
+.leftsidebar {
+    flex: 1;
+    background-color: #fff;
+    padding: 15px;
+    border: 1px solid #ddd;
+}
+
+.midsidebar {
+    flex: 2;
+    background-color: #fff;
+    padding: 15px;
+    border: 1px solid #ddd;
+}
+
+.rightsidebar {
+    flex: 1;
+    background-color: #fff;
+    padding: 15px;
+    border: 1px solid #ddd;
+}
+
+h2 {
+    font-size: 18px;
+    margin-bottom: 15px;
+    color: #333;
+    font-weight: bold;
+}
+
+form {
+    margin-bottom: 10px;
+}
+
+label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+}
+
+input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    border: 1px solid #ddd;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+    font-size: 14px;
+}
+
+th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+}
+
+.btn-login {
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 3px;
+    margin-top: 10px;
+}
+
+.btn-login:hover {
+    background-color: #357abd;
+}
+
+select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    margin-bottom: 15px;
+    background-color: white;
+}
+
+input[type="namefile"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+#selectAll {
+    margin-bottom: 10px;
+}
+
+#tables {
+    margin-top: 15px;
+}
+
+#result {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #333;
+}
+
+.leftsidebar input[type="checkbox"] {
+    accent-color: #333;
+}
+
+.midsidebar h2 {
+    margin-bottom: 10px;
+}
+
+.midsidebar > label {
+    margin-bottom: 5px;
+}
+
+.rightsidebar select {
+    width: 100%;
+    padding: 5px;
+}
