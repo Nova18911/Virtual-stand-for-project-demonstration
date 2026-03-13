@@ -12,127 +12,66 @@
         <form action="/inputcode" method="post" id="codeForm">
             <div class="form-row">
                 <div class="form-group" id="code-inputs">
-                    <input type="text"
-                           inputmode="\d*"
-                           maxlength="1"
-                           id="code1"
-                           name="input_code1"
-                           class="code-input"
-                           autofocus>
-                    <input type="text"
-                           inputmode="\d*"
-                           maxlength="1"
-                           id="code2"
-                           name="input_code2"
-                           class="code-input"
-                           autofocus>
-                    <input type="text"
-                           inputmode="\d*"
-                           maxlength="1"
-                           id="code3"
-                           name="input_code3"
-                           class="code-input"
-                           autofocus>
-                    <input type="text"
-                           inputmode="\d*"
-                           maxlength="1"
-                           id="code4"
-                           name="input_code4"
-                           class="code-input"
-                           autofocus>
-                    <input type="text"
-                           inputmode="\d*"
-                           maxlength="1"
-                           id="code5"
-                           name="input_code5"
-                           class="code-input"
-                           autofocus>
-                    <input type="text"
-                           inputmode="\d*"
-                           maxlength="1"
-                           id="code6"
-                           name="input_code6"
-                           class="code-input"
-                           autofocus>
+                    <input type="text" inputmode="\d*" maxlength="1" id="code1" name="input_code1" class="code-input" autofocus>
+                    <input type="text" inputmode="\d*" maxlength="1" id="code2" name="input_code2" class="code-input">
+                    <input type="text" inputmode="\d*" maxlength="1" id="code3" name="input_code3" class="code-input">
+                    <input type="text" inputmode="\d*" maxlength="1" id="code4" name="input_code4" class="code-input">
+                    <input type="text" inputmode="\d*" maxlength="1" id="code5" name="input_code5" class="code-input">
+                    <input type="text" inputmode="\d*" maxlength="1" id="code6" name="input_code6" class="code-input">
                 </div>
             </div>
         </form>
     </div>
     <script>
-        // Ждем загрузки страницы
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('✅ Скрипт загружен!');
-            
-            // Получаем все поля ввода
             const inputs = document.querySelectorAll('.code-input');
             const form = document.getElementById('codeForm');
-            const correctCode = '123456'; // Правильный код
-            
-            console.log('📝 Найдено полей:', inputs.length);
-            
-            // Если поля не найдены - выходим
-            if (inputs.length === 0) {
-                console.error('❌ Поля не найдены!');
-                return;
-            }
-            
-            // Функция для проверки кода
+
             function checkCode() {
                 let code = '';
                 inputs.forEach(input => code += input.value);
-                
-                // Если все поля заполнены
+
                 if (code.length === inputs.length) {
-                    console.log('🔍 Проверка кода:', code);
-                    
-                    if (code === correctCode) {
-                        alert('✅ Код верный!');
-                        form.submit(); // Отправляем форму
-                    } else {
-                        alert('❌ Неверный код!');
-                        // Очищаем поля
-                        inputs.forEach(input => input.value = '');
-                        inputs[0].focus();
-                    }
+                    // Отправляем на сервер — он проверяет код из письма
+                    fetch('/inputcode', {
+                        method: 'POST',
+                        body: new FormData(form)
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.href = data.redirect;
+                        } else {
+                            alert('❌ Неверный код!');
+                            inputs.forEach(input => input.value = '');
+                            inputs[0].focus();
+                        }
+                    });
                 }
             }
-            
-            // Добавляем обработчики для каждого поля
+
             inputs.forEach((input, index) => {
-                // При вводе
                 input.addEventListener('input', function() {
-                    // Только цифры
                     this.value = this.value.replace(/[^0-9]/g, '');
-                    
-                    // Если ввели цифру и это не последнее поле
                     if (this.value && index < inputs.length - 1) {
-                        inputs[index + 1].focus(); // Переход к следующему
+                        inputs[index + 1].focus();
                     }
-                    
-                    // Проверяем код
                     checkCode();
                 });
-                
-                // При нажатии клавиш
+
                 input.addEventListener('keydown', function(e) {
-                    // Backspace на пустом поле - переход к предыдущему
                     if (e.key === 'Backspace' && !this.value && index > 0) {
                         inputs[index - 1].focus();
                     }
                 });
-                
-                // Выделяем текст при фокусе
+
                 input.addEventListener('focus', function() {
                     this.select();
                 });
             });
-            
-            // Ставим фокус на первое поле
+
             inputs[0].focus();
-            
-            console.log('✅ Готов к работе!');
         });
     </script>
-    </body>
 </body>
 </html>
