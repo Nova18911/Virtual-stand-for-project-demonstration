@@ -20,8 +20,7 @@ app.register_blueprint(register_bp)
 app.register_blueprint(mainpage_bp)
 app.register_blueprint(logadm_bp)
 app.register_blueprint(admexp_bp)
-app.register_blueprint(inputcode_bp)
-app.register_blueprint(changepassword_bp)
+
 
 @app.route('/')
 def login_page():
