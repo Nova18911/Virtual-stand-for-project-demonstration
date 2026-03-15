@@ -4,6 +4,9 @@ from core.registration import register_bp
 from core.mainpage import mainpage_bp
 from core.adminlogin import logadm_bp
 from core.adminexport import admexp_bp
+from core.input_code import inputcode_bp
+from core.change_password import changepassword_bp
+from core.taskslist import tasks_bp
 
 
 # Указываем Flask, где искать папки со страницами и стилями
@@ -18,6 +21,7 @@ app.register_blueprint(register_bp)
 app.register_blueprint(mainpage_bp)
 app.register_blueprint(logadm_bp)
 app.register_blueprint(admexp_bp)
+app.register_blueprint(tasks_bp)
 
 @app.route('/')
 def login_page():
