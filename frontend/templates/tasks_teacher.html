@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Виртуальный стенд - список заданий</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tasks.css') }}">
+</head>
+<body>
+  <div class="page-wrapper">
+
+      <header class="header">
+          <div class="logo">Virtual Stand</div>
+          <div class="search-block">
+              <input type="text" class="search-input" placeholder="Поиск...">
+              <button class="search-btn">найти</button>
+          </div>
+      </header>
+
+      <nav class="nav-tabs">
+          <a href="/courses" class="tab">Курсы</a>
+          <a href="/tasks" class="tab active">Задание</a>
+      </nav>
+
+      <main class="content">
+          <ul class="task-list">
+              {% for lab in labs %}
+              <li class="task-item">
+                  <span class="task-name">{{ lab.name }}</span>
+                  <a href="/task/{{ lab.lab_id }}/edit" class="btn btn-edit">Редактировать</a>
+              </li>
+              {% endfor %}
+          </ul>
+
+          <div class="bottom-bar">
+              <a href="/task/add" class="btn btn-add">Добавить задание</a>
+          </div>
+      </main>
+  </div>
+</body>
+</html>
