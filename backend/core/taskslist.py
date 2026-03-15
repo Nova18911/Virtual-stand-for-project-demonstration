@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint, render_template, session
+from flask import Flask, Blueprint, render_template, session, request, redirect, url_for
 
 app = Flask(__name__,
             template_folder='../../frontend/templates',
@@ -10,11 +10,13 @@ tasks_bp = Blueprint('tasks', __name__)
 
 
 MOCK_LABS_TEACHER = [
-    {'lab_id': 1, 'name': 'Лабораторная работа №1'},
-    {'lab_id': 2, 'name': 'Лабораторная работа №2'},
-    {'lab_id': 3, 'name': 'Лабораторная работа №3'},
-    {'lab_id': 4, 'name': 'Лабораторная работа №4'},
+    {'lab_id': 1, 'name': 'Лабораторная работа №1', 'course': ''},
+    {'lab_id': 2, 'name': 'Лабораторная работа №2', 'course': ''},
+    {'lab_id': 3, 'name': 'Лабораторная работа №3', 'course': ''},
+    {'lab_id': 4, 'name': 'Лабораторная работа №4', 'course': ''},
 ]
+
+_next_lab_id = 5
 
 MOCK_LABS_STUDENT = [
     {'lab_id': 1, 'name': 'Лабораторная работа №1', 'submitted': True},
@@ -78,13 +80,28 @@ def task_detail(lab_id):
     '''
 
 
-@tasks_bp.route('/task/add')
+@tasks_bp.route('/task/add', methods=['GET', 'POST'])
 def task_add():
-    return '''
-        <h2>Добавление задания</h2>
-        <p>Здесь будет форма добавления задания</p>
-        <a href="/tasks">← Назад к заданиям</a>
-    '''
+    global _next_lab_id
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        course = request.form.get('course', '').strip()
+        deadline = request.form.get('deadline', '')
+        description = request.form.get('description', '')
+
+        if name:
+            display_name = f"{name} ({course})" if course else name
+            MOCK_LABS_TEACHER.append({
+                'lab_id': _next_lab_id,
+                'name': display_name,
+                'course': course,
+                'deadline': deadline,
+                'description': description,
+            })
+            _next_lab_id += 1
+
+        return redirect(url_for('tasks.tasks_teacher'))
+    return redirect(url_for('tasks.tasks_teacher') + '?add=1')
 
 
 @tasks_bp.route('/test/set-teacher')
