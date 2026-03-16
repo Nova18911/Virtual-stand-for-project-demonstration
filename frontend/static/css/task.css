@@ -1,0 +1,263 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 14px;
+    color: #2d2d2d;
+    background: #fff;
+}
+
+/* ── Шапка ────────────────────────────────────────────────────────────────── */
+
+.header {
+    padding: 12px 20px;
+    border-bottom: 1px solid #d1d5db;
+}
+
+.header__logo {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* ── Хлебные крошки ───────────────────────────────────────────────────────── */
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border-bottom: 1px solid #d1d5db;
+    font-size: 13px;
+}
+
+.breadcrumb a {
+    color: #2d2d2d;
+    text-decoration: none;
+}
+
+.breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+.breadcrumb__sep {
+    color: #9ca3af;
+}
+
+/* ── Основной контент ─────────────────────────────────────────────────────── */
+
+.main {
+    padding: 20px 24px;
+    max-width: 700px;
+}
+
+/* ── Заголовок задания ────────────────────────────────────────────────────── */
+
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.task__name {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.task__file {
+    font-size: 13px;
+    color: #1a56db;
+    text-decoration: none;
+    border-bottom: 1px solid #1a56db;
+}
+
+.task__file:hover {
+    opacity: 0.8;
+}
+
+.task-header__right {
+    text-align: right;
+    font-size: 13px;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.task__meta {
+    margin-bottom: 4px;
+}
+
+.task__meta span {
+    color: #2d2d2d;
+}
+
+/* ── Метки секций ─────────────────────────────────────────────────────────── */
+
+.section-label {
+    font-size: 13px;
+    margin-bottom: 8px;
+    margin-top: 16px;
+}
+
+/* ── Описание задания ─────────────────────────────────────────────────────── */
+
+.task__description {
+    border: 1px solid #d1d5db;
+    padding: 12px;
+    font-size: 14px;
+    min-height: 140px;
+    color: #374151;
+    line-height: 1.5;
+}
+
+/* ── Поле ответа ──────────────────────────────────────────────────────────── */
+
+.answer-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.answer-row input {
+    flex: 1;
+    padding: 7px 10px;
+    border: none;
+    border-bottom: 1px solid #d1d5db;
+    font-size: 13px;
+    color: #6b7280;
+    outline: none;
+    font-family: inherit;
+    background: transparent;
+}
+
+.answer-row input:focus {
+    border-bottom-color: #555;
+}
+
+.answer-row input[readonly] {
+    color: #2d2d2d;
+    cursor: default;
+}
+
+/* Иконки-кнопки рядом с полем ссылки */
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid #d1d5db;
+    border-radius: 3px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    color: #2d2d2d;
+    transition: background 0.15s;
+}
+
+.btn-icon:hover {
+    background: #f5f5f5;
+}
+
+/* ── Оценка ───────────────────────────────────────────────────────────────── */
+
+.grade-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    margin-bottom: 4px;
+}
+
+.grade-input {
+    width: 48px;
+    height: 32px;
+    border: 1px solid #d1d5db;
+    text-align: center;
+    font-size: 14px;
+    outline: none;
+    font-family: inherit;
+}
+
+.grade-input:focus {
+    border-color: #555;
+}
+
+.grade-input[readonly] {
+    background: #f9fafb;
+    cursor: default;
+}
+
+/* ── Комментарий ──────────────────────────────────────────────────────────── */
+
+.task__comment {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+}
+
+.task__comment:focus {
+    border-color: #555;
+}
+
+.task__comment[readonly] {
+    background: #f9fafb;
+    cursor: default;
+}
+
+/* ── Кнопка сохранить ─────────────────────────────────────────────────────── */
+
+.btn-save {
+    margin-top: 12px;
+    padding: 7px 24px;
+    border: 1px solid #d1d5db;
+    border-radius: 3px;
+    background: #fff;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.btn-save:hover {
+    background: #f5f5f5;
+}
+
+/* ── Флеш ─────────────────────────────────────────────────────────────────── */
+
+.flash {
+    font-size: 13px;
+    color: #15803d;
+    margin-top: 6px;
+}
+
+/* ── Карточка студента (для преподавателя) ────────────────────────────────── */
+
+.student-card {
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.student-card__name {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.student-card__empty {
+    font-size: 13px;
+    color: #9ca3af;
+    margin-bottom: 8px;
+}
