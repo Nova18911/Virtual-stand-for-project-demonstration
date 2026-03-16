@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint, render_template, session
+from flask import Flask, Blueprint, render_template, session, request, redirect
 
 app = Flask(__name__,
             template_folder='../../frontend/templates',
