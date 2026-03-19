@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for
 import pg8000
+from docker.runner import run_container, get_container_info
 
 task_detail_bp = Blueprint('task_detail', __name__)
 
@@ -117,6 +118,13 @@ def task_detail_student(lab_id, student_id):
     """, (student_id,))
     student_name_row = cursor.fetchone()
 
+    cursor.execute("""
+                SELECT project_id FROM student_projects
+                WHERE lab_id = %s AND user_id = %s
+            """, (lab_id, student_id))
+    project_id_row = cursor.fetchone()
+    project_id = project_id_row[0] if project_id_row else None
+
     cursor.close()
     conn.close()
 
@@ -132,12 +140,46 @@ def task_detail_student(lab_id, student_id):
         'teacher_comment': project_row[2] if project_row else ''
     }
 
+    # Получаем информацию о контейнере
+    container_info = get_container_info(project_id) if project_id else None
+
     return render_template('student_list.html',
                            lab=lab,
                            students=students,
                            selected_student=selected_student,
-                           selected_student_id=student_id)
+                           selected_student_id=student_id,
+                           container_info=container_info)
 
+
+@task_detail_bp.route('/task/<int:lab_id>/student/<int:student_id>/build', methods=['POST'])
+def build_container(lab_id, student_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT project_id, github_link
+        FROM student_projects
+        WHERE lab_id = %s AND user_id = %s
+    """, (lab_id, student_id))
+    project_row = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    if not project_row:
+        return "Работа студента не найдена", 404
+
+    project_id = project_row[0]
+    github_link = project_row[1]
+    image_name = f"student_{student_id}_lab_{lab_id}"
+
+    container, link = run_container(image_name, project_id)
+
+    if not container:
+        return "Ошибка при запуске контейнера", 500
+
+    return redirect(url_for('task_detail.task_detail_student',
+                            lab_id=lab_id,
+                            student_id=student_id))
 
 @task_detail_bp.route('/task/<int:lab_id>/student/<int:student_id>/grade', methods=['POST'])
 def set_grade(lab_id, student_id):

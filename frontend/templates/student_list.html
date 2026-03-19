@@ -52,16 +52,24 @@
                 </div>
 
                 <div class="field-row">
-                    <button class="btn-docker">собрать docker образ</button>
+                    {% if container_info and container_info.status == 'running' %}
+                        <a href="{{ container_info.link }}" target="_blank" class="btn-docker">
+                            Открыть проект
+                        </a>
+                    {% else %}
+                        <form action="/task/{{ lab.lab_id }}/student/{{ selected_student.user_id }}/build" method="post">
+                            <button type="submit" class="btn-docker">Осуществить сборку</button>
+                        </form>
+                    {% endif %}
                 </div>
 
                 <div class="field-row">
                     <label class="field-label">Готовая ссылка:</label>
-                    <input type="text"
-                           class="field-input"
-                           value="{{ selected_student.docker_link or '' }}"
-                           placeholder="ссылка для запуска docker контейнера"
-                           readonly>
+                        <input type="text"
+                            class="field-input"
+                            value="{{ container_info.link if container_info and container_info.status == 'running' else '' }}"
+                            placeholder="ссылка для запуска docker контейнера"
+                            readonly>
                 </div>
 
                 <div class="field-row grade-row">
