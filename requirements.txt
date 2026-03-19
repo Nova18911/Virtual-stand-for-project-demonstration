@@ -1,3 +1,4 @@
 flask
 pg8000
 bs4
+docker
