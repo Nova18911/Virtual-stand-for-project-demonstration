@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ lab.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student_list.css') }}">
+</head>
+<body>
+    <div class="page-wrapper">
+
+        <header class="header">
+            <div class="logo">Virtual Stand</div>
+        </header>
+
+        <nav class="nav-tabs">
+            <a href="/courses" class="tab">Курсы</a>
+            <a href="/tasks" class="tab">Задания</a>
+            <span class="tab active">{{ lab.name }}</span>
+        </nav>
+
+        <div class="main-layout">
+
+            <!-- Левая колонка — список студентов -->
+            <aside class="sidebar">
+                <h2 class="sidebar-title">Список студентов</h2>
+                <div class="search-block">
+                    <input type="text" class="search-input" placeholder="Поиск...">
+                    <button class="search-btn">найти</button>
+                </div>
+                <ul class="student-list">
+                    {% for student in students %}
+                    <li class="student-item {% if student.user_id == selected_student_id %}active{% endif %}">
+                        <a href="/task/{{ lab.lab_id }}/student/{{ student.user_id }}" class="student-link">
+                            {{ loop.index }} {{ student.full_name }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </aside>
+
+            <!-- Правая колонка — работа студента -->
+            <main class="detail">
+                {% if selected_student %}
+
+                <div class="field-row">
+                    <label class="field-label">Ссылка</label>
+                    <input type="text"
+                           class="field-input"
+                           value="{{ selected_student.github_link or '' }}"
+                           placeholder="ссылка на github репозиторий"
+                           readonly>
+                </div>
+
+                <div class="field-row">
+                    <button class="btn-docker">собрать docker образ</button>
+                </div>
+
+                <div class="field-row">
+                    <label class="field-label">Готовая ссылка:</label>
+                    <input type="text"
+                           class="field-input"
+                           value="{{ selected_student.docker_link or '' }}"
+                           placeholder="ссылка для запуска docker контейнера"
+                           readonly>
+                </div>
+
+                <div class="field-row grade-row">
+                    <label class="field-label">Оценка:</label>
+                    <form action="/task/{{ lab.lab_id }}/student/{{ selected_student.user_id }}/grade" method="post" class="grade-form">
+                        {% for grade in [2, 3, 4, 5] %}
+                        <button type="submit"
+                                name="grade"
+                                value="{{ grade }}"
+                                class="grade-btn {% if selected_student.grade == grade %}selected{% endif %}">
+                            {{ grade }}
+                        </button>
+                        {% endfor %}
+                    </form>
+                </div>
+
+                <div class="field-row comment-row">
+                    <label class="field-label">Оставить комментарий</label>
+                    <form action="/task/{{ lab.lab_id }}/student/{{ selected_student.user_id }}/comment" method="post">
+                        <textarea class="comment-input" name="teacher_comment" rows="4">{{ selected_student.teacher_comment or '' }}</textarea>
+                        <button type="submit" class="btn-save">Сохранить</button>
+                    </form>
+                </div>
+
+                {% else %}
+                <p class="hint">Выберите студента из списка</p>
+                {% endif %}
+            </main>
+
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,229 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+}
+
+.page-wrapper {
+    width: 100%;
+    min-height: 100vh;
+}
+
+/* Шапка */
+.header {
+    padding: 16px 24px;
+    border-bottom: 1px solid #ccc;
+}
+
+.logo {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+/* Навигация */
+.nav-tabs {
+    display: flex;
+    gap: 32px;
+    padding: 12px 24px;
+    border-bottom: 1px solid #ccc;
+}
+
+.tab {
+    text-decoration: none;
+    color: #333;
+    font-size: 15px;
+}
+
+.tab.active {
+    font-weight: bold;
+    border-bottom: 2px solid #333;
+    padding-bottom: 2px;
+}
+
+/* Двухколоночный layout */
+.main-layout {
+    display: flex;
+    height: calc(100vh - 110px);
+}
+
+/* Левая колонка */
+.sidebar {
+    width: 320px;
+    min-width: 280px;
+    border-right: 1px solid #ccc;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sidebar-title {
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.search-block {
+    display: flex;
+    gap: 8px;
+}
+
+.search-input {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.search-btn {
+    padding: 6px 14px;
+    border: 1px solid #333;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.search-btn:hover {
+    background: #f0f0f0;
+}
+
+.student-list {
+    list-style: none;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.student-item {
+    border-bottom: 1px solid #ddd;
+}
+
+.student-link {
+    display: block;
+    padding: 12px 8px;
+    text-decoration: none;
+    color: #222;
+    font-size: 15px;
+}
+
+.student-link:hover {
+    background: #f5f5f5;
+}
+
+.student-item.active .student-link {
+    font-weight: bold;
+    background: #f0f0f0;
+}
+
+/* Правая колонка */
+.detail {
+    flex: 1;
+    padding: 24px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+}
+
+.hint {
+    color: #999;
+    font-size: 15px;
+    margin-top: 40px;
+    text-align: center;
+}
+
+/* Поля */
+.field-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.field-label {
+    font-size: 15px;
+    white-space: nowrap;
+    min-width: 120px;
+}
+
+.field-input {
+    flex: 1;
+    border: none;
+    border-bottom: 1px solid #999;
+    padding: 6px 0;
+    font-size: 14px;
+    color: #333;
+    background: transparent;
+    outline: none;
+}
+
+/* Docker */
+.btn-docker {
+    padding: 10px 24px;
+    border: 1px solid #333;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-docker:hover {
+    background: #f0f0f0;
+}
+
+/* Оценки */
+.grade-form {
+    display: flex;
+    gap: 0;
+}
+
+.grade-btn {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #333;
+    background: white;
+    cursor: pointer;
+    font-size: 15px;
+    margin-left: -1px;
+}
+
+.grade-btn:hover {
+    background: #f0f0f0;
+}
+
+.grade-btn.selected {
+    background: #333;
+    color: white;
+}
+
+/* Комментарий */
+.comment-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.comment-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #333;
+    font-size: 14px;
+    resize: vertical;
+    font-family: Arial, sans-serif;
+}
+
+.btn-save {
+    margin-top: 8px;
+    padding: 8px 20px;
+    border: 1px solid #333;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-save:hover {
+    background: #f0f0f0;
+}
