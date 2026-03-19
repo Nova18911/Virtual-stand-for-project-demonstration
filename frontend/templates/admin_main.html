@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Панель администратора</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_main.css') }}">
+</head>
+<body>
+
+<header class="header">
+    <div class="header__title">Панель администратора</div>
+    <div class="header__user">
+        вы вошли как {{ user_name }}
+        <a href="{{ url_for('auth.logout') }}" class="header__logout" title="Выйти">🔒</a>
+    </div>
+</header>
+
+<nav class="navbar">
+    <a href="{{ url_for('admin_main.index') }}" class="navbar__link navbar__link--active">Главная</a>
+    <a href="#" class="navbar__link">Экспорт</a>
+    <a href="/admin/import/" class="navbar__link">Импорт</a>
+</nav>
+
+<main class="main">
+    <h1 class="main__title">Главная</h1>
+
+    {% for msg in get_flashed_messages() %}
+        <div class="flash">{{ msg }}</div>
+    {% endfor %}
+
+    <div class="panel">
+
+        <!-- Список курсов -->
+        <div class="courses">
+            <div class="courses__label">Курсы</div>
+            <div class="courses__list">
+                {% for course in courses %}
+                <a href="{{ url_for('admin_main.course_detail', course_id=course.course_id) }}"
+                   class="courses__item {% if selected and selected.course_id == course.course_id %}courses__item--active{% endif %}">
+                    {{ course.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Форма курса -->
+        <div class="info">
+            <div class="info__title">Информация о курсе</div>
+            <form method="POST" action="{{ url_for('admin_main.course_save') }}">
+                {% if selected %}
+                <input type="hidden" name="course_id" value="{{ selected.course_id }}">
+                {% endif %}
+
+                <div class="form-group">
+                    <label>Название</label>
+                    <input type="text" name="name"
+                           value="{{ selected.name if selected else '' }}"
+                           placeholder="Введите название курса">
+                </div>
+
+                <div class="form-group">
+                    <label>Преподаватель</label>
+                    <select name="teacher">
+                        <option value="">— выберите —</option>
+                        {% for t in teachers %}
+                        <option value="{{ t.full_name }}"
+                            {% if selected and selected.teacher == t.full_name %}selected{% endif %}>
+                            {{ t.full_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn">Добавить</button>
+                </div>
+            </form>
+
+            {% if selected %}
+            <form method="POST" action="{{ url_for('admin_main.course_delete') }}" style="margin-top: 8px;">
+                <input type="hidden" name="course_id" value="{{ selected.course_id }}">
+                <button type="submit" class="btn">Удалить</button>
+            </form>
+            {% else %}
+            <button class="btn" disabled>Удалить</button>
+            {% endif %}
+        </div>
+
+    </div>
+</main>
+
+</body>
+</html>
