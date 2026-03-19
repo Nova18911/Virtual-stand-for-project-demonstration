@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for
 import pg8000
 from docker.runner import run_container, get_container_info
-from docker.streamer import streamer_bp
 
 task_detail_bp = Blueprint('task_detail', __name__)
 
@@ -239,5 +238,4 @@ if __name__ == '__main__':
                 static_folder=static)
     app.config['SECRET_KEY'] = 'test-secret-key-12345'
     app.register_blueprint(task_detail_bp)
-    app.register_blueprint(streamer_bp)
     app.run(debug=True)
