@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ lab.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/task.css') }}">
+</head>
+<body>
+
+<header class="header">
+    <div class="header__logo">Virtual Stand</div>
+</header>
+
+<nav class="breadcrumb">
+    <a href="/tasks">Курсы</a>
+    <span class="breadcrumb__sep">›</span>
+    <a href="/tasks">Задания</a>
+    <span class="breadcrumb__sep">›</span>
+    <span>{{ lab.name }}</span>
+</nav>
+
+<main class="main">
+
+    <div class="task-header">
+        <div class="task-header__left">
+            <div class="task__name">{{ lab.name }}</div>
+        </div>
+        <div class="task-header__right">
+            <div class="task__meta">Открыто с: <span>{{ lab.start_date.strftime('%d.%m.%Y, %H:%M') }}</span></div>
+            <div class="task__meta">Срок сдачи <span>{{ lab.end_date.strftime('%d.%m.%Y, %H:%M') }}</span></div>
+        </div>
+    </div>
+
+    <div class="section-label">Описание задания</div>
+    <div class="task__description">{{ lab.task or 'Описание не указано.' }}</div>
+
+    {% for msg in get_flashed_messages() %}
+        <div class="flash">{{ msg }}</div>
+    {% endfor %}
+
+    {% if role == 'student' %}
+
+    <div class="section-label">Добавить ответ</div>
+    <form method="POST" action="{{ url_for('task.submit', lab_id=lab.lab_id) }}">
+        <div class="answer-row">
+            <input type="text" name="answer_url"
+                   value="{{ project.github_link if project else '' }}"
+                   placeholder="введите ссылку на GitHub...">
+            <button type="submit" class="btn-icon" title="Подтвердить">✔</button>
+            {% if project and project.github_link %}
+            <a href="{{ project.github_link }}" target="_blank" class="btn-icon" title="Открыть">✎</a>
+            {% endif %}
+        </div>
+    </form>
+
+    <div class="grade-row">
+        <span class="section-label" style="margin:0">Оценка</span>
+        <input type="text" class="grade-input" readonly
+               value="{{ project.grade if project and project.grade else '' }}">
+    </div>
+
+    <div class="section-label">Комментарий</div>
+    <textarea class="task__comment" rows="4" readonly>{{ project.teacher_comment if project and project.teacher_comment else '' }}</textarea>
+
+    {% endif %}
+
+    {% if role == 'teacher' %}
+
+    <div class="section-label">Ответы студентов</div>
+
+    {% if students %}
+    {% for s in students %}
+    <div class="student-card">
+        <div class="student-card__name">{{ s.full_name }}</div>
+
+        {% if s.github_link %}
+        <div class="answer-row">
+            <input type="text" value="{{ s.github_link }}" readonly>
+            <a href="{{ s.github_link }}" target="_blank" class="btn-icon" title="Открыть">✎</a>
+        </div>
+        {% else %}
+        <div class="student-card__empty">Ответ не прикреплён</div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('task.grade', lab_id=lab.lab_id) }}">
+            <input type="hidden" name="project_id" value="{{ s.project_id }}">
+            <div class="grade-row">
+                <span class="section-label" style="margin:0">Оценка</span>
+                <input type="text" name="grade" class="grade-input"
+                       value="{{ s.grade if s.grade else '' }}"
+                       placeholder="2-5">
+            </div>
+            <div class="section-label">Комментарий</div>
+            <textarea name="comment" class="task__comment" rows="3">{{ s.teacher_comment if s.teacher_comment else '' }}</textarea>
+            <button type="submit" class="btn-save">Сохранить</button>
+        </form>
+    </div>
+    {% endfor %}
+
+    {% else %}
+    <div class="student-card__empty">Студенты ещё не сдали работы.</div>
+    {% endif %}
+
+    {% endif %}
+
+</main>
+
+</body>
+</html>

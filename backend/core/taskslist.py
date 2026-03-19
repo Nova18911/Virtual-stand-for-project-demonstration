@@ -1,10 +1,5 @@
 from flask import Flask, Blueprint, render_template, session, request, redirect, url_for
 
-app = Flask(__name__,
-            template_folder='../../frontend/templates',
-            static_folder='../../frontend/static')
-
-app.config['SECRET_KEY'] = 'test-secret-key-12345'
 
 tasks_bp = Blueprint('tasks', __name__)
 
@@ -67,19 +62,6 @@ def task_edit(lab_id):
         <a href="/tasks">← Назад к заданиям</a>
     '''
 
-
-@tasks_bp.route('/task/<int:lab_id>')
-def task_detail(lab_id):
-    lab = next((l for l in MOCK_LABS_STUDENT if l['lab_id'] == lab_id), None)
-    if not lab:
-        return "Задание не найдено", 404
-    return f'''
-        <h2>{lab["name"]}</h2>
-        <p>Здесь будет страница задания с описанием и полем для ссылки на репозиторий</p>
-        <a href="/tasks">← Назад к заданиям</a>
-    '''
-
-
 @tasks_bp.route('/task/add', methods=['GET', 'POST'])
 def task_add():
     global _next_lab_id
@@ -122,9 +104,3 @@ def set_student():
         <p>✅ Роль установлена: <b>студент</b></p>
         <a href="/tasks">Перейти к заданиям</a>
     '''
-
-
-app.register_blueprint(tasks_bp)
-
-if __name__ == '__main__':
-    app.run(debug=True)
