@@ -21,7 +21,7 @@ MOCK_LABS_STUDENT = [
 ]
 
 
-@tasks_bp.route('/')
+@tasks_bp.route('/tasks')
 def index():
     return '''
         <h2>Тестирование страницы заданий</h2>
