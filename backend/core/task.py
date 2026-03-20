@@ -1,19 +1,32 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
-import psycopg2
-import psycopg2.extras
+import pg8000
 
 task_bp = Blueprint('task', __name__, url_prefix='/tasks')
 
 
 def get_db():
-    return psycopg2.connect(
+    conn = pg8000.connect(
         host='127.0.0.1',
         port=5432,
-        dbname='course_management',
-        user='admin',
-        password='12345678',
-        cursor_factory=psycopg2.extras.RealDictCursor
+        database='course_management',
+        user='postgres',
+        password='12345'
     )
+    return conn
+
+def dict_fetchone(cursor):
+    row = cursor.fetchone()
+    if row is None:
+        return None
+    columns = [col[0] for col in cursor.description]  # col[0] - это имя колонки
+    return dict(zip(columns, row))
+
+def dict_fetchall(cursor):
+    rows = cursor.fetchall()
+    if not rows:
+        return []
+    columns = [col[0] for col in cursor.description]  # col[0] - это имя колонки
+    return [dict(zip(columns, row)) for row in rows]
 
 
 @task_bp.route('/<int:lab_id>')
@@ -27,14 +40,23 @@ def index(lab_id):
 
         # Получаем данные задания из labs
         cur.execute('''
-            SELECT l.lab_id, l.name, l.task, l.start_date, l.end_date
+            SELECT l.lab_id, l.name, l.task, l.start_date, l.end_date, l.course_id
             FROM labs l
             WHERE l.lab_id = %s
         ''', (lab_id,))
-        lab = cur.fetchone()
+        lab = dict_fetchone(cur)
 
         if lab is None:
             return 'Задание не найдено', 404
+
+        course_id = lab.get('course_id')
+
+        # Сохраняем course_id в сессию для навигации
+        if course_id:
+            session['current_course_id'] = course_id
+        else:
+            # Если нет course_id в базе, используем из сессии
+            course_id = session.get('current_course_id', 1)
 
         # Получаем ответ студента из student_projects
         project = None
@@ -44,7 +66,7 @@ def index(lab_id):
                 FROM student_projects
                 WHERE lab_id = %s AND user_id = %s
             ''', (lab_id, user_id))
-            project = cur.fetchone()
+            project = dict_fetchone(cur)
 
         # Преподаватель видит все ответы студентов
         students = None
@@ -58,7 +80,7 @@ def index(lab_id):
                 WHERE sp.lab_id = %s
                 ORDER BY sp.submission_date DESC
             ''', (lab_id,))
-            students = cur.fetchall()
+            students = dict_fetchall(cur)
 
     finally:
         conn.close()
@@ -67,7 +89,8 @@ def index(lab_id):
                            lab=lab,
                            project=project,
                            students=students,
-                           role=role)
+                           role=role,
+                           course_id=course_id)
 
 
 @task_bp.route('/<int:lab_id>/submit', methods=['POST'])
@@ -90,7 +113,7 @@ def submit(lab_id):
             SELECT project_id FROM student_projects
             WHERE lab_id = %s AND user_id = %s
         ''', (lab_id, user_id))
-        existing = cur.fetchone()
+        existing = dict_fetchone(cur)
 
         if existing:
             cur.execute('''

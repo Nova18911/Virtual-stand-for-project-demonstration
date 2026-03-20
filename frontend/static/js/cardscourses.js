@@ -1,63 +1,32 @@
-    let cardsData = [];
+let cardsData = [];
 
-    async function loadCoursesFromServer() {
-        const response = await fetch('/api/courses');
-        cardsData = await response.json();
-        renderCards();
-    }
+async function loadCoursesFromServer() {
+    const response = await fetch('/api/courses');
+    cardsData = await response.json();
+    renderCards();
+}
 
-    function handleAddAnswer(courseName, workName) {
-        alert(`Добавить ответ для: ${courseName} - ${workName}`);
-        console.log('Добавить ответ:', courseName, workName);
-    }
+function renderCards() {
+    const container = document.getElementById('cardsContainer');
+    container.innerHTML = '';
 
-    function renderCards() {
-        const container = document.getElementById('cardsContainer');
-        container.innerHTML = '';
+    cardsData.forEach(item => {
+        const article = document.createElement('article');
 
-        cardsData.forEach(item => {
-            const article = document.createElement('article');
-            const h3 = document.createElement('h3');
-            const workP = document.createElement('p');
-            const workStrong = document.createElement('strong');
-            const descP = document.createElement('p');
-            const teacherP = document.createElement('p');
-            const teacherA = document.createElement('a');
-            const answerDiv = document.createElement('div');
-            const answerButton = document.createElement('button');
+        const courseLink = document.createElement('a');
+        // Теперь ссылка ведет на тестовый маршрут с параметром course_id
+        courseLink.href = `/tasks?course_id=${item.id}`;
+        courseLink.textContent = item.course;
+        courseLink.className = 'course-link';
 
-            h3.textContent = item.course;
-            workStrong.textContent = item.work;
-            workP.appendChild(workStrong);
+        const teacherP = document.createElement('p');
+        teacherP.textContent = item.teacher;
+        teacherP.className = 'teacher-text';
 
-            if (item.description) {
-                descP.textContent = item.description;
-            } else if (item.deadline) {
-                descP.textContent = item.deadline;
-            }
+        article.appendChild(courseLink);
+        article.appendChild(teacherP);
+        container.appendChild(article);
+    });
+}
 
-            teacherA.href = '#';
-            teacherA.textContent = item.teacher;
-            teacherP.appendChild(teacherA);
-
-            answerButton.textContent = 'Добавить ответ';
-            answerButton.type = 'button';
-            answerButton.onclick = function() {
-                handleAddAnswer(item.course, item.work);
-            };
-
-            answerButton.className = 'add-answer-btn';
-
-            answerDiv.appendChild(answerButton);
-
-            article.appendChild(h3);
-            article.appendChild(workP);
-            article.appendChild(descP);
-            article.appendChild(teacherP);
-            article.appendChild(answerDiv);
-
-            container.appendChild(article);
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', loadCoursesFromServer);
+document.addEventListener('DOMContentLoaded', loadCoursesFromServer);

@@ -12,9 +12,9 @@
 </header>
 
 <nav class="breadcrumb">
-    <a href="/tasks">Курсы</a>
+    <a href="{{ url_for('main_page') }}" class="tab">Главная</a>
     <span class="breadcrumb__sep">›</span>
-    <a href="/tasks">Задания</a>
+    <a href="{{ url_for('tasks.course_tasks', course_id=course_id) }}" class="tab active">Задания</a>
     <span class="breadcrumb__sep">›</span>
     <span>{{ lab.name }}</span>
 </nav>
