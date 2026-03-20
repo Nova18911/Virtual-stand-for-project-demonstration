@@ -25,7 +25,7 @@
             <ul class="task-list">
                 {% for lab in labs %}
                 <li class="task-item">
-                    <a href="/task/{{ lab.lab_id }}" class="task-link">{{ lab.name }}</a>
+                    <a href="/tasks/{{ lab.lab_id }}" class="task-link">{{ lab.name }}</a>
                     {% if lab.submitted %}
                         <span class="status status-done">✔ Выполнено</span>
                     {% else %}

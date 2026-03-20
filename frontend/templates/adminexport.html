@@ -13,7 +13,7 @@
             <h1>Вы вошли как администратор</h1>
         </div>
     <div class="sidebar">
-        <button class="btn-login" type="submit">Главная</button>
+        <button class="btn-login" type="submit" onclick="window.location.href='{{ url_for('admin_main.admin_main_page') }}'">Главная</button>
          <button class="btn-login" type="submit">Экспорт</button>
          <button class="btn-login" type="submit">Импорт</button>
     </div>

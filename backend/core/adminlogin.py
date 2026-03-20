@@ -78,4 +78,4 @@ def admin_export_page():
         flash('Пожалуйста, войдите в систему', 'error')
         return redirect(url_for('adminlogin.admin_login_page'))
 
-    return render_template('adminexport.html')
+    return render_template('admin_main.html')

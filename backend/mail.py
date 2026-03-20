@@ -1,10 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, Blueprint
 import re
 import secrets
 from datetime import datetime, timedelta
 
-app = Flask(__name__)
-app.secret_key = secrets.token_hex(16)  
+mail_bp = Blueprint('mail', __name__)
+mail_bp.secret_key = secrets.token_hex(16)
 users_db = {
     "ivan@student.ru": {
         "name": "Иван Студентов",
@@ -23,41 +23,42 @@ def generate_reset_token():
     """Генерация уникального токена для сброса пароля"""
     return secrets.token_urlsafe(32)
 
-@app.route('/')
-def index():
+@mail_bp.route('/mail')
+def mail_index():
     """Главная страница с формой восстановления пароля"""
     return render_template('index.html')
 
-@app.route('/recovery', methods=['POST'])
+@mail_bp.route('/recovery', methods=['POST'])
 def recovery():
     """Обработка запроса на восстановление пароля"""
     email = request.form.get('email', '').strip().lower()
 
     if not email:
         flash('Пожалуйста, введите email', 'error')
-        return redirect(url_for('index'))
+        return redirect(url_for('mail.mail_index'))
     
     if not is_valid_email(email):
         flash('Пожалуйста, введите корректный email адрес', 'error')
-        return redirect(url_for('index'))
+        return redirect(url_for('mail.mail_index'))
     if email in users_db:
         token = generate_reset_token()
         users_db[email]['reset_token'] = token
         users_db[email]['token_expiry'] = datetime.now() + timedelta(hours=24)
         
-        reset_link = url_for('reset_password', token=token, _external=True)
+        reset_link = url_for('mail.reset_password', token=token, _external=True)
         print(f"\n=== Ссылка для сброса пароля для {email} ===")
         print(f"Имя пользователя: {users_db[email]['name']}")
         print(f"Ссылка: {reset_link}")
         print(f"Срок действия: 24 часа\n")
         
         flash('Инструкции по восстановлению пароля отправлены на ваш email', 'success')
+        return redirect(url_for('inputcode.inputcode_page'))
     else:
         flash('Если указанный email зарегистрирован, мы отправили на него инструкции', 'success')
-    
-    return redirect(url_for('index'))
 
-@app.route('/reset/<token>')
+    return redirect(url_for('mail.mail_index'))
+
+@mail_bp.route('/reset/<token>')
 def reset_password(token):
     """Страница сброса пароля (переход по ссылке из письма)"""
     for email, user_data in users_db.items():
@@ -83,10 +84,4 @@ def reset_password(token):
     <p><a href='/'>← Вернуться на главную</a></p>
     """, 404
 
-if __name__ == '__main__':
-    print("=" * 50)
-    print("Сервер запущен!")
-    print("Для тестирования используйте email: ivan@student.ru")
-    print("Ссылки для сброса пароля будут появляться в консоли")
-    print("=" * 50)
-    app.run(debug=True, port=5000)
+

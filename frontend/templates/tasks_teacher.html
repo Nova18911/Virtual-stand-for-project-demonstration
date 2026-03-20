@@ -26,7 +26,7 @@
               {% for lab in labs %}
               <li class="task-item">
                   <span class="task-name">{{ lab.name }}</span>
-                  <a href="/task/{{ lab.lab_id }}/edit" class="btn btn-edit">Редактировать</a>
+                  <a href="{{ url_for('tasks.task_edit', lab_id=lab.lab_id) }}" class="btn btn-edit">Редактировать</a>
               </li>
               {% endfor %}
           </ul>

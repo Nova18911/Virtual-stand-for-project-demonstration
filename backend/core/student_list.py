@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from flask import Blueprint, render_template, request, redirect, url_for
 import pg8000
 from docker.runner import run_container, get_container_info

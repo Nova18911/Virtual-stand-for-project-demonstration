@@ -1,20 +1,25 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
-import psycopg2
-import psycopg2.extras
+import pg8000
 
 task_bp = Blueprint('task', __name__, url_prefix='/tasks')
 
 
 def get_db():
-    return psycopg2.connect(
+    conn = pg8000.connect(
         host='127.0.0.1',
         port=5432,
-        dbname='course_management',
-        user='admin',
-        password='12345678',
-        cursor_factory=psycopg2.extras.RealDictCursor
+        database='course_management',
+        user='postgres',
+        password='12345'
     )
+    def dict_row(cursor, row):
+        d = {}
+        for idx, col in enumerate(cursor.description):
+            d[col.name] = row[idx]
+        return d
 
+    conn.row_factory = dict_row
+    return conn
 
 @task_bp.route('/<int:lab_id>')
 def index(lab_id):

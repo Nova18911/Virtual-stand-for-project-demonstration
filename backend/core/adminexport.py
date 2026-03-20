@@ -17,6 +17,10 @@ def get_db_connection():
         password="12345"
     )
 
+@admexp_bp.route('/admin/export')
+def export_page():
+    return render_template('adminexport.html')
+
 
 def get_tables_from_db():
     conn = get_db_connection()

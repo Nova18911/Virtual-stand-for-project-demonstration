@@ -1,70 +1,75 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
-import psycopg2
-import psycopg2.extras
-import os
+import pg8000
 
 admin_main = Blueprint('admin_main', __name__, url_prefix='/admin')
 
+
 def get_db():
-    return psycopg2.connect(
+    conn = pg8000.connect(
         host='127.0.0.1',
         port=5432,
-        dbname='course_management',
+        database='course_management',
         user='admin',
-        password='12345678',
-        cursor_factory=psycopg2.extras.RealDictCursor
+        password='12345678'
     )
 
+    def dict_row(cursor, row):
+        d = {}
+        for idx, col in enumerate(cursor.description):
+            d[col.name] = row[idx]
+        return d
 
-@admin_main.route('/')
+    conn.row_factory = dict_row
+    return conn
+
+@admin_main.route('/admin/main')
+def admin_main_page():
+    return render_template('admin_main.html')
+
+@admin_main.route('/admin_main')
 def index():
     conn = get_db()
-    try:
-        cur = conn.cursor()
-        # Получаем все курсы с именем преподавателя
-        cur.execute('SELECT course_id, name, teacher FROM courses ORDER BY course_id')
-        courses = cur.fetchall()
+    cur = conn.cursor()
+    cur.execute('SELECT course_id, name, teacher FROM courses ORDER BY course_id')
+    courses = cur.fetchall()
 
-        # Получаем всех преподавателей (role access_id = 2)
-        cur.execute('''
-            SELECT u.user_id, u.full_name
-            FROM users u
-            JOIN roles r ON u.access_id = r.access_id
-            WHERE r.access_rights = %s
-            ORDER BY u.full_name
-        ''', ('teacher',))
-        teachers = cur.fetchall()
-    finally:
-        conn.close()
+    cur.execute('''
+                SELECT u.user_id, u.full_name
+                FROM users u
+                JOIN roles r ON u.access_id = r.access_id
+                WHERE r.access_rights = %s
+                ORDER BY u.full_name
+            ''', ('teacher',))
+    teachers = cur.fetchall()
+    conn.close()
 
     return render_template('admin_main.html',
-                           courses=courses,
-                           teachers=teachers,
-                           selected=None,
-                           user_name=session.get('user_name', 'Админ'))
+                       courses=courses,
+                       teachers=teachers,
+                       selected=None,
+                       user_name=session.get('user_name', 'Админ'))
+
 
 
 @admin_main.route('/course/<int:course_id>')
 def course_detail(course_id):
     conn = get_db()
-    try:
-        cur = conn.cursor()
-        cur.execute('SELECT course_id, name, teacher FROM courses ORDER BY course_id')
-        courses = cur.fetchall()
+    cur = conn.cursor()
+    cur.execute('SELECT course_id, name, teacher FROM courses ORDER BY course_id')
+    courses = cur.fetchall()
 
-        cur.execute('SELECT course_id, name, teacher FROM courses WHERE course_id = %s', (course_id,))
-        selected = cur.fetchone()
+    cur.execute('SELECT course_id, name, teacher FROM courses WHERE course_id = %s', (course_id,))
+    selected = cur.fetchone()
 
-        cur.execute('''
-            SELECT u.user_id, u.full_name
-            FROM users u
-            JOIN roles r ON u.access_id = r.access_id
-            WHERE r.access_rights = %s
-            ORDER BY u.full_name
-        ''', ('teacher',))
-        teachers = cur.fetchall()
-    finally:
-        conn.close()
+    cur.execute('''
+                SELECT u.user_id, u.full_name
+                FROM users u
+                JOIN roles r ON u.access_id = r.access_id
+                WHERE r.access_rights = %s
+                ORDER BY u.full_name
+            ''', ('teacher',))
+    teachers = cur.fetchall()
+    conn.close()
 
     return render_template('admin_main.html',
                            courses=courses,

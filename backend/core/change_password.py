@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for,jsonify
 
 changepassword_bp = Blueprint('changepassword', __name__)
 
@@ -21,9 +21,4 @@ def change_password():
 
     # Здесь будет логика сохранения пароля в БД
 
-    return redirect(url_for('mainpage.main_page'))
-
-
-@changepassword_bp.route('/main')
-def main_page():
-    return "Главная страница после смены пароля"
+    return redirect(url_for('main_page'))
