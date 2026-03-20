@@ -12,7 +12,7 @@ def get_db_connection():
         password="12345678"
     )
 
-def fing_free_port():
+def find_free_port():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(('', 0))
         return s.getsockname()[1]
@@ -22,12 +22,12 @@ def run_container(image_name, project_id):
     cursor = None
     try:
         client = docker.from_env()
-        port = fing_free_port()
+        port = find_free_port()
 
         container = client.containers.run(
             image_name,
             detach=True,
-            ports={'5000/tsp': port}
+            ports={'5000/tcp': port}
         )
 
         conn = get_db_connection()
@@ -35,7 +35,7 @@ def run_container(image_name, project_id):
         cursor.execute("""
             INSERT INTO docker_containers (container_id, project_id, port, image_name, started_at, status)
             VALUES (%s, %s, %s, %s, %s, 'running')
-        """,(container.id, project_id, port, image_name, datetime.now()))
+        """, (container.id, project_id, port, image_name, datetime.now()))
         conn.commit()
 
         link = f"http://localhost:{port}"

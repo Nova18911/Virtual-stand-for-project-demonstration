@@ -1,11 +1,13 @@
 import sys
 import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from flask import Blueprint, render_template, request, redirect, url_for
+backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, backend_dir)
+from backend.core.runner import run_container, get_container_info
+from flask import Blueprint, render_template, request, redirect, url_for,session
 import pg8000
-from docker.runner import run_container, get_container_info
 
-task_detail_bp = Blueprint('task_detail', __name__)  #хз никак docker.runner в Blueprint-е не смог передать ошибку выдаёт
+
+task_detail_bp = Blueprint('task_detail', __name__)  #вставку студентов в бд надо и если докер нужно в отдельную папку то там с путями возиться надо а то только в текущей работает
 
 
 def get_db_connection():
@@ -14,7 +16,7 @@ def get_db_connection():
         port=5432,
         database="course_management",
         user="postgres",
-        password="12345678"
+        password="12345"
     )
 
 
@@ -25,10 +27,10 @@ def task_detail(lab_id):
 
     # Получаем данные задания
     cursor.execute("""
-        SELECT lab_id, name
-        FROM labs
-        WHERE lab_id = %s
-    """, (lab_id,))
+            SELECT lab_id, name, course_id
+            FROM labs
+            WHERE lab_id = %s
+        """, (lab_id,))
     lab_row = cursor.fetchone()
 
     if not lab_row:
