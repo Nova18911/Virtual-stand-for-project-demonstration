@@ -12,6 +12,7 @@ from core.task import task_bp
 from core.admin_main import admin_main
 from core.student_list import task_detail_bp
 
+from core.admin_import import admin_import
 
 # Указываем Flask, где искать папки со страницами и стилями
 app = Flask(__name__,
@@ -32,6 +33,7 @@ app.register_blueprint(admin_main)
 app.register_blueprint(changepassword_bp)
 app.register_blueprint(inputcode_bp)
 app.register_blueprint(task_detail_bp)
+app.register_blueprint(admin_import)
 
 
 @app.route('/')
