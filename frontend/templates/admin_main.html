@@ -16,9 +16,9 @@
 </header>
 
 <nav class="navbar">
-    <a href="{{ url_for('admin_main.index') }}" class="navbar__link navbar__link--active">Главная</a>
-    <a href="#" class="navbar__link">Экспорт</a>
-    <a href="/admin/import/" class="navbar__link">Импорт</a>
+    <a href="#" class="navbar__link navbar__link--active">Главная</a>  <!-- а это лучше просто текстом сделать мы всё равно на главной -->
+    <a href="#" onclick="window.location.href='{{ url_for('adminexport.export_page') }}'" class="navbar__link">Экспорт</a>
+    <a href="/admin/import/" class="navbar__link">Импорт</a>  <!-- здесь будет перенаправление на импорт -->
 </nav>
 
 <main class="main">

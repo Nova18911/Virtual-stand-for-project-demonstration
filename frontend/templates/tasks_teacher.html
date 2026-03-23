@@ -17,8 +17,8 @@
       </header>
 
       <nav class="nav-tabs">
-          <a href="/courses" class="tab">Курсы</a>
-          <a href="/tasks" class="tab active">Задание</a>
+            <a href="{{ url_for('main_page') }}" class="tab">Главная</a>
+            <a href="{{ url_for('tasks.course_tasks', course_id=course_id) }}" class="tab active">Задания</a>
       </nav>
 
       <main class="content">
@@ -26,7 +26,7 @@
               {% for lab in labs %}
               <li class="task-item">
                   <span class="task-name">{{ lab.name }}</span>
-                  <a href="/task/{{ lab.lab_id }}/edit" class="btn btn-edit">Редактировать</a>
+                  <a href="{{ url_for('task_detail.task_detail', lab_id=lab.lab_id) }}" class="btn btn-edit">Редактировать</a>
               </li>
               {% endfor %}
           </ul>
@@ -103,7 +103,7 @@
     </div>
   </div>
 
-  <script>
+  <script> <!-- вынести в отдельный файл js (но можно и оставить она маленькая) -->
     document.getElementById('addTaskModal').addEventListener('click', function(e) {
       if (e.target === this) this.style.display = 'none';
     });

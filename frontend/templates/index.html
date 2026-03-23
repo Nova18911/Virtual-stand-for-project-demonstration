@@ -4,14 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Восстановление пароля</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <div class="container">
         <div class="login-box">
             <h1>Виртуальный стенд</h1>
-            
-            <!-- Flash сообщения -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     <div class="flash-messages">
@@ -31,7 +29,6 @@
                 <button type="submit" class="btn">Восстановить пароль</button>
             </form>
             
-            <!-- Ссылки полностью удалены -->
         </div>
     </div>
 </body>

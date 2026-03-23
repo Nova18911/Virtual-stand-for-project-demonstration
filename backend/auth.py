@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import check_password_hash, generate_password_hash
 
-auth_bp = Blueprint('auth', __name__)
+auth_bp = Blueprint('auth', __name__) #подключить бд, организовать выдачу роли по проверке емейла
 
 # Тестовые пользователи (заглушка вместо БД)
 MOCK_USERS = {
