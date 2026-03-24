@@ -1,18 +1,7 @@
-from flask import Blueprint, jsonify,redirect,url_for
-import pg8000
+from flask import Blueprint, jsonify,redirect,url_for, render_template
+from backend.core.connect import get_db_connection
 
 mainpage_bp = Blueprint('mainpage', __name__)
-
-
-def get_db_connection():
-    return pg8000.connect(
-        host="localhost",
-        port=5432,
-        database="course_management",
-        user="postgres",
-        password="12345"
-    )
-
 
 @mainpage_bp.route('/api/courses')
 def get_courses():
@@ -43,6 +32,10 @@ def get_courses():
     cursor.close()
     conn.close()
     return jsonify(formatted_courses)
+
+@mainpage_bp.route('/courses')
+def courses_page():
+    return render_template('mainpage.html')
 
 @mainpage_bp.route('/course/<int:course_id>')
 def course_page(course_id):

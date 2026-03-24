@@ -10,7 +10,7 @@ def get_db_connection():
         port=5432,
         database="course_management",
         user="postgres",
-        password="12345"
+        password="12345678"
     )
 
 

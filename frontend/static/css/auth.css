@@ -115,3 +115,15 @@ body {
         box-shadow: none;
     }
 }
+
+.input-error {
+    border-color: #e74c3c;
+    outline-color: #e74c3c;
+}
+
+.field-error {
+    color: #e74c3c;
+    font-size: 0.8rem;
+    margin-top: 4px;
+    display: block;
+}

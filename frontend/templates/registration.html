@@ -10,39 +10,54 @@
     <div class="registration-container">
         <h1>Регистрация</h1>
 
-        <form action="/register" method="post">
+        {% for category, msg in get_flashed_messages(with_categories=true) %}
+            <div class="flash {{ category }}">{{ msg }}</div>
+        {% endfor %}
+
+        <form action="/register" method="post" autocomplete="off">
             <div class="form-row">
                 <div class="form-group">
                     <label for="email">Адрес эл. почты</label>
-                    <input type="email" id="email" name="email" placeholder="example@mail.ru" required>
+                    <input type="email" id="email" name="email"
+                           value="{{ email or '' }}"
+                           autocomplete="new-password"
+                           placeholder="example@mail.ru" required>
                 </div>
                 <div class="form-group">
                     <label for="fio">ФИО</label>
-                    <input type="text" id="fio" name="fio" required>
+                    <input type="text" id="fio" name="fio"
+                           value="{{ fio or '' }}"
+                           autocomplete="new-password"
+                           placeholder="Иванов Иван Иванович" required>
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
                     <label for="password">Пароль</label>
-                    <input type="password" id="password" required>
+                    <input type="password" id="password" name="password"
+                           autocomplete="new-password" required>
                 </div>
                 <div class="form-group">
                     <label for="role">Выберите роль</label>
                     <select id="role" name="role" required>
-                        <option value="student">Студент</option>
-                        <option value="teacher">Преподаватель</option>
+                        <option value="student" {{ 'selected' if role == 'student' else '' }}>Студент</option>
+                        <option value="teacher" {{ 'selected' if role == 'teacher' else '' }}>Преподаватель</option>
                     </select>
                 </div>
             </div>
 
             <div class="button-container">
-                <button type="submit" class="submit-btn" onclick="window.location.href='{{ url_for('login_page') }}'">Зарегистрироваться</button>
+                <button type="submit" class="submit-btn">Зарегистрироваться</button>
             </div>
         </form>
     </div>
+
     <div class="image-container">
-        <img src="{{ url_for('static', filename='images/registration_image.jpg') }}" alt="Регистрация" class="footer-img">
+        <img src="{{ url_for('static', filename='images/registration_image.jpg') }}"
+             alt="Регистрация" class="footer-img">
     </div>
+
+    <script src="{{ url_for('static', filename='js/registration.js') }}"></script>
 </body>
 </html>
