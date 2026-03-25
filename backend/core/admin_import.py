@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
-import psycopg2
-import psycopg2.extras
+import pg8000
 import io
 import csv
 
@@ -8,17 +7,16 @@ admin_import = Blueprint('admin_import', __name__, url_prefix='/admin/import')
 
 
 def get_db():
-    return psycopg2.connect(
+    return pg8000.connect(
         host='127.0.0.1',
         port=5432,
-        dbname='course_management',
+        database='course_management',
         user='admin',
-        password='12345678',
-        cursor_factory=psycopg2.extras.RealDictCursor
+        password='12345678'
     )
 
 
-@admin_import.route('/')
+@admin_import.route('/uploaded')
 def index():
     return render_template('admin_import.html',
                            user_name=session.get('user_name', 'Админ'))
