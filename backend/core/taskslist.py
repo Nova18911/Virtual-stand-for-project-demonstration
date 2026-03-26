@@ -1,106 +1,198 @@
-from flask import Flask, Blueprint, render_template, session, request, redirect, url_for
+from flask import Blueprint, jsonify, request, session, Response
+from backend.core.connect import get_db_connection
+
+taskslist_bp = Blueprint('taskslist', __name__)
 
 
-tasks_bp = Blueprint('tasks', __name__)
+@taskslist_bp.route('/api/course/<int:course_id>/labs', methods=['GET'])
+def get_course_labs(course_id):
+    user_id = session.get('user_id')
+    role    = session.get('user_role', 'student')
 
+    conn   = get_db_connection()
+    cursor = conn.cursor()
 
-MOCK_LABS_TEACHER = [
-    {'lab_id': 1, 'name': 'Лабораторная работа №1', 'course': ''},
-    {'lab_id': 2, 'name': 'Лабораторная работа №2', 'course': ''},
-    {'lab_id': 3, 'name': 'Лабораторная работа №3', 'course': ''},
-    {'lab_id': 4, 'name': 'Лабораторная работа №4', 'course': ''},
-]
-
-_next_lab_id = 5
-
-MOCK_LABS_STUDENT = [
-    {'lab_id': 1, 'name': 'Лабораторная работа №1', 'submitted': True},
-    {'lab_id': 2, 'name': 'Лабораторная работа №2', 'submitted': True},
-    {'lab_id': 3, 'name': 'Лабораторная работа №3', 'submitted': False},
-    {'lab_id': 4, 'name': 'Лабораторная работа №4', 'submitted': False},
-]
-
-
-@tasks_bp.route('/')
-def index():
-    return '''
-        <h2>Тестирование страницы заданий</h2>
-        <ul>
-            <li><a href="/test/set-teacher">Войти как преподаватель</a></li>
-            <li><a href="/test/set-student">Войти как студент</a></li>
-        </ul>
-    '''
-
-
-@tasks_bp.route('/tasks/teacher')
-def tasks_teacher():
-    return render_template('tasks_teacher.html', labs=MOCK_LABS_TEACHER)
-
-
-@tasks_bp.route('/tasks/student')
-def tasks_student():
-    return render_template('tasks_student.html', labs=MOCK_LABS_STUDENT)
-
-
-@tasks_bp.route('/tasks')
-def tasks_page():
-    role = session.get('role', 'student')
-    if role == 'teacher':
-        return render_template('tasks_teacher.html', labs=MOCK_LABS_TEACHER)
+    if role == 'student' and user_id:
+        cursor.execute("""
+            SELECT
+                l.lab_id,
+                l.name,
+                l.task,
+                l.start_date,
+                l.end_date,
+                CASE WHEN sp.project_id IS NOT NULL THEN true ELSE false END AS submitted,
+                CASE WHEN l.task_file IS NOT NULL AND length(l.task_file) > 0 THEN true ELSE false END AS has_file
+            FROM labs l
+            LEFT JOIN student_projects sp
+                ON sp.lab_id = l.lab_id AND sp.user_id = %s
+            WHERE l.course_id = %s
+            ORDER BY l.lab_id
+        """, (user_id, course_id))
     else:
-        return render_template('tasks_student.html', labs=MOCK_LABS_STUDENT)
+        cursor.execute("""
+            SELECT
+                lab_id,
+                name,
+                task,
+                start_date,
+                end_date,
+                false AS submitted,
+                CASE WHEN task_file IS NOT NULL AND length(task_file) > 0 THEN true ELSE false END AS has_file
+            FROM labs
+            WHERE course_id = %s
+            ORDER BY lab_id
+        """, (course_id,))
+
+    labs = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify([
+        {
+            'id':         lab[0],
+            'name':       lab[1],
+            'task':       lab[2],
+            'start_date': lab[3].strftime('%d.%m.%Y') if lab[3] else None,
+            'end_date':   lab[4].strftime('%d.%m.%Y') if lab[4] else None,
+            'submitted':  lab[5],
+            'has_file':   lab[6],
+        }
+        for lab in labs
+    ])
 
 
-@tasks_bp.route('/task/<int:lab_id>/edit')
-def task_edit(lab_id):
-    lab = next((l for l in MOCK_LABS_TEACHER if l['lab_id'] == lab_id), None)
-    if not lab:
-        return "Задание не найдено", 404
-    return f'''
-        <h2>Редактирование: {lab["name"]}</h2>
-        <p>Здесь будет форма редактирования задания (id={lab_id})</p>
-        <a href="/tasks">← Назад к заданиям</a>
-    '''
+@taskslist_bp.route('/api/task/<int:lab_id>', methods=['GET'])
+def get_task(lab_id):
+    role = session.get('user_role')
+    if role != 'teacher':
+        return jsonify({'ok': False, 'error': 'Недостаточно прав.'}), 403
 
-@tasks_bp.route('/task/add', methods=['GET', 'POST'])
-def task_add():
-    global _next_lab_id
-    if request.method == 'POST':
-        name = request.form.get('name', '').strip()
-        course = request.form.get('course', '').strip()
-        deadline = request.form.get('deadline', '')
-        description = request.form.get('description', '')
+    conn   = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT lab_id, name, task, end_date,
+               CASE WHEN task_file IS NOT NULL AND length(task_file) > 0 
+                    THEN true ELSE false END AS has_file
+        FROM labs WHERE lab_id = %s
+    """, (lab_id,))
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
 
-        if name:
-            display_name = f"{name} ({course})" if course else name
-            MOCK_LABS_TEACHER.append({
-                'lab_id': _next_lab_id,
-                'name': display_name,
-                'course': course,
-                'deadline': deadline,
-                'description': description,
-            })
-            _next_lab_id += 1
+    if not row:
+        return jsonify({'ok': False, 'error': 'Задание не найдено.'}), 404
 
-        return redirect(url_for('tasks.tasks_teacher'))
-    return redirect(url_for('tasks.tasks_teacher') + '?add=1')
+    return jsonify({
+        'id':           row[0],
+        'name':         row[1],
+        'task':         row[2],
+        'end_date_raw': row[3].strftime('%Y-%m-%d') if row[3] else '',
+        'has_file':     row[4],
+    })
 
 
-@tasks_bp.route('/test/set-teacher')
-def set_teacher():
-    session['role'] = 'teacher'
-    session['user_id'] = 1
-    return '''
-        <p>✅ Роль установлена: <b>преподаватель</b></p>
-        <a href="/tasks">Перейти к заданиям</a>
-    '''
+@taskslist_bp.route('/api/task/<int:lab_id>/file', methods=['GET'])
+def download_task_file(lab_id):
+    conn   = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT task_file, name FROM labs WHERE lab_id = %s", (lab_id,))
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if not row or not row[0]:
+        return jsonify({'ok': False, 'error': 'Файл не найден.'}), 404
+
+    file_bytes = bytes(row[0])
+    file_name  = f"{row[1]}"
+
+    return Response(
+        file_bytes,
+        mimetype='application/octet-stream',
+        headers={'Content-Disposition': f'attachment; filename="{file_name}"'}
+    )
 
 
-@tasks_bp.route('/test/set-student')
-def set_student():
-    session['role'] = 'student'
-    session['user_id'] = 2
-    return '''
-        <p>✅ Роль установлена: <b>студент</b></p>
-        <a href="/tasks">Перейти к заданиям</a>
-    '''
+@taskslist_bp.route('/api/task/add', methods=['POST'])
+def add_task():
+    role = session.get('user_role')
+    if role != 'teacher':
+        return jsonify({'ok': False, 'error': 'Недостаточно прав.'}), 403
+
+    course_id   = request.form.get('course_id', '').strip()
+    name        = request.form.get('name', '').strip()
+    deadline    = request.form.get('deadline', '').strip()
+    description = request.form.get('description', '').strip()
+    file        = request.files.get('file')
+
+    if not name:      return jsonify({'ok': False, 'error': 'Введите название задания.'}), 400
+    if not deadline:  return jsonify({'ok': False, 'error': 'Укажите срок сдачи.'}), 400
+    if not course_id: return jsonify({'ok': False, 'error': 'Не указан курс.'}), 400
+
+    file_bytes = file.read() if file and file.filename else b''
+
+    try:
+        conn   = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO labs (name, course_id, task, task_file, end_date)
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING lab_id
+        """, (name, int(course_id), description, file_bytes, deadline))
+        lab_id = cursor.fetchone()[0]
+        conn.commit()
+        cursor.close()
+        conn.close()
+    except Exception as e:
+        return jsonify({'ok': False, 'error': f'Ошибка при добавлении: {e}'}), 500
+
+    return jsonify({'ok': True, 'lab_id': lab_id})
+
+
+@taskslist_bp.route('/api/task/edit', methods=['POST'])
+def edit_task():
+    role = session.get('user_role')
+    if role != 'teacher':
+        return jsonify({'ok': False, 'error': 'Недостаточно прав.'}), 403
+
+    lab_id      = request.form.get('lab_id', '').strip()
+    name        = request.form.get('name', '').strip()
+    deadline    = request.form.get('deadline', '').strip()
+    description = request.form.get('description', '').strip()
+    file        = request.files.get('file')
+
+    if not name:     return jsonify({'ok': False, 'error': 'Введите название.'}), 400
+    if not deadline: return jsonify({'ok': False, 'error': 'Укажите срок сдачи.'}), 400
+
+    try:
+        conn   = get_db_connection()
+        cursor = conn.cursor()
+
+        # Читаем файл только если он реально загружен
+        if file and file.filename and len(file.filename) > 0:
+            file_bytes = file.read()
+            if len(file_bytes) > 0:
+                cursor.execute("""
+                    UPDATE labs SET name=%s, task=%s, end_date=%s, task_file=%s
+                    WHERE lab_id=%s
+                """, (name, description, deadline, file_bytes, int(lab_id)))
+            else:
+                # Файл пустой — не обновляем task_file
+                cursor.execute("""
+                    UPDATE labs SET name=%s, task=%s, end_date=%s
+                    WHERE lab_id=%s
+                """, (name, description, deadline, int(lab_id)))
+        else:
+            # Файл не загружен — оставляем старый
+            cursor.execute("""
+                UPDATE labs SET name=%s, task=%s, end_date=%s
+                WHERE lab_id=%s
+            """, (name, description, deadline, int(lab_id)))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+    except Exception as e:
+        return jsonify({'ok': False, 'error': f'Ошибка: {e}'}), 500
+
+    return jsonify({'ok': True})

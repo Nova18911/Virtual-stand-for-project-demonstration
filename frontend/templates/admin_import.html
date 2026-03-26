@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Импорт — Панель администратора</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_import.css') }}">
+</head>
+<body>
+
+<header class="header">
+    <div class="header__title">Панель администратора</div>
+    <div class="header__user">
+        вы вошли как {{ user_name }}
+        <a href="{{ url_for('auth.logout') }}" class="header__logout" title="Выйти">🔒</a>
+    </div>
+</header>
+
+<nav class="navbar">
+    <a href="/admin/" class="navbar__link">Главная</a>
+    <a href="#" class="navbar__link">Экспорт</a>
+    <a href="/admin/import/" class="navbar__link navbar__link--active">Импорт</a>
+</nav>
+
+<main class="main">
+    <h1 class="main__title">Импорт</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, msg in messages %}
+            <div class="flash flash--{{ category }}">{{ msg }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    <form method="POST"
+          action="{{ url_for('admin_import.upload') }}"
+          enctype="multipart/form-data">
+
+        <div class="file-row">
+            <label class="file-label">Выберите файл</label>
+            <label class="btn">
+                Обзор файлов
+                <input type="file" name="file" id="fileInput"
+                       accept=".sql,.csv" hidden>
+            </label>
+            <span class="file-name" id="fileName"></span>
+        </div>
+
+        <div class="hint">
+            Поддерживаются форматы: <strong>.sql</strong> (полный дамп БД),
+            <strong>.csv</strong> (таблица курсов: столбцы name, teacher)
+        </div>
+
+        <button type="submit" class="btn btn--import">Импорт</button>
+
+    </form>
+</main>
+
+<script>
+    document.getElementById('fileInput').addEventListener('change', function () {
+        document.getElementById('fileName').textContent =
+            this.files[0] ? this.files[0].name : '';
+    });
+</script>
+
+</body>
+</html>

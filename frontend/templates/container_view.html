@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Результат работы программы</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/container_view.css') }}">
+</head>
+<body>
+    <div class="page-wrapper">
+
+        <header class="header">
+            <div class="logo">Virtual Stand</div>
+            <span class="status-badge" id="status-badge">🟢 Работает</span>
+        </header>
+
+        <div class="terminal" id="terminal">
+            <div class="terminal-output" id="output"></div>
+        </div>
+
+        <div class="input-block">
+            <input type="text"
+                   id="user-input"
+                   class="terminal-input"
+                   placeholder="Введите данные для программы...">
+            <button class="send-btn" id="send-btn">Отправить</button>
+        </div>
+
+    </div>
+
+    <script>
+        const projectId = {{ project_id }};
+        const output = document.getElementById('output');
+        const statusBadge = document.getElementById('status-badge');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        const source = new EventSource(`/container/${projectId}/logs`);
+
+        source.onmessage = function(event) {
+            const line = document.createElement('div');
+            line.className = 'output-line';
+            line.textContent = event.data;
+            output.appendChild(line);
+
+            output.scrollTop = output.scrollHeight;
+        };
+
+        source.addEventListener('close', function(event) {
+            statusBadge.textContent = '🔴 Завершено';
+            statusBadge.className = 'status-badge stopped';
+            source.close();
+
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+        });
+
+        source.onerror = function() {
+            statusBadge.textContent = '🔴 Ошибка подключения';
+            statusBadge.className = 'status-badge stopped';
+            source.close();
+        };
+
+        sendBtn.addEventListener('click', sendInput);
+
+        userInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                sendInput();
+            }
+        });
+
+        function sendInput() {
+            const value = userInput.value.trim();
+            if (!value) return;
+
+            // Показываем ввод в терминале
+            const line = document.createElement('div');
+            line.className = 'output-line input-line';
+            line.textContent = '> ' + value;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+
+            // Отправляем на сервер
+            fetch(`/container/${projectId}/input`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `input=${encodeURIComponent(value)}`
+            });
+
+            userInput.value = '';
+        }
+    </script>
+</body>
+</html>

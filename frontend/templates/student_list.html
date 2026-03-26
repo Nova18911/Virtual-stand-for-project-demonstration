@@ -6,100 +6,71 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/student_list.css') }}">
 </head>
 <body>
-    <div class="page-wrapper">
+<div class="page-wrapper">
 
-        <header class="header">
-            <div class="logo">Virtual Stand</div>
-        </header>
+    <header class="header">
+        <div class="logo">Virtual Stand</div>
+    </header>
 
-        <nav class="nav-tabs">
-            <a href="/courses" class="tab">Курсы</a>
-            <a href="/tasks" class="tab">Задания</a>
-            <span class="tab active">{{ lab.name }}</span>
-        </nav>
+    <nav class="nav-tabs">
+        <a href="/courses" class="tab">Курсы</a>
+        <a href="javascript:history.back()" class="tab">Задания</a>
+        <span class="tab active">{{ lab.name }}</span>
+    </nav>
 
-        <div class="main-layout">
+    <div class="main-layout">
 
-            <!-- Левая колонка — список студентов -->
-            <aside class="sidebar">
-                <h2 class="sidebar-title">Список студентов</h2>
-                <div class="search-block">
-                    <input type="text" class="search-input" placeholder="Поиск...">
-                    <button class="search-btn">найти</button>
-                </div>
-                <ul class="student-list">
-                    {% for student in students %}
-                    <li class="student-item {% if student.user_id == selected_student_id %}active{% endif %}">
-                        <a href="/task/{{ lab.lab_id }}/student/{{ student.user_id }}" class="student-link">
-                            {{ loop.index }} {{ student.full_name }}
-                        </a>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </aside>
+        <aside class="sidebar">
+            <h2 class="sidebar-title">Список студентов</h2>
+            <div class="search-block">
+                <input type="text" id="searchInput" class="search-input" placeholder="Поиск...">
+                <button class="search-btn" id="searchBtn">найти</button>
+            </div>
+            <ul class="student-list" id="studentList"></ul>
+        </aside>
 
-            <!-- Правая колонка — работа студента -->
-            <main class="detail">
-                {% if selected_student %}
+        <main class="detail" id="detailPanel">
+            <p class="hint" id="hintText">Выберите студента из списка</p>
 
+            <div id="studentDetail" style="display:none;">
                 <div class="field-row">
                     <label class="field-label">Ссылка</label>
-                    <input type="text"
-                           class="field-input"
-                           value="{{ selected_student.github_link or '' }}"
-                           placeholder="ссылка на github репозиторий"
-                           readonly>
+                    <input type="text" id="githubLink" class="field-input"
+                           placeholder="ссылка на github репозиторий" readonly>
                 </div>
 
                 <div class="field-row">
-                    {% if container_info and container_info.status == 'running' %}
-                        <a href="{{ container_info.link }}" target="_blank" class="btn-docker">
-                            Открыть проект
-                        </a>
-                    {% else %}
-                        <form action="/task/{{ lab.lab_id }}/student/{{ selected_student.user_id }}/build" method="post">
-                            <button type="submit" class="btn-docker">Осуществить сборку</button>
-                        </form>
-                    {% endif %}
+                    <div id="dockerBlock"></div>
                 </div>
 
                 <div class="field-row">
                     <label class="field-label">Готовая ссылка:</label>
-                        <input type="text"
-                            class="field-input"
-                            value="{{ container_info.link if container_info and container_info.status == 'running' else '' }}"
-                            placeholder="ссылка для запуска docker контейнера"
-                            readonly>
+                    <input type="text" id="containerLink" class="field-input"
+                           placeholder="ссылка для запуска docker контейнера" readonly>
                 </div>
 
                 <div class="field-row grade-row">
                     <label class="field-label">Оценка:</label>
-                    <form action="/task/{{ lab.lab_id }}/student/{{ selected_student.user_id }}/grade" method="post" class="grade-form">
+                    <div class="grade-form" id="gradeForm">
                         {% for grade in [2, 3, 4, 5] %}
-                        <button type="submit"
-                                name="grade"
-                                value="{{ grade }}"
-                                class="grade-btn {% if selected_student.grade == grade %}selected{% endif %}">
-                            {{ grade }}
-                        </button>
+                        <button class="grade-btn" data-grade="{{ grade }}">{{ grade }}</button>
                         {% endfor %}
-                    </form>
+                    </div>
                 </div>
 
                 <div class="field-row comment-row">
                     <label class="field-label">Оставить комментарий</label>
-                    <form action="/task/{{ lab.lab_id }}/student/{{ selected_student.user_id }}/comment" method="post">
-                        <textarea class="comment-input" name="teacher_comment" rows="4">{{ selected_student.teacher_comment or '' }}</textarea>
-                        <button type="submit" class="btn-save">Сохранить</button>
-                    </form>
+                    <textarea class="comment-input" id="commentInput" rows="4"></textarea>
+                    <button class="btn-save" id="saveCommentBtn">Сохранить</button>
                 </div>
-
-                {% else %}
-                <p class="hint">Выберите студента из списка</p>
-                {% endif %}
-            </main>
-
-        </div>
+            </div>
+        </main>
     </div>
+</div>
+
+<script>
+    const LAB_ID = {{ lab.lab_id }};
+</script>
+<script src="{{ url_for('static', filename='js/student_list.js') }}"></script>
 </body>
 </html>

@@ -1,0 +1,115 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+html, body {
+    height: 100%;
+    background: #1e1e1e;
+    color: #f0f0f0;
+}
+
+.page-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 16px;
+    gap: 12px;
+}
+
+/* Шапка */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo {
+    font-weight: bold;
+    font-size: 18px;
+    color: #ffffff;
+}
+
+.status-badge {
+    font-size: 14px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    background: #2d4a2d;
+    color: #7fff7f;
+}
+
+.status-badge.stopped {
+    background: #4a2d2d;
+    color: #ff7f7f;
+}
+
+/* Терминал */
+.terminal {
+    flex: 1;
+    background: #0d0d0d;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 16px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+}
+
+.output-line {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #d4d4d4;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.input-line {
+    color: #7fc3ff;  /* ввод пользователя выделяется синим */
+}
+
+/* Поле ввода */
+.input-block {
+    display: flex;
+    gap: 8px;
+}
+
+.terminal-input {
+    flex: 1;
+    padding: 10px 14px;
+    background: #0d0d0d;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #f0f0f0;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    outline: none;
+}
+
+.terminal-input:focus {
+    border-color: #7fc3ff;
+}
+
+.terminal-input:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.send-btn {
+    padding: 10px 24px;
+    background: #2d4a6e;
+    border: 1px solid #4a7aaa;
+    border-radius: 6px;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.send-btn:hover {
+    background: #3a5f8a;
+}
+
+.send-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}

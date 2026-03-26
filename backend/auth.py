@@ -1,58 +1,56 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from werkzeug.security import check_password_hash, generate_password_hash
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
+from backend.core.connect import get_db_connection
 
 auth_bp = Blueprint('auth', __name__)
 
-# Тестовые пользователи (заглушка вместо БД)
-MOCK_USERS = {
-    'student@mail.ru': {
-        'id': 1,
-        'full_name': 'Иван Студентов',
-        'password_hash': generate_password_hash('student123'),
-        'role': 'student',
-        'is_approved': True,
-    },
-    'teacher@mail.ru': {
-        'id': 2,
-        'full_name': 'Пётр Преподавателев',
-        'password_hash': generate_password_hash('teacher123'),
-        'role': 'teacher',
-        'is_approved': True,
-    },
-}
-
-
-@auth_bp.route('/login', methods=['GET', 'POST'])
+@auth_bp.route('/login', methods=['GET'])
 def login():
-    if request.method == 'POST':
-        email = request.form.get('email', '').strip()
-        password = request.form.get('password', '')
-
-        if not email or not password:
-            flash('Заполните все поля.', 'error')
-            return render_template('login.html')
-
-        user = MOCK_USERS.get(email)
-
-        if user is None or not check_password_hash(user['password_hash'], password):
-            flash('Неверный логин или пароль.', 'error')
-            return render_template('login.html')
-
-        # Преподаватель без одобрения — не пускаем
-        if user['role'] == 'teacher' and not user['is_approved']:
-            flash('Ваша учётная запись ещё не одобрена администратором.', 'error')
-            return render_template('login.html')
-
-        session['user_id'] = user['id']
-        session['user_role'] = user['role']
-        session['user_name'] = user['full_name']
-
-        if user['role'] == 'admin':
-            return redirect(url_for('admin.index'))
-        return redirect(url_for('main.index'))
-
     return render_template('login.html')
 
+@auth_bp.route('/api/login', methods=['POST'])
+def login_api():
+    data     = request.get_json()
+    email    = data.get('email', '').strip()
+    password = data.get('password', '').strip()
+
+    if not email or not password:
+        return jsonify({'ok': False, 'error': 'Заполните все поля.'}), 400
+
+    try:
+        conn = get_db_connection()
+        cur  = conn.cursor()
+
+        cur.execute("""
+            SELECT u.user_id, u.full_name, r.access_rights, p.password
+            FROM users u
+            JOIN passwords p ON p.login_id = u.login_id
+            JOIN roles     r ON r.access_id = u.access_id
+            WHERE p.login = %s
+        """, (email,))
+        row = cur.fetchone()
+        conn.close()
+
+    except Exception as e:
+        return jsonify({'ok': False, 'error': f'Ошибка подключения к БД: {e}'}), 500
+
+    if row is None or row[3] != password:
+        return jsonify({'ok': False, 'error': 'Неверный логин или пароль.'}), 401
+
+    user_id, full_name, role, _ = row
+
+    if role == 'admin':
+        return jsonify({'ok': False, 'error': 'Для входа администратора используйте специальную страницу.'}), 403
+
+    session['user_id']   = user_id
+    session['user_role'] = role
+    session['user_name'] = full_name
+
+    if role == 'teacher':
+        redirect_url = url_for('mainpage.courses_page')
+    else:
+        redirect_url = url_for('mainpage.courses_page')
+
+    return jsonify({'ok': True, 'redirect': redirect_url})
 
 @auth_bp.route('/logout')
 def logout():
