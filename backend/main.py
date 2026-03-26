@@ -7,8 +7,9 @@ from core.adminlogin import logadm_bp
 from core.adminexport import admexp_bp
 from core.input_code import inputcode_bp
 from core.change_password import changepassword_bp
-from core.taskslist import tasks_bp
+from core.taskslist import taskslist_bp
 from core.task import task_bp
+from core.tasks import tasks_bp
 from core.admin_main import admin_main
 from core.student_list import task_detail_bp
 
@@ -27,6 +28,7 @@ app.register_blueprint(register_bp)
 app.register_blueprint(mainpage_bp)
 app.register_blueprint(logadm_bp)
 app.register_blueprint(admexp_bp)
+app.register_blueprint(taskslist_bp)
 app.register_blueprint(tasks_bp)
 app.register_blueprint(task_bp)
 app.register_blueprint(admin_main)

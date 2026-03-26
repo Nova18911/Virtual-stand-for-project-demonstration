@@ -15,7 +15,7 @@ function renderCards() {
 
         const courseLink = document.createElement('a');
         // Теперь ссылка ведет на тестовый маршрут с параметром course_id
-        courseLink.href = `/tasks?course_id=${item.id}`;
+        courseLink.href = `/tasks/course/${item.id}`;
         courseLink.textContent = item.course;
         courseLink.className = 'course-link';
 
