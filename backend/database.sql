@@ -72,6 +72,11 @@ CREATE TABLE IF NOT EXISTS docker_containers (
     CHECK (status IN ('running', 'stopped', 'removed')),
     FOREIGN KEY (project_id) REFERENCES student_projects(project_id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_docker_containers_project_id ON docker_containers(project_id);
+CREATE INDEX IF NOT EXISTS idx_docker_containers_status ON docker_containers(status);
+CREATE INDEX IF NOT EXISTS idx_docker_containers_container_id ON docker_containers(container_id);
+
 -- Роли
 INSERT INTO roles (access_rights) VALUES
     ('admin'),
