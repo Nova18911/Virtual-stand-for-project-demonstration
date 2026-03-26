@@ -11,7 +11,7 @@ from core.taskslist import taskslist_bp
 from core.task import task_bp
 from core.tasks import tasks_bp
 from core.admin_main import admin_main
-from core.student_list import task_detail_bp
+from backend.student_list import task_detail_bp
 
 from core.admin_import import admin_import
 

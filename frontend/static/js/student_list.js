@@ -59,24 +59,17 @@
         });
 
         // Docker кнопка
-        const dockerBlock = document.getElementById('dockerBlock');
-        if (data.container?.status === 'running') {
-            dockerBlock.innerHTML = `
-                <a href="${data.container.link}" target="_blank" class="btn-docker">
-                    Открыть проект
-                </a>`;
-        } else {
-            dockerBlock.innerHTML = `
-                <button class="btn-docker" id="buildBtn">Осуществить сборку</button>`;
-            document.getElementById('buildBtn').addEventListener('click', () => buildContainer(userId));
-        }
+const dockerBlock = document.getElementById('dockerBlock');
+dockerBlock.innerHTML = `
+    <button class="btn-docker" id="buildBtn">Сборка проекта</button>`;
+document.getElementById('buildBtn').addEventListener('click', () => buildContainer(userId));
     };
 
     // --- Сборка контейнера ---
     async function buildContainer(userId) {
         const btn = document.getElementById('buildBtn');
         btn.disabled   = true;
-        btn.textContent = 'Сборка...';
+        btn.textContent = 'Скачивание...';
 
         try {
             const response = await fetch(
