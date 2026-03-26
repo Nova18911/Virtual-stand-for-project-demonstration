@@ -1,3 +1,4 @@
+#backend/core/docker/project_analyzer.py
 import os
 import ast
 
@@ -205,3 +206,32 @@ def _get_stdlib_modules() -> set:
         'base64', 'binascii', 'codecs', 'uuid', 'zipfile', 'tarfile',
     })
     return stdlib
+
+def _create_requirements_file(repo_path: str, requirements: list) -> bool:
+    req_path = os.path.join(repo_path, 'requirements.txt')
+
+    try:
+        with open(req_path, 'w', encoding='utf-8') as f:
+            if requirements:
+                for req in requirements:
+                    f.write(f"{req}\n")
+
+        return True
+    except Exception as e:
+        print(f"Ошибка при создании requirements.txt: {e}")
+        return False
+
+
+def update_requirements_file(repo_path: str, requirements: list) -> bool:
+    req_path = os.path.join(repo_path, 'requirements.txt')
+
+    try:
+        if os.path.exists(req_path):
+            existing_reqs = set(_parse_requirements_file(req_path))
+            all_reqs = existing_reqs.union(set(requirements))
+            requirements = sorted(all_reqs)
+
+        return _create_requirements_file(repo_path, requirements)
+    except Exception as e:
+        print(f"Ошибка при обновлении requirements.txt: {e}")
+        return False

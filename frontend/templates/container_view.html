@@ -10,7 +10,7 @@
 
         <header class="header">
             <div class="logo">Virtual Stand</div>
-            <span class="status-badge" id="status-badge">🟢 Работает</span>
+            <span class="status-badge" id="status-badge">🟢 Подключение...</span>
         </header>
 
         <div class="terminal" id="terminal">
@@ -34,60 +34,82 @@
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
 
-        const source = new EventSource(`/container/${projectId}/logs`);
+        let eventSource = null;
+        let isRunning = true;
 
-        source.onmessage = function(event) {
+        function addLine(text, type = 'output') {
             const line = document.createElement('div');
-            line.className = 'output-line';
-            line.textContent = event.data;
+            line.className = `output-line ${type}`;
+            line.textContent = text;
             output.appendChild(line);
-
             output.scrollTop = output.scrollHeight;
-        };
+        }
 
-        source.addEventListener('close', function(event) {
-            statusBadge.textContent = '🔴 Завершено';
-            statusBadge.className = 'status-badge stopped';
-            source.close();
+        function connectToLogs() {
+            eventSource = new EventSource(`/container/${projectId}/logs`);
 
-            userInput.disabled = true;
-            sendBtn.disabled = true;
-        });
+            eventSource.onopen = function() {
+                addLine('✅ Подключено к контейнеру', 'info');
+                statusBadge.textContent = '🟢 Работает';
+                statusBadge.className = 'status-badge running';
+            };
 
-        source.onerror = function() {
-            statusBadge.textContent = '🔴 Ошибка подключения';
-            statusBadge.className = 'status-badge stopped';
-            source.close();
-        };
+            eventSource.onmessage = function(event) {
+                if (event.data) {
+                    // Проверяем, не является ли сообщение командой запуска
+                    if (event.data.includes('🚀 Запуск программы')) {
+                        addLine(event.data, 'info');
+                    } else {
+                        addLine(event.data, 'output');
+                    }
+                }
+            };
+
+            eventSource.addEventListener('close', function(event) {
+                addLine('🔌 Программа завершила работу', 'error');
+                statusBadge.textContent = '🔴 Завершено';
+                statusBadge.className = 'status-badge stopped';
+                isRunning = false;
+                userInput.disabled = true;
+                sendBtn.disabled = true;
+                eventSource.close();
+            });
+
+            eventSource.onerror = function() {
+                if (isRunning) {
+                    addLine('⚠️ Потеря соединения с сервером', 'error');
+                    statusBadge.textContent = '🔴 Ошибка';
+                    statusBadge.className = 'status-badge stopped';
+                }
+            };
+        }
+
+        function sendInput() {
+            const value = userInput.value.trim();
+            if (!value) return;
+
+            addLine(`> ${value}`, 'input');
+
+            fetch(`/container/${projectId}/input`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `input=${encodeURIComponent(value)}`
+            }).catch(err => {
+                addLine(`❌ Ошибка отправки: ${err.message}`, 'error');
+            });
+
+            userInput.value = '';
+        }
 
         sendBtn.addEventListener('click', sendInput);
-
         userInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 sendInput();
             }
         });
 
-        function sendInput() {
-            const value = userInput.value.trim();
-            if (!value) return;
-
-            // Показываем ввод в терминале
-            const line = document.createElement('div');
-            line.className = 'output-line input-line';
-            line.textContent = '> ' + value;
-            output.appendChild(line);
-            output.scrollTop = output.scrollHeight;
-
-            // Отправляем на сервер
-            fetch(`/container/${projectId}/input`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: `input=${encodeURIComponent(value)}`
-            });
-
-            userInput.value = '';
-        }
+        // Подключаемся к логам
+        connectToLogs();
     </script>
 </body>
 </html>

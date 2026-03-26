@@ -1,18 +1,9 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
 import pg8000
+from backend.core.connect import get_db_connection
 
 task_bp = Blueprint('task', __name__, url_prefix='/tasks')
 
-
-def get_db():
-    conn = pg8000.connect(
-        host='127.0.0.1',
-        port=5432,
-        database='course_management',
-        user='postgres',
-        password='12345678'
-    )
-    return conn
 
 def dict_fetchone(cursor):
     row = cursor.fetchone()
@@ -34,7 +25,7 @@ def index(lab_id):
     role = session.get('user_role', 'student')
     user_id = session.get('user_id')
 
-    conn = get_db()
+    conn = get_db_connection()
     try:
         cur = conn.cursor()
 
@@ -104,7 +95,7 @@ def submit(lab_id):
         flash('Введите ссылку на репозиторий.', 'error')
         return redirect(url_for('task.index', lab_id=lab_id))
 
-    conn = get_db()
+    conn = get_db_connection()
     try:
         cur = conn.cursor()
 
@@ -160,7 +151,7 @@ def grade(lab_id):
             flash('Оценка должна быть числом.', 'error')
             return redirect(url_for('task.index', lab_id=lab_id))
 
-    conn = get_db()
+    conn = get_db_connection()
     try:
         cur = conn.cursor()
         cur.execute('''

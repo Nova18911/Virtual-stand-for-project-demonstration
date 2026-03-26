@@ -45,8 +45,11 @@
 
                 <div class="field-row">
                     <label class="field-label">Готовая ссылка:</label>
-                    <input type="text" id="containerLink" class="field-input"
-                           placeholder="ссылка для запуска docker контейнера" readonly>
+                    <div style="flex: 1; display: flex; align-items: center;">
+                        <input type="text" id="containerLink" class="field-input"
+                               placeholder="ссылка для запуска docker контейнера" readonly>
+                        <div id="consoleLinkContainer" style="margin-left: 10px;"></div>
+                    </div>
                 </div>
 
                 <div class="field-row grade-row">

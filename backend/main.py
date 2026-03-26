@@ -11,7 +11,8 @@ from core.taskslist import taskslist_bp
 from core.task import task_bp
 from core.tasks import tasks_bp
 from core.admin_main import admin_main
-from core.student_list import task_detail_bp
+from backend.student_list import task_detail_bp
+from core.docker.streamer import streamer_bp
 
 from core.admin_import import admin_import
 
@@ -36,7 +37,7 @@ app.register_blueprint(changepassword_bp)
 app.register_blueprint(inputcode_bp)
 app.register_blueprint(task_detail_bp)
 app.register_blueprint(admin_import)
-
+app.register_blueprint(streamer_bp)
 
 @app.route('/')
 def login_page():

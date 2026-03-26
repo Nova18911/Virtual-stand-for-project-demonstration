@@ -1,0 +1,89 @@
+2026-03-26 14:39:59,033 - docker_lifecycle_manager - INFO - Подключение к PostgreSQL успешно
+2026-03-26 14:39:59,037 - docker_lifecycle_manager - INFO - База данных PostgreSQL инициализирована
+2026-03-26 14:39:59,040 - docker_lifecycle_manager - INFO - Запуск планировщика...
+2026-03-26 14:39:59,041 - docker_lifecycle_manager - INFO - Запуск цикла очистки...
+2026-03-26 14:39:59,043 - docker_lifecycle_manager - INFO - Удалено просроченных контейнеров: 0
+2026-03-26 14:40:00,339 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.116:5000
+2026-03-26 14:40:00,340 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2026-03-26 14:40:59,148 - docker_lifecycle_manager - INFO - Запуск цикла очистки...
+2026-03-26 14:40:59,149 - docker_lifecycle_manager - INFO - Удалено просроченных контейнеров: 0
+2026-03-26 14:41:59,263 - docker_lifecycle_manager - INFO - Запуск цикла очистки...
+2026-03-26 14:41:59,264 - docker_lifecycle_manager - INFO - Удалено просроченных контейнеров: 0
+2026-03-26 14:42:03,912 - docker_lifecycle_manager - ERROR - Ошибка получения статистики: 'NoneType' object has no attribute 'append'
+2026-03-26 14:42:03,913 - werkzeug - INFO - 192.168.1.116 - - [26/Mar/2026 14:42:03] "GET /api/stats HTTP/1.1" 200 -
+2026-03-26 14:42:03,915 - werkzeug - INFO - 192.168.1.116 - - [26/Mar/2026 14:42:03] "GET /api/containers HTTP/1.1" 200 -
+2026-03-26 14:42:07,794 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:42:07] "GET /api/containers HTTP/1.1" 200 -
+2026-03-26 14:42:07,796 - docker_lifecycle_manager - ERROR - Ошибка получения статистики: 'int' object has no attribute 'isoformat'
+2026-03-26 14:42:07,796 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:42:07] "GET /api/stats HTTP/1.1" 200 -
+2026-03-26 14:42:33,905 - werkzeug - INFO - 192.168.1.116 - - [26/Mar/2026 14:42:33] "GET /api/containers HTTP/1.1" 200 -
+2026-03-26 14:42:33,906 - docker_lifecycle_manager - ERROR - Ошибка получения статистики: 'int' object has no attribute 'isoformat'
+2026-03-26 14:42:33,907 - werkzeug - INFO - 192.168.1.116 - - [26/Mar/2026 14:42:33] "GET /api/stats HTTP/1.1" 200 -
+2026-03-26 14:42:37,919 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:42:37] "GET /api/containers HTTP/1.1" 200 -
+2026-03-26 14:42:37,920 - docker_lifecycle_manager - ERROR - Ошибка получения статистики: 'int' object has no attribute 'isoformat'
+2026-03-26 14:42:37,920 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:42:37] "GET /api/stats HTTP/1.1" 200 -
+2026-03-26 14:42:59,367 - docker_lifecycle_manager - INFO - Запуск цикла очистки...
+2026-03-26 14:42:59,367 - docker_lifecycle_manager - ERROR - Ошибка получения просроченных контейнеров: list index out of range
+2026-03-26 14:42:59,368 - docker_lifecycle_manager - INFO - Удалено просроченных контейнеров: 0
+2026-03-26 14:42:59,461 - docker_lifecycle_manager - ERROR - Ошибка очистки образов: attempting to use unexecuted cursor
+2026-03-26 14:43:03,905 - werkzeug - INFO - 192.168.1.116 - - [26/Mar/2026 14:43:03] "GET /api/containers HTTP/1.1" 200 -
+2026-03-26 14:43:03,906 - docker_lifecycle_manager - ERROR - Ошибка получения статистики: 'int' object has no attribute 'isoformat'
+2026-03-26 14:43:03,907 - werkzeug - INFO - 192.168.1.116 - - [26/Mar/2026 14:43:03] "GET /api/stats HTTP/1.1" 200 -
+2026-03-26 14:43:24,457 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:43:24] "[33mGET /api/teacher/registrations HTTP/1.1[0m" 404 -
+2026-03-26 14:43:44,916 - werkzeug - INFO - 192.168.1.116 - - [26/Mar/2026 14:43:44] "GET /api/containers HTTP/1.1" 200 -
+2026-03-26 14:43:44,918 - docker_lifecycle_manager - ERROR - Ошибка получения статистики: 'int' object has no attribute 'isoformat'
+2026-03-26 14:43:44,919 - werkzeug - INFO - 192.168.1.116 - - [26/Mar/2026 14:43:44] "GET /api/stats HTTP/1.1" 200 -
+2026-03-26 14:43:44,924 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:43:44] "GET /api/containers HTTP/1.1" 200 -
+2026-03-26 14:43:44,928 - docker_lifecycle_manager - ERROR - Ошибка получения статистики: 'int' object has no attribute 'isoformat'
+2026-03-26 14:43:44,930 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:43:44] "GET /api/stats HTTP/1.1" 200 -
+2026-03-26 14:43:54,903 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:43:54] "[33mGET /api/teacher/registrations HTTP/1.1[0m" 404 -
+2026-03-26 14:43:59,583 - docker_lifecycle_manager - INFO - Запуск цикла очистки...
+2026-03-26 14:43:59,584 - docker_lifecycle_manager - ERROR - Ошибка получения просроченных контейнеров: list index out of range
+2026-03-26 14:43:59,584 - docker_lifecycle_manager - INFO - Удалено просроченных контейнеров: 0
+2026-03-26 14:43:59,679 - docker_lifecycle_manager - ERROR - Ошибка очистки образов: attempting to use unexecuted cursor
+2026-03-26 14:44:03,907 - werkzeug - INFO - 192.168.1.116 - - [26/Mar/2026 14:44:03] "GET /api/containers HTTP/1.1" 200 -
+2026-03-26 14:44:03,907 - docker_lifecycle_manager - ERROR - Ошибка получения статистики: 'int' object has no attribute 'isoformat'
+2026-03-26 14:44:03,908 - werkzeug - INFO - 192.168.1.116 - - [26/Mar/2026 14:44:03] "GET /api/stats HTTP/1.1" 200 -
+2026-03-26 14:44:07,909 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:44:07] "GET /api/containers HTTP/1.1" 200 -
+2026-03-26 14:44:07,910 - docker_lifecycle_manager - ERROR - Ошибка получения статистики: 'int' object has no attribute 'isoformat'
+2026-03-26 14:44:07,911 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:44:07] "GET /api/stats HTTP/1.1" 200 -
+2026-03-26 14:44:24,905 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:44:24] "[33mGET /api/teacher/registrations HTTP/1.1[0m" 404 -
+2026-03-26 14:44:33,915 - werkzeug - INFO - 192.168.1.116 - - [26/Mar/2026 14:44:33] "GET /api/containers HTTP/1.1" 200 -
+2026-03-26 14:44:33,916 - docker_lifecycle_manager - ERROR - Ошибка получения статистики: 'int' object has no attribute 'isoformat'
+2026-03-26 14:44:33,916 - werkzeug - INFO - 192.168.1.116 - - [26/Mar/2026 14:44:33] "GET /api/stats HTTP/1.1" 200 -
+2026-03-26 14:44:37,911 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:44:37] "GET /api/containers HTTP/1.1" 200 -
+2026-03-26 14:44:37,912 - docker_lifecycle_manager - ERROR - Ошибка получения статистики: 'int' object has no attribute 'isoformat'
+2026-03-26 14:44:37,912 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:44:37] "GET /api/stats HTTP/1.1" 200 -
+2026-03-26 14:44:54,907 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:44:54] "[33mGET /api/teacher/registrations HTTP/1.1[0m" 404 -
+2026-03-26 14:44:59,703 - docker_lifecycle_manager - INFO - Запуск цикла очистки...
+2026-03-26 14:44:59,703 - docker_lifecycle_manager - ERROR - Ошибка получения просроченных контейнеров: list index out of range
+2026-03-26 14:44:59,703 - docker_lifecycle_manager - INFO - Удалено просроченных контейнеров: 0
+2026-03-26 14:44:59,797 - docker_lifecycle_manager - ERROR - Ошибка очистки образов: attempting to use unexecuted cursor
+2026-03-26 14:45:07,909 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:45:07] "GET /api/containers HTTP/1.1" 200 -
+2026-03-26 14:45:07,910 - docker_lifecycle_manager - ERROR - Ошибка получения статистики: 'int' object has no attribute 'isoformat'
+2026-03-26 14:45:07,911 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:45:07] "GET /api/stats HTTP/1.1" 200 -
+2026-03-26 14:45:24,902 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:45:24] "[33mGET /api/teacher/registrations HTTP/1.1[0m" 404 -
+2026-03-26 14:45:44,908 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:45:44] "GET /api/containers HTTP/1.1" 200 -
+2026-03-26 14:45:44,909 - werkzeug - INFO - 192.168.1.116 - - [26/Mar/2026 14:45:44] "GET /api/containers HTTP/1.1" 200 -
+2026-03-26 14:45:44,911 - docker_lifecycle_manager - ERROR - Ошибка получения статистики: 'int' object has no attribute 'isoformat'
+2026-03-26 14:45:44,914 - docker_lifecycle_manager - ERROR - Ошибка получения статистики: list index out of range
+2026-03-26 14:45:44,915 - werkzeug - INFO - 192.168.1.116 - - [26/Mar/2026 14:45:44] "GET /api/stats HTTP/1.1" 200 -
+2026-03-26 14:45:44,916 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:45:44] "GET /api/stats HTTP/1.1" 200 -
+2026-03-26 14:45:54,906 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:45:54] "[33mGET /api/teacher/registrations HTTP/1.1[0m" 404 -
+2026-03-26 14:45:59,818 - docker_lifecycle_manager - INFO - Запуск цикла очистки...
+2026-03-26 14:45:59,819 - docker_lifecycle_manager - ERROR - Ошибка получения просроченных контейнеров: list index out of range
+2026-03-26 14:45:59,819 - docker_lifecycle_manager - INFO - Удалено просроченных контейнеров: 0
+2026-03-26 14:45:59,922 - docker_lifecycle_manager - ERROR - Ошибка очистки образов: attempting to use unexecuted cursor
+2026-03-26 14:46:24,907 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:46:24] "[33mGET /api/teacher/registrations HTTP/1.1[0m" 404 -
+2026-03-26 14:46:44,905 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:46:44] "GET /api/containers HTTP/1.1" 200 -
+2026-03-26 14:46:44,907 - werkzeug - INFO - 192.168.1.116 - - [26/Mar/2026 14:46:44] "GET /api/containers HTTP/1.1" 200 -
+2026-03-26 14:46:44,908 - docker_lifecycle_manager - ERROR - Ошибка получения статистики: 'int' object has no attribute 'isoformat'
+2026-03-26 14:46:44,910 - werkzeug - INFO - 192.168.1.116 - - [26/Mar/2026 14:46:44] "GET /api/stats HTTP/1.1" 200 -
+2026-03-26 14:46:44,910 - docker_lifecycle_manager - ERROR - Ошибка получения статистики: list index out of range
+2026-03-26 14:46:44,911 - werkzeug - INFO - 127.0.0.1 - - [26/Mar/2026 14:46:44] "GET /api/stats HTTP/1.1" 200 -
+2026-03-26 14:46:59,945 - docker_lifecycle_manager - INFO - Запуск цикла очистки...
+2026-03-26 14:46:59,945 - docker_lifecycle_manager - ERROR - Ошибка получения просроченных контейнеров: list index out of range
+2026-03-26 14:46:59,946 - docker_lifecycle_manager - INFO - Удалено просроченных контейнеров: 0
+2026-03-26 14:47:00,046 - docker_lifecycle_manager - ERROR - Ошибка очистки образов: attempting to use unexecuted cursor

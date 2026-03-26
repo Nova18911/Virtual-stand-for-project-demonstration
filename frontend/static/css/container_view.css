@@ -1,115 +1,159 @@
+/* frontend/static/css/container_view.css */
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: Arial, sans-serif;
 }
 
-html, body {
-    height: 100%;
-    background: #1e1e1e;
-    color: #f0f0f0;
+body {
+    font-family: 'Courier New', monospace;
+    background: #0a0e12;
+    color: #abb2bf;
 }
 
 .page-wrapper {
+    height: 100vh;
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    padding: 16px;
-    gap: 12px;
 }
 
-/* Шапка */
 .header {
+    background: #1e2227;
+    padding: 15px 30px;
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #2c313a;
 }
 
 .logo {
-    font-weight: bold;
     font-size: 18px;
-    color: #ffffff;
+    font-weight: bold;
+    color: #61afef;
 }
 
 .status-badge {
-    font-size: 14px;
-    padding: 4px 12px;
-    border-radius: 12px;
-    background: #2d4a2d;
-    color: #7fff7f;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    background: #2c313a;
+}
+
+.status-badge.running {
+    color: #98c379;
 }
 
 .status-badge.stopped {
-    background: #4a2d2d;
-    color: #ff7f7f;
+    color: #e06c75;
 }
 
-/* Терминал */
 .terminal {
     flex: 1;
-    background: #0d0d0d;
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 16px;
     overflow-y: auto;
+    padding: 20px;
+    background: #0a0e12;
+}
+
+.terminal-output {
     font-family: 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.6;
 }
 
 .output-line {
-    font-size: 14px;
-    line-height: 1.6;
-    color: #d4d4d4;
     white-space: pre-wrap;
-    word-break: break-all;
+    word-wrap: break-word;
+    margin: 2px 0;
+    padding: 2px 0;
+    border-left: 3px solid transparent;
+    padding-left: 8px;
 }
 
-.input-line {
-    color: #7fc3ff;  /* ввод пользователя выделяется синим */
+.output-line.input {
+    color: #98c379;
+    border-left-color: #98c379;
 }
 
-/* Поле ввода */
+.output-line.error {
+    color: #e06c75;
+    border-left-color: #e06c75;
+}
+
+.output-line.info {
+    color: #61afef;
+    border-left-color: #61afef;
+}
+
+.output-line.output {
+    color: #abb2bf;
+}
+
 .input-block {
+    background: #1e2227;
+    padding: 15px 20px;
     display: flex;
-    gap: 8px;
+    gap: 10px;
+    border-top: 1px solid #2c313a;
 }
 
 .terminal-input {
     flex: 1;
-    padding: 10px 14px;
-    background: #0d0d0d;
-    border: 1px solid #444;
-    border-radius: 6px;
-    color: #f0f0f0;
+    background: #2c313a;
+    border: 1px solid #3e4451;
+    color: #abb2bf;
+    padding: 10px 15px;
     font-family: 'Courier New', monospace;
     font-size: 14px;
+    border-radius: 4px;
     outline: none;
 }
 
 .terminal-input:focus {
-    border-color: #7fc3ff;
+    border-color: #61afef;
 }
 
 .terminal-input:disabled {
-    opacity: 0.4;
+    background: #1e2227;
     cursor: not-allowed;
 }
 
 .send-btn {
-    padding: 10px 24px;
-    background: #2d4a6e;
-    border: 1px solid #4a7aaa;
-    border-radius: 6px;
-    color: #ffffff;
-    cursor: pointer;
+    background: #61afef;
+    color: #0a0e12;
+    border: none;
+    padding: 10px 20px;
+    font-family: 'Courier New', monospace;
     font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
 }
 
 .send-btn:hover {
-    background: #3a5f8a;
+    background: #98c379;
 }
 
 .send-btn:disabled {
-    opacity: 0.4;
+    background: #3e4451;
     cursor: not-allowed;
+}
+
+/* Стили для скроллбара */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #2d2d2d;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #3e3e3e;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #4e4e4e;
 }
