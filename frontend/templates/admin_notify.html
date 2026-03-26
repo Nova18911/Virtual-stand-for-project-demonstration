@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление пользователями</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_notify.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Управление пользователями</h1>
+        
+        <div id="message" class="message"></div>
+        
+        <h2>Пользователи на одобрение</h2>
+        <div id="pending-users">
+            <div class="loading">Загрузка...</div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/admin_notify.js') }}"></script>
+</body>
+</html>
