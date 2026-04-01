@@ -28,7 +28,7 @@ def run_sql_file(filepath):
     try:
         conn = pg8000.connect(
             user='postgres',
-            password='12345',
+            password='endermen',
             host='localhost',
             port=5432,
             database='course_management'
@@ -51,7 +51,7 @@ def run_sql_file(filepath):
                 conn.rollback()
                 conn = pg8000.connect(
                     user='postgres',
-                    password='12345678',
+                    password='endermen',
                     host='localhost',
                     port=5432,
                     database='course_management'

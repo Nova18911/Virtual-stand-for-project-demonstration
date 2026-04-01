@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from flask import Flask,redirect, render_template, url_for
 from auth import auth_bp
 from mail import mail_bp

@@ -7,7 +7,7 @@ conn = pg8000.connect(
     port=5432,
     database="course_management",
     user="postgres",
-    password="12345678"
+    password="endermen"
 )
 cursor = conn.cursor()
 
