@@ -4,18 +4,10 @@ import json
 import io
 import zipfile
 from datetime import datetime
+from backend.core.connect import get_db_connection
 
 admexp_bp = Blueprint('adminexport', __name__)
 
-
-def get_db_connection():
-    return pg8000.connect(
-        host="127.0.0.1",
-        port=5432,
-        database="course_management",
-        user="postgres",
-        password="12345678"
-    )
 
 
 def get_tables_from_db():
