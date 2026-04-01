@@ -13,9 +13,9 @@
             <h1>Вы вошли как администратор</h1>
         </div>
     <div class="sidebar">
-        <button class="btn-login" type="submit" onclick="window.location.href='{{ url_for('admin_main.admin_main_page') }}'">Главная</button>
+        <button class="btn-login" type="button" onclick="window.location.href='{{ url_for('adminlogin.admin_mainpage') }}'">Главная</button>
          <button class="btn-login" type="submit">Экспорт</button>
-         <button class="btn-login" type="submit">Импорт</button>    <!-- здесь будет перенаправление на импорт -->
+         <button class="btn-login" type="button" onclick="window.location.href='{{ url_for('admin_import.index') }}'">Импорт</button>
     </div>
      <div class="content">
         <div class="leftsidebar">

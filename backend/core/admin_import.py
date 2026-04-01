@@ -12,7 +12,8 @@ def get_db():
         port=5432,
         database='course_management',
         user='admin',
-        password='12345678'
+        #password='12345678'
+        password='12345'
     )
 
 
