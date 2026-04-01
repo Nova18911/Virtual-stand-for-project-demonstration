@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, send_file
+from flask import Blueprint, render_template, request, jsonify, send_file, session, redirect, url_for, flash
 import pg8000
 import json
 import io
@@ -188,3 +188,10 @@ def create_backup():
             as_attachment=True,
             download_name=f"{filename}{file_extension}"
         )
+
+@admexp_bp.route('/admin/export')
+def export_page():
+    if 'user_id' not in session:
+        flash('Пожалуйста, войдите в систему', 'error')
+        return redirect(url_for('adminlogin.admin_login_page'))
+    return render_template('adminexport.html')

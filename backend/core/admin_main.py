@@ -12,15 +12,23 @@ def get_db():
         user='admin',
         password='12345678'
     )
-
-    def dict_row(cursor, row):
-        d = {}
-        for idx, col in enumerate(cursor.description):
-            d[col.name] = row[idx]
-        return d
-
-    conn.row_factory = dict_row
     return conn
+
+
+def rows_to_dicts(cursor, rows):
+    """Converts a list of pg8000 row tuples to a list of dicts using cursor.description."""
+    if rows is None:
+        return None
+    cols = [desc[0] for desc in cursor.description]
+    return [dict(zip(cols, row)) for row in rows]
+
+
+def row_to_dict(cursor, row):
+    """Converts a single pg8000 row tuple to a dict."""
+    if row is None:
+        return None
+    cols = [desc[0] for desc in cursor.description]
+    return dict(zip(cols, row))
 
 @admin_main.route('/admin/main')
 def admin_main_page():
@@ -31,7 +39,7 @@ def index():
     conn = get_db()
     cur = conn.cursor()
     cur.execute('SELECT course_id, name, teacher FROM courses ORDER BY course_id')
-    courses = cur.fetchall()
+    courses = rows_to_dicts(cur, cur.fetchall())
 
     cur.execute('''
                 SELECT u.user_id, u.full_name
@@ -40,7 +48,7 @@ def index():
                 WHERE r.access_rights = %s
                 ORDER BY u.full_name
             ''', ('teacher',))
-    teachers = cur.fetchall()
+    teachers = rows_to_dicts(cur, cur.fetchall())
     conn.close()
 
     return render_template('admin_main.html',
@@ -56,10 +64,10 @@ def course_detail(course_id):
     conn = get_db()
     cur = conn.cursor()
     cur.execute('SELECT course_id, name, teacher FROM courses ORDER BY course_id')
-    courses = cur.fetchall()
+    courses = rows_to_dicts(cur, cur.fetchall())
 
     cur.execute('SELECT course_id, name, teacher FROM courses WHERE course_id = %s', (course_id,))
-    selected = cur.fetchone()
+    selected = row_to_dict(cur, cur.fetchone())
 
     cur.execute('''
                 SELECT u.user_id, u.full_name
@@ -68,7 +76,7 @@ def course_detail(course_id):
                 WHERE r.access_rights = %s
                 ORDER BY u.full_name
             ''', ('teacher',))
-    teachers = cur.fetchall()
+    teachers = rows_to_dicts(cur, cur.fetchall())
     conn.close()
 
     return render_template('admin_main.html',

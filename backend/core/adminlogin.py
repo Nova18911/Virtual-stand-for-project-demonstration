@@ -61,7 +61,7 @@ def admin_login_page():
             session.permanent = True
 
             session.pop('_flashes', None)
-            return redirect(url_for('adminlogin.admin_export_page'))
+            return redirect(url_for('admin_main.index'))
 
         finally:
             if cursor:
@@ -70,12 +70,3 @@ def admin_login_page():
                 conn.close()
 
     return render_template('adminlogin.html')
-
-
-@logadm_bp.route('/admin_export')
-def admin_export_page():
-    if 'user_id' not in session:
-        flash('Пожалуйста, войдите в систему', 'error')
-        return redirect(url_for('adminlogin.admin_login_page'))
-
-    return render_template('adminexport.html')
