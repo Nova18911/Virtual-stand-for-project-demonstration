@@ -101,62 +101,130 @@
 
         // Docker кнопка
         const dockerBlock = document.getElementById('dockerBlock');
-        dockerBlock.innerHTML = `
-            <button class="btn-docker" id="buildBtn">Осуществить сборку</button>`;
-        document.getElementById('buildBtn').addEventListener('click', () => buildContainer(userId));
-    };
+
+        if (data.build_success) {
+            // Образ уже собран — показываем кнопки запуска и пересборки
+            const statusResponse2 = await fetch(`/api/task/${LAB_ID}/student/${userId}/container-status`);
+            const statusData2 = await statusResponse2.json();
+
+            if (statusData2.ok && statusData2.container?.status === 'running') {
+                const isGui = statusData2.container.link?.includes('vnc.html');
+                dockerBlock.innerHTML = `
+                    <a href="${statusData2.container.link}" target="_blank" class="btn-docker">
+                        ${isGui ? '🖥 Открыть GUI' : '💻 Открыть консоль'}
+                    </a>
+                    <button class="btn-docker" id="rebuildBtn">🔄 Пересобрать</button>
+                `;
+            } else {
+                dockerBlock.innerHTML = `
+                    <button class="btn-docker" id="buildBtn">▶️ Запустить</button>
+                    <button class="btn-docker" id="rebuildBtn">🔄 Пересобрать</button>
+                `;
+                document.getElementById('buildBtn').addEventListener('click', () => buildContainer(userId));
+            }
+
+            // Обработчик пересборки
+            document.getElementById('rebuildBtn')?.addEventListener('click', async () => {
+                if (!confirm('Пересобрать проект? Старый образ будет удалён.')) return;
+                const btn = document.getElementById('rebuildBtn');
+                btn.disabled    = true;
+                btn.textContent = '🔄 Сборка...';
+
+                try {
+                    const response = await fetch(
+                        `/api/task/${LAB_ID}/student/${userId}/rebuild`,
+                        { method: 'POST' }
+                    );
+                    const data = await response.json();
+                    if (data.ok) {
+                        showNotification('Проект пересобран!', 'success');
+                        loadStudentDetail(userId);
+                    } else {
+                        alert(data.error);
+                        btn.disabled    = false;
+                        btn.textContent = '🔄 Пересобрать';
+                    }
+                } catch (err) {
+                    alert('Ошибка соединения');
+                    btn.disabled    = false;
+                    btn.textContent = '🔄 Пересобрать';
+                }
+            });
+
+        } else {
+            // Образ ещё не собран
+            dockerBlock.innerHTML = `
+                <button class="btn-docker" id="buildBtn">Осуществить сборку</button>
+            `;
+            document.getElementById('buildBtn').addEventListener('click', () => buildContainer(userId));
+        }
+            };
 
     // --- Сборка контейнера ---
     async function buildContainer(userId) {
-        const btn = document.getElementById('buildBtn');
-        btn.disabled = true;
-        btn.textContent = 'Сборка...';
+    const btn       = document.getElementById('buildBtn') || document.getElementById('rebuildBtn');
+    btn.disabled    = true;
+    btn.textContent = '⏳ Сборка...';
 
-        try {
-            const response = await fetch(
-                `/api/task/${LAB_ID}/student/${userId}/build`,
-                { method: 'POST' }
-            );
-            const data = await response.json();
+    try {
+        const response = await fetch(
+            `/api/task/${LAB_ID}/student/${userId}/build`,
+            { method: 'POST' }
+        );
+        const data = await response.json();
 
-            if (data.ok) {
-                // Обновляем ссылку
-                const containerLinkInput = document.getElementById('containerLink');
-                if (data.link) {
-                    let fullLink = data.link;
-                    if (fullLink.startsWith('/')) {
-                        fullLink = window.location.origin + fullLink;
-                    }
-                    containerLinkInput.value = fullLink;
-
-                    // Добавляем кликабельную ссылку
-                    const containerLinkWrapper = document.getElementById('consoleLinkContainer');
-                    containerLinkWrapper.innerHTML = `
-                        <a href="${fullLink}" target="_blank" class="console-link">
-                            🔗 Открыть консоль
-                        </a>
-                    `;
-                }
-
-                // Обновляем кнопку
-                btn.textContent = '✅ Собрано';
-                setTimeout(() => {
-                    btn.textContent = 'Осуществить сборку';
-                    btn.disabled = false;
-                }, 2000);
-
-                showNotification('Контейнер успешно собран и запущен!', 'success');
-            } else {
-                alert(data.error || 'Ошибка при сборке');
-                btn.textContent = 'Осуществить сборку';
-                btn.disabled = false;
-            }
-        } catch (err) {
-            console.error('Ошибка:', err);
-            alert('Ошибка соединения с сервером');
+        if (!data.ok && !data.status) {
+            alert(data.error || 'Ошибка при сборке');
+            btn.disabled    = false;
             btn.textContent = 'Осуществить сборку';
-            btn.disabled = false;
+            return;
         }
+
+        // Сборка запущена в фоне — опрашиваем статус
+        const projectId = data.project_id;
+        showNotification('Сборка запущена, ожидайте...', 'info');
+        await pollBuildStatus(projectId, userId, btn);
+
+    } catch (err) {
+        console.error('Ошибка:', err);
+        alert('Ошибка соединения с сервером');
+        btn.disabled    = false;
+        btn.textContent = 'Осуществить сборку';
+    }
+    }
+
+    async function pollBuildStatus(projectId, userId, btn) {
+        const maxAttempts = 60; // максимум 5 минут (каждые 5 секунд)
+        let attempts = 0;
+
+        const interval = setInterval(async () => {
+            attempts++;
+
+            try {
+                const response = await fetch(`/api/build-status/${projectId}`);
+                const data     = await response.json();
+
+                if (data.status === 'done') {
+                    clearInterval(interval);
+                    showNotification('Контейнер успешно собран!', 'success');
+                    loadStudentDetail(userId);
+                } else if (data.status === 'error') {
+                    clearInterval(interval);
+                    alert(`Ошибка сборки: ${data.error}`);
+                    btn.disabled    = false;
+                    btn.textContent = 'Осуществить сборку';
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(interval);
+                    alert('Превышено время ожидания сборки');
+                    btn.disabled    = false;
+                    btn.textContent = 'Осуществить сборку';
+                } else {
+                    btn.textContent = `⏳ Сборка... (${attempts * 5}с)`;
+                }
+            } catch (err) {
+                console.error('Ошибка опроса статуса:', err);
+            }
+        }, 5000); // опрашиваем каждые 5 секунд
     }
 
     // --- Оценки ---
