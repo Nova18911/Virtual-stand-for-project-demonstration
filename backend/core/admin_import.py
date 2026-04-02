@@ -2,22 +2,12 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for,
 import pg8000
 import io
 import csv
+from backend.core.connect import get_db_connection
 
 admin_import = Blueprint('admin_import', __name__, url_prefix='/admin/import')
 
 
-def get_db():
-    return pg8000.connect(
-        host='127.0.0.1',
-        port=5432,
-        database='course_management',
-        user='admin',
-        #password='12345678'
-        password='12345'
-    )
-
-
-@admin_import.route('/uploaded')
+@admin_import.route('/')
 def index():
     return render_template('admin_import.html',
                            user_name=session.get('user_name', 'Админ'))
@@ -37,7 +27,7 @@ def upload():
         flash('Поддерживаются только файлы .sql и .csv.', 'error')
         return redirect(url_for('admin_import.index'))
 
-    conn = get_db()
+    conn = get_db_connection()
     try:
         cur = conn.cursor()
 

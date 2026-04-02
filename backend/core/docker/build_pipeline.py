@@ -106,7 +106,7 @@ def _save_project_analysis(project_id: int, analysis: dict, image_name: str, rep
 
         cursor.execute("""
             UPDATE student_projects
-            SET teacher_comment = %s
+            SET build_info = %s
             WHERE project_id = %s
         """, (comment, project_id))
         conn.commit()

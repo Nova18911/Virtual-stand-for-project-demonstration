@@ -14,110 +14,48 @@ def find_free_port():
 
 
 def run_container(image_name, project_id, project_type=None):
-    conn = None
+    conn   = None
     cursor = None
     try:
-        print(f"🔧 Запуск контейнера: image={image_name}, project_id={project_id}, type={project_type}")
-
         client = docker.from_env()
 
-        # Проверяем, существует ли образ
         try:
             client.images.get(image_name)
-            print(f"✅ Образ {image_name} найден")
         except docker.errors.ImageNotFound:
             print(f"❌ Образ {image_name} не найден")
             return None, None
 
-        if project_type == 'web':
-            print("🌐 Запуск как веб-приложение")
-            port = find_free_port()
-            container = client.containers.run(
-                image_name,
-                detach=True,
-                ports={'5000/tcp': port},
-                mem_limit='512m'
-            )
-            link = f"http://localhost:{port}"
-            port_value = port
-            print(f"✅ Веб-контейнер запущен на порту {port}")
+        if project_type == 'gui':
+            container, link, port_value = _run_gui_container(image_name, project_id, client)
 
-        else:
-            print("💻 Запуск как консольное приложение")
-            container = client.containers.run(
-                image_name,
-                detach=True,
-                stdin_open=True,
-                tty=True,
-                mem_limit='512m',
-                command=["tail", "-f", "/dev/null"]
-            )
-            link = f"/container/{project_id}/view"
-            port_value = None  # Для консольных приложений порт не нужен
-            print(f"✅ Консольный контейнер запущен: {container.id[:12]}")
-
-            # Проверяем, что контейнер работает
-            container.reload()
-            print(f"📊 Статус контейнера: {container.status}")
+        else:  # console
+            container, link, port_value = _run_console_container(image_name, project_id, client)
 
         # Сохраняем в БД
-        conn = get_db_connection()
+        conn   = get_db_connection()
         cursor = conn.cursor()
-
-        # Проверяем, существует ли таблица
         cursor.execute("""
-            SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_name = 'docker_containers'
-            );
-        """)
-        table_exists = cursor.fetchone()[0]
-
-        if not table_exists:
-            print("❌ Таблица docker_containers не существует! Создайте её в БД.")
-            # Создаем таблицу на лету
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS docker_containers (
-                    id SERIAL PRIMARY KEY,
-                    container_id VARCHAR(64) NOT NULL UNIQUE,
-                    project_id INTEGER NOT NULL,
-                    port INTEGER,
-                    image_name VARCHAR(255) NOT NULL,
-                    started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    stopped_at TIMESTAMP,
-                    status VARCHAR(20) DEFAULT 'running'
-                );
-            """)
-            conn.commit()
-            print("✅ Таблица docker_containers создана")
-
-        # Вставляем данные
-        cursor.execute("""
-            INSERT INTO docker_containers (container_id, project_id, port, image_name, started_at, status)
-            VALUES (%s, %s, %s, %s, %s, 'running')
-        """, (container.id, project_id, port_value, image_name, datetime.now()))
+            INSERT INTO docker_containers
+                (container_id, project_id, port, image_name, started_at, status, project_type)
+            VALUES (%s, %s, %s, %s, %s, 'running', %s)
+        """, (container.id, project_id, port_value, image_name, datetime.now(), project_type or 'console'))
         conn.commit()
-        print(f"💾 Информация сохранена в БД")
 
         return container, link
 
     except Exception as e:
         print(f"❌ Ошибка в run_container: {e}")
-        import traceback
-        traceback.print_exc()
         return None, None
     finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+        if cursor: cursor.close()
+        if conn:   conn.close()
 
 
 def get_container_info(project_id):
-    conn = None
+    conn   = None
     cursor = None
     try:
-        conn = get_db_connection()
+        conn   = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("""
             SELECT container_id, port, image_name, started_at, status
@@ -127,73 +65,45 @@ def get_container_info(project_id):
             LIMIT 1
         """, (project_id,))
         row = cursor.fetchone()
-
         if not row:
             return None
 
         link = None
         if row[4] == 'running':
-            if row[1]:  # Если есть порт
-                link = f"http://localhost:{row[1]}"
+            if row[1]:
+                # Если порт есть — определяем тип по image_name
+                if 'gui' in row[2]:
+                    link = f"http://localhost:{row[1]}/vnc.html?password=vstand&autoconnect=true"
+                else:
+                    link = f"http://localhost:{row[1]}"
             else:
                 link = f"/container/{project_id}/view"
 
         return {
             'container_id': row[0],
-            'port': row[1],
-            'image_name': row[2],
-            'started_at': row[3],
-            'status': row[4],
-            'link': link
+            'port':         row[1],
+            'image_name':   row[2],
+            'started_at':   row[3],
+            'status':       row[4],
+            'link':         link
         }
-
     except Exception as e:
-        print(f"❌ Ошибка получения данных контейнера: {e}")
+        print(f"❌ Ошибка: {e}")
         return None
-
     finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
-
-
-def _run_web_container(image_name, project_id, client):
-    """Запуск веб-приложения"""
-    port = find_free_port()
-
-    container = client.containers.run(
-        image_name,
-        detach=True,
-        ports={'5000/tcp': port},
-        mem_limit='512m'
-    )
-
-    # Сохраняем в БД
-    _save_container_info(container.id, project_id, port, image_name)
-
-    link = f"http://localhost:{port}"
-    return container, link
-
+        if cursor: cursor.close()
+        if conn:   conn.close()
 
 def _run_console_container(image_name, project_id, client):
-    """Запуск консольного приложения с возможностью ввода"""
-    # Для консольных приложений используем интерактивный режим
     container = client.containers.run(
         image_name,
         detach=True,
-        stdin_open=True,  # Открыть stdin
-        tty=True,  # Выделить псевдо-TTY
+        stdin_open=True,
+        tty=True,
         mem_limit='256m',
-        command=["python", "-u", "test.py"]  # -u для unbuffered output
+        command=["python", "-u", "main.py"]
     )
-
-    # Для консольных приложений порт не нужен
-    _save_container_info(container.id, project_id, None, image_name)
-
-    # Ссылка для консольного приложения - это WebSocket для ввода/вывода
-    link = f"ws://localhost/console/{container.id}"
-    return container, link
+    return container, f"/container/{project_id}/view", None
 
 
 def _save_container_info(container_id, project_id, port, image_name):
@@ -207,3 +117,41 @@ def _save_container_info(container_id, project_id, port, image_name):
     conn.commit()
     cursor.close()
     conn.close()
+
+def _run_gui_container(image_name, project_id, client):
+    """
+    Запуск GUI-приложения через VNC.
+    Внутри контейнера запускается Xvfb + x11vnc,
+    снаружи доступен VNC-порт и noVNC (веб-браузер).
+    """
+    vnc_port   = find_free_port()  # порт для VNC
+    novnc_port = find_free_port()  # порт для noVNC (просмотр в браузере)
+
+    container = client.containers.run(
+        image_name,
+        detach=True,
+        stdin_open=True,
+        tty=True,
+        mem_limit='512m',
+        environment={
+            'DISPLAY':      ':99',
+            'VNC_PASSWORD': 'vstand',
+        },
+        ports={
+            '5900/tcp': vnc_port,    # стандартный VNC порт
+            '6080/tcp': novnc_port,  # noVNC веб-интерфейс
+        },
+        # Запускаем Xvfb + x11vnc + приложение
+        command=[
+            '/bin/sh', '-c',
+            'Xvfb :99 -screen 0 1280x720x24 & '
+            'x11vnc -display :99 -passwd vstand -forever -rfbport 5900 & '
+            'sleep 2 && python main.py'
+        ]
+    )
+
+    # Ссылка открывает noVNC в браузере
+    link      = f"http://localhost:{novnc_port}/vnc.html?password=vstand&autoconnect=true"
+    port_value = novnc_port
+
+    return container, link, port_value

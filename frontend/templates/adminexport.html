@@ -2,60 +2,76 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход Админ</title>
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/adminexport.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Экспорт — Панель администратора</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/adminexport.css') }}">
 </head>
 <body>
-    <div class="page">
-        <div class="top-bar">
-            <h1>Панель Администратора</h1>
-            <h1>Вы вошли как администратор</h1>
-        </div>
-    <div class="sidebar">
-        <button class="btn-login" type="button" onclick="window.location.href='{{ url_for('adminlogin.admin_mainpage') }}'">Главная</button>
-         <button class="btn-login" type="submit">Экспорт</button>
-         <button class="btn-login" type="button" onclick="window.location.href='{{ url_for('admin_import.index') }}'">Импорт</button>
+
+<header class="header">
+    <div class="header__title">Панель администратора</div>
+    <div class="header__user">
+        Вы вошли как {{ user_name }}
+        <a href="{{ url_for('auth.logout') }}" class="header__logout" title="Выйти">🔒</a>
     </div>
-     <div class="content">
-        <div class="leftsidebar">
-            <h2>Экспорт данных</h2>
+</header>
+
+<nav class="navbar">
+    <a href="'{{ url_for('adminlogin.admin_mainpage') }}'" class="navbar__link">Главная</a>
+    <a href="#" class="navbar__link navbar__link--active">Экспорт</a>
+    <a href="'{{ url_for('admin_import.index') }}'" class="navbar__link">Импорт</a>
+</nav>
+
+<main class="main">
+    <h1 class="main__title">Экспорт данных</h1>
+
+    <div class="export-panel">
+
+        <!-- Левая колонка: тип экспорта -->
+        <div class="export-col">
+            <div class="col__title">Тип экспорта</div>
             <form>
-                <label>
-                <input type="checkbox" id="fullBackupCheckbox">
-                Экспортировать все данные
+                <label class="checkbox-label">
+                    <input type="checkbox" id="fullBackupCheckbox">
+                    Экспортировать все данные
                 </label>
             </form>
             <form>
-                <label>
-                <input type="checkbox" id="customExportCheckbox">
-                Настроить экспорт
+                <label class="checkbox-label">
+                    <input type="checkbox" id="customExportCheckbox">
+                    Настроить экспорт
                 </label>
             </form>
-                <button class="btn-login" type="submit" id="exportBtn">Экспорт</button>
+            <button class="btn" id="exportBtn">Экспорт</button>
         </div>
-         <div class="midsidebar">
-             <h2>Выберите необходимые таблицы</h2>
-                 <div id="tables"></div>
-                 <div id="result"></div>
-                 <script src="{{ url_for('static', filename='js/tables.js') }}"></script>
-         </div>
-         <div class="rightsidebar">
-             <h2>Выберите формат файла</h2>
-             <select name="select" id="fileFormat">
-                 <option value="value1">MySQL</option>
-                 <option value="value2">PostgreSQL</option>
-             </select>
-             <form>
-                <label>
+
+        <!-- Средняя колонка: таблицы -->
+        <div class="export-col export-col--wide">
+            <div class="col__title">Выберите таблицы</div>
+            <div id="tables"></div>
+            <div id="result"></div>
+            <script src="{{ url_for('static', filename='js/tables.js') }}"></script>
+        </div>
+
+        <!-- Правая колонка: настройки -->
+        <div class="export-col">
+            <div class="col__title">Формат файла</div>
+            <select name="select" id="fileFormat">
+                <option value="value1">MySQL</option>
+                <option value="value2">PostgreSQL</option>
+            </select>
+
+            <label class="checkbox-label" style="margin-bottom: 16px;">
                 Сохранить в виде zip архива
                 <input type="checkbox" id="zipCheckbox">
-                </label>
-            </form>
-             <h2>Название файла</h2>
-             <input  type="text" name="namefile" id="fileName" placeholder="backup">
-         </div>
-     </div>
+            </label>
+
+            <div class="col__title">Название файла</div>
+            <input type="text" name="namefile" id="fileName" placeholder="backup">
+        </div>
+
     </div>
+</main>
+
 </body>
 </html>

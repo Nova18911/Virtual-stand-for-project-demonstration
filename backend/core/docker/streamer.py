@@ -203,3 +203,32 @@ def stop_container(project_id):
 def container_view(project_id):
     """Страница просмотра консоли"""
     return render_template('container_view.html', project_id=project_id)
+
+@streamer_bp.route('/container/<int:project_id>/gui')
+def container_gui(project_id):
+    """Страница просмотра GUI через noVNC"""
+    container_id = get_container_id_by_project(project_id)
+    if not container_id:
+        return "Контейнер не найден", 404
+
+    # Получаем порт noVNC из БД
+    conn   = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT port FROM docker_containers
+        WHERE project_id = %s AND status = 'running'
+        ORDER BY started_at DESC
+        LIMIT 1
+    """, (project_id,))
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if not row or not row[0]:
+        return "Порт контейнера не найден", 404
+
+    novnc_url = f"http://localhost:{row[0]}/vnc.html?password=vstand&autoconnect=true"
+
+    return render_template('container_gui.html',
+                           project_id=project_id,
+                           novnc_url=novnc_url)

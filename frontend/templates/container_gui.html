@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>GUI приложение</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/container_gui.css') }}">
+</head>
+<body>
+    <div class="toolbar">
+        <span>🖥 GUI приложение</span>
+        <button class="btn-stop" id="stopBtn">Остановить</button>
+    </div>
+
+    <iframe src="{{ novnc_url }}" allowfullscreen></iframe>
+
+    <script>
+        const PROJECT_ID = {{ project_id }};
+    </script>
+    <script src="{{ url_for('static', filename='js/container_gui.js') }}"></script>
+</body>
+</html>
