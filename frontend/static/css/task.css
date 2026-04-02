@@ -1,121 +1,166 @@
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+    --blue-deep:   #1e3a8a;
+    --blue-mid:    #2563eb;
+    --blue-light:  #60a5fa;
+    --blue-pale:   #eff6ff;
+    --blue-border: #bfdbfe;
+    --white:       #ffffff;
+    --text-dark:   #0f172a;
+    --text-muted:  #64748b;
+    --success:     #16a34a;
+    --error:       #ef4444;
 }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    font-size: 14px;
-    color: #2d2d2d;
-    background: #fff;
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    background:
+        radial-gradient(ellipse at 10% 20%, rgba(37,99,235,0.07) 0%, transparent 55%),
+        radial-gradient(ellipse at 90% 80%, rgba(96,165,250,0.08) 0%, transparent 50%),
+        linear-gradient(160deg, #f0f7ff 0%, #ffffff 60%, #e8f0fe 100%);
+    color: var(--text-dark);
 }
 
-/* ── Шапка ────────────────────────────────────────────────────────────────── */
-
+/* ── Шапка ── */
 .header {
-    padding: 12px 20px;
-    border-bottom: 1px solid #d1d5db;
+    padding: 14px 36px;
+    background: rgba(255,255,255,0.82);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(191,219,254,0.5);
+    box-shadow: 0 1px 12px rgba(37,99,235,0.06);
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .header__logo {
-    font-size: 16px;
-    font-weight: 600;
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--blue-deep), var(--blue-mid));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-/* ── Хлебные крошки ───────────────────────────────────────────────────────── */
-
+/* ── Хлебные крошки ── */
 .breadcrumb {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 10px 20px;
-    border-bottom: 1px solid #d1d5db;
+    padding: 12px 36px;
+    border-bottom: 1px solid rgba(191,219,254,0.4);
+    background: rgba(255,255,255,0.5);
     font-size: 13px;
 }
 
 .breadcrumb a {
-    color: #2d2d2d;
+    color: var(--text-muted);
     text-decoration: none;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 7px;
+    transition: background 0.2s, color 0.2s;
 }
 
 .breadcrumb a:hover {
-    text-decoration: underline;
+    background: var(--blue-pale);
+    color: var(--blue-mid);
 }
 
-.breadcrumb__sep {
-    color: #9ca3af;
-}
+.breadcrumb a.active { color: var(--blue-mid); font-weight: 600; }
 
-/* ── Основной контент ─────────────────────────────────────────────────────── */
+.breadcrumb__sep { color: var(--blue-light); }
 
+/* ── Основной контент ── */
 .main {
-    padding: 20px 24px;
-    max-width: 700px;
+    padding: 32px 36px;
+    max-width: 760px;
 }
 
-/* ── Заголовок задания ────────────────────────────────────────────────────── */
-
+/* ── Шапка задания ── */
 .task-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    gap: 20px;
+    background: rgba(255,255,255,0.85);
+    border: 1px solid rgba(191,219,254,0.55);
+    border-radius: 18px;
+    padding: 22px 24px;
     margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.05);
+    animation: cardIn 0.4s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+@keyframes cardIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 .task__name {
-    font-size: 15px;
-    font-weight: 600;
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--blue-deep);
     margin-bottom: 6px;
 }
 
 .task__file {
     font-size: 13px;
-    color: #1a56db;
+    color: var(--blue-mid);
     text-decoration: none;
-    border-bottom: 1px solid #1a56db;
+    font-weight: 500;
+    transition: opacity 0.2s;
 }
 
-.task__file:hover {
-    opacity: 0.8;
-}
+.task__file:hover { opacity: 0.75; text-decoration: underline; }
 
 .task-header__right {
     text-align: right;
-    font-size: 13px;
-    color: #6b7280;
-    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .task__meta {
-    margin-bottom: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 5px;
 }
 
 .task__meta span {
-    color: #2d2d2d;
+    font-weight: 600;
+    color: var(--text-dark);
 }
 
-/* ── Метки секций ─────────────────────────────────────────────────────────── */
-
+/* ── Метки секций ── */
 .section-label {
-    font-size: 13px;
-    margin-bottom: 8px;
-    margin-top: 16px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--blue-mid);
+    margin: 22px 0 10px;
 }
 
-/* ── Описание задания ─────────────────────────────────────────────────────── */
-
+/* ── Описание ── */
 .task__description {
-    border: 1px solid #d1d5db;
-    padding: 12px;
+    background: rgba(255,255,255,0.85);
+    border: 1px solid rgba(191,219,254,0.55);
+    border-radius: 14px;
+    padding: 16px 18px;
     font-size: 14px;
-    min-height: 140px;
-    color: #374151;
-    line-height: 1.5;
+    min-height: 120px;
+    color: var(--text-dark);
+    line-height: 1.6;
+    box-shadow: 0 2px 6px rgba(37,99,235,0.04);
 }
 
-/* ── Поле ответа ──────────────────────────────────────────────────────────── */
-
+/* ── Поле ответа ── */
 .answer-row {
     display: flex;
     align-items: center;
@@ -125,48 +170,51 @@ body {
 
 .answer-row input {
     flex: 1;
-    padding: 7px 10px;
-    border: none;
-    border-bottom: 1px solid #d1d5db;
+    padding: 9px 14px;
+    border: 1.5px solid var(--blue-border);
+    border-radius: 10px;
     font-size: 13px;
-    color: #6b7280;
+    font-family: 'DM Sans', sans-serif;
+    background: rgba(239,246,255,0.5);
+    color: var(--text-dark);
     outline: none;
-    font-family: inherit;
-    background: transparent;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .answer-row input:focus {
-    border-bottom-color: #555;
+    border-color: var(--blue-mid);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.10);
+    background: var(--white);
 }
 
 .answer-row input[readonly] {
-    color: #2d2d2d;
+    background: var(--blue-pale);
     cursor: default;
+    color: var(--text-dark);
 }
 
-/* Иконки-кнопки рядом с полем ссылки */
 .btn-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
-    border: 1px solid #d1d5db;
-    border-radius: 3px;
-    background: #fff;
+    width: 34px; height: 34px;
+    border: 1.5px solid var(--blue-border);
+    border-radius: 9px;
+    background: var(--white);
     cursor: pointer;
     font-size: 14px;
     text-decoration: none;
-    color: #2d2d2d;
-    transition: background 0.15s;
+    color: var(--blue-mid);
+    transition: background 0.18s, border-color 0.18s;
+    flex-shrink: 0;
 }
 
 .btn-icon:hover {
-    background: #f5f5f5;
+    background: var(--blue-pale);
+    border-color: var(--blue-mid);
 }
 
-/* ── Оценка ───────────────────────────────────────────────────────────────── */
-
+/* ── Оценка ── */
 .grade-row {
     display: flex;
     align-items: center;
@@ -176,88 +224,112 @@ body {
 }
 
 .grade-input {
-    width: 48px;
-    height: 32px;
-    border: 1px solid #d1d5db;
+    width: 52px; height: 36px;
+    border: 1.5px solid var(--blue-border);
+    border-radius: 10px;
     text-align: center;
-    font-size: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--blue-deep);
     outline: none;
-    font-family: inherit;
+    transition: border-color 0.2s;
 }
 
-.grade-input:focus {
-    border-color: #555;
-}
+.grade-input:focus { border-color: var(--blue-mid); }
 
 .grade-input[readonly] {
-    background: #f9fafb;
+    background: var(--blue-pale);
     cursor: default;
 }
 
-/* ── Комментарий ──────────────────────────────────────────────────────────── */
-
+/* ── Комментарий ── */
 .task__comment {
     width: 100%;
-    border: 1px solid #d1d5db;
-    padding: 10px 12px;
-    font-size: 14px;
-    font-family: inherit;
+    border: 1.5px solid var(--blue-border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    background: rgba(239,246,255,0.5);
+    color: var(--text-dark);
     resize: vertical;
     outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .task__comment:focus {
-    border-color: #555;
+    border-color: var(--blue-mid);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.10);
+    background: var(--white);
 }
 
 .task__comment[readonly] {
-    background: #f9fafb;
+    background: var(--blue-pale);
     cursor: default;
 }
 
-/* ── Кнопка сохранить ─────────────────────────────────────────────────────── */
-
+/* ── Кнопка сохранить ── */
 .btn-save {
     margin-top: 12px;
-    padding: 7px 24px;
-    border: 1px solid #d1d5db;
-    border-radius: 3px;
-    background: #fff;
-    font-size: 14px;
-    font-family: inherit;
+    padding: 9px 28px;
+    background: linear-gradient(135deg, var(--blue-deep), var(--blue-mid));
+    color: var(--white);
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
     cursor: pointer;
-    transition: background 0.15s;
+    box-shadow: 0 3px 10px rgba(37,99,235,0.20);
+    transition: transform 0.15s, box-shadow 0.15s;
 }
 
 .btn-save:hover {
-    background: #f5f5f5;
+    transform: translateY(-1px);
+    box-shadow: 0 5px 16px rgba(37,99,235,0.28);
 }
 
-/* ── Флеш ─────────────────────────────────────────────────────────────────── */
-
+/* ── Flash ── */
 .flash {
     font-size: 13px;
-    color: #15803d;
-    margin-top: 6px;
+    color: var(--success);
+    background: #dcfce7;
+    border: 1px solid #bbf7d0;
+    border-radius: 9px;
+    padding: 9px 14px;
+    margin-top: 8px;
 }
 
-/* ── Карточка студента (для преподавателя) ────────────────────────────────── */
-
+/* ── Карточка студента (преподаватель) ── */
 .student-card {
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
-    padding: 16px;
-    margin-bottom: 16px;
+    background: rgba(255,255,255,0.85);
+    border: 1px solid rgba(191,219,254,0.55);
+    border-radius: 16px;
+    padding: 20px 22px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.05);
+    animation: cardIn 0.35s cubic-bezier(0.22,1,0.36,1) both;
 }
 
 .student-card__name {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
-    margin-bottom: 12px;
+    color: var(--blue-deep);
+    margin-bottom: 14px;
 }
 
 .student-card__empty {
     font-size: 13px;
-    color: #9ca3af;
+    color: var(--text-muted);
     margin-bottom: 8px;
+    font-style: italic;
+}
+
+@media (max-width: 600px) {
+    .header { padding: 12px 16px; }
+    .breadcrumb { padding: 10px 16px; }
+    .main { padding: 20px 16px; }
+    .task-header { flex-direction: column; }
+    .task-header__right { text-align: left; }
 }
