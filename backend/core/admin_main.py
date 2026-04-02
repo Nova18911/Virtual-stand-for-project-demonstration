@@ -1,18 +1,8 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
-from core.connect import get_db_connection
+from backend.core.connect import get_db_connection
 
 admin_main = Blueprint('admin_main', __name__, url_prefix='/admin')
 
-
-def get_db():
-    conn = pg8000.connect(
-        host='127.0.0.1',
-        port=5432,
-        database='course_management',
-        user='admin',
-        password='12345678'
-    )
-    return conn
 
 
 def rows_to_dicts(cursor, rows):
@@ -50,7 +40,7 @@ def get_teachers(cur):
 # /admin/admin_main — главная страница после входа
 @admin_main.route('/admin_main')
 def index():
-    conn = get_db()
+    conn = get_db_connection()
     cur = conn.cursor()
     cur.execute('SELECT course_id, name, teacher FROM courses ORDER BY course_id')
     courses = rows_to_dicts(cur, cur.fetchall())
@@ -83,7 +73,7 @@ def index():
 # /admin/course/<id> — выбор курса
 @admin_main.route('/course/<int:course_id>')
 def course_detail(course_id):
-    conn = get_db()
+    conn = get_db_connection()
     cur = conn.cursor()
     cur.execute('SELECT course_id, name, teacher FROM courses ORDER BY course_id')
     courses = rows_to_dicts(cur, cur.fetchall())
