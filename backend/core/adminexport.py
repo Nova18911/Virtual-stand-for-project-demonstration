@@ -1,21 +1,13 @@
-from flask import Blueprint, render_template, request, jsonify, send_file
+from flask import Blueprint, render_template, request, jsonify, send_file, session, redirect, url_for, flash
 import pg8000
 import json
 import io
 import zipfile
 from datetime import datetime
+from backend.core.connect import get_db_connection
 
 admexp_bp = Blueprint('adminexport', __name__)
 
-
-def get_db_connection():
-    return pg8000.connect(
-        host="127.0.0.1",
-        port=5432,
-        database="course_management",
-        user="postgres",
-        password="12345678"
-    )
 
 
 def get_tables_from_db():
@@ -188,3 +180,10 @@ def create_backup():
             as_attachment=True,
             download_name=f"{filename}{file_extension}"
         )
+
+@admexp_bp.route('/admin/export')
+def export_page():
+    if 'user_id' not in session:
+        flash('Пожалуйста, войдите в систему', 'error')
+        return redirect(url_for('adminlogin.admin_login_page'))
+    return render_template('adminexport.html')

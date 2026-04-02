@@ -9,16 +9,8 @@ def create_dockerfile(repo_path: str, project_type: str, main_file: str) -> dict
     if not main_file:
         return {'success': False, 'path': None, 'error': 'Не найден основной файл запуска'}
 
-
-    if project_type == 'gui':
-        cmd = f'CMD ["python", "{main_file}"]'
-        expose = '# GUI приложение - требуется X11 forwarding'
-    else:
-        cmd = f'CMD ["python", "{main_file}"]'
-        expose = '# Консольное приложение'
-
-    dockerfile_content = f'''# Dockerfile для {project_type} приложения
-FROM python:3.9-slim
+    dockerfile_content = f'''
+FROM python:3.12
 
 WORKDIR /app
 
@@ -26,12 +18,39 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt || true
 
 COPY . .
-
-{expose}
-
-{cmd}
 '''
 
+    if project_type == 'gui':
+        dockerfile_content += '''
+    RUN apt-get update && apt-get install -y \\
+    python3-tk \\
+    python3-pyqt5 \\
+    x11-apps \\
+    libx11-xcb1 \\
+    libxcb-icccm4 \\
+    libxcb-image0 \\
+    libxcb-keysyms1 \\
+    libxcb-randr0 \\
+    libxcb-render-util0 \\
+    libxcb-shape0 \\
+    libxcb-xinerama0 \\
+    libxcb-xfixes0 \\
+    libxcb-xkb1 \\
+    libxkbcommon-x11-0 \\
+    && rm -rf /var/lib/apt/lists/*
+
+ENV DISPLAY=host.docker.internal:0
+ENV QT_X11_NO_MITSHM=1
+
+'''
+
+        dockerfile_content += f'''
+CMD ["python", "{main_file}"]
+        '''
+    else:
+        dockerfile_content += f'''
+CMD ["python", "{main_file}"]
+'''
     dockerfile_path = os.path.join(repo_path, 'Dockerfile')
 
     try:
@@ -49,17 +68,15 @@ def save_requirements_file(repo_path: str, dependencies: list) -> dict:
 
     req_path = os.path.join(repo_path, 'requirements.txt')
 
-    # Если файл уже существует, не перезаписываем
     if os.path.exists(req_path):
         return {'success': True, 'path': req_path, 'error': None}
 
-    # Если зависимостей нет, создаем минимальный
     if not dependencies:
         dependencies = ['python']
 
     try:
         with open(req_path, 'w', encoding='utf-8') as f:
-            for dep in sorted(set(dependencies)):  # удаляем дубликаты
+            for dep in sorted(set(dependencies)):
                 if dep and not dep.startswith('_'):
                     f.write(f"{dep}\n")
         return {'success': True, 'path': req_path, 'error': None}
@@ -126,7 +143,6 @@ def check_docker_available() -> dict:
         'error': None
     }
 
-    # 1. Проверяем, установлен ли Docker
     try:
         version_result = subprocess.run(
             ['docker', '--version'],
@@ -149,7 +165,6 @@ def check_docker_available() -> dict:
         result['error'] = f'Ошибка при проверке Docker: {str(e)}'
         return result
 
-    # 2. Проверяем, запущен ли демон Docker
     try:
         ps_result = subprocess.run(
             ['docker', 'ps'],
@@ -186,8 +201,8 @@ def build_docker_image(repo_path: str, image_name: str) -> dict:
             'error': docker_check['error']
         }
 
-    print(f"🐳 Начинаем сборку образа {image_name}...")
-    print(f"📁 Путь: {repo_path}")
+    print(f"Образ {image_name}...")
+    print(f"Путь: {repo_path}")
 
     try:
         result = subprocess.run(
@@ -207,7 +222,7 @@ def build_docker_image(repo_path: str, image_name: str) -> dict:
             size_bytes = int(inspect_result.stdout.strip()) if inspect_result.stdout else 0
             size_mb = size_bytes / 1024 / 1024
 
-            print(f"✅ Образ {image_name} успешно собран (размер: {size_mb:.2f} MB)")
+            print(f"Образ {image_name}  собран (размер: {size_mb:.2f} MB)")
 
             return {
                 'success': True,

@@ -1,17 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 import pg8000
+from backend.core.connect import get_db_connection
 
 logadm_bp = Blueprint('adminlogin', __name__)
 
-
-def get_db_connection():
-    return pg8000.connect(
-        host="127.0.0.1",
-        port=5432,
-        database="course_management",
-        user="postgres",
-        password="12345678"
-    )
 
 
 @logadm_bp.route('/loginadmin', methods=['GET', 'POST'])
@@ -61,8 +53,7 @@ def admin_login_page():
             session.permanent = True
 
             session.pop('_flashes', None)
-            return redirect(url_for('adminlogin.admin_export_page'))
-
+            return redirect(url_for('adminlogin.admin_mainpage'))
         finally:
             if cursor:
                 cursor.close()
@@ -70,6 +61,16 @@ def admin_login_page():
                 conn.close()
 
     return render_template('adminlogin.html')
+
+
+@logadm_bp.route('/admin_mainpage')
+def admin_mainpage():
+    if 'user_id' not in session:
+        flash('Пожалуйста, войдите в систему', 'error')
+        return redirect(url_for('adminlogin.admin_login_page'))
+
+    user_name = session.get('user_name', 'Администратор')
+    return render_template('admin_main.html', user_name=user_name)
 
 
 @logadm_bp.route('/admin_export')
