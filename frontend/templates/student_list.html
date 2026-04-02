@@ -1,384 +1,79 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ lab.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student_list.css') }}">
+</head>
+<body>
+<div class="page-wrapper">
 
-:root {
-    --blue-deep:   #1e3a8a;
-    --blue-mid:    #2563eb;
-    --blue-light:  #60a5fa;
-    --blue-pale:   #eff6ff;
-    --blue-border: #bfdbfe;
-    --white:       #ffffff;
-    --text-dark:   #0f172a;
-    --text-muted:  #64748b;
-    --success:     #16a34a;
-    --error:       #ef4444;
-}
+    <header class="header">
+        <div class="logo">Virtual Stand</div>
+    </header>
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    <nav class="nav-tabs">
+        <a href="/courses" class="tab">Курсы</a>
+        <a href="javascript:history.back()" class="tab">Задания</a>
+        <span class="tab active">{{ lab.name }}</span>
+    </nav>
 
-html, body { height: 100%; width: 100%; }
+    <div class="main-layout">
 
-body {
-    font-family: 'DM Sans', sans-serif;
-    min-height: 100vh;
-    background:
-        radial-gradient(ellipse at 10% 20%, rgba(37,99,235,0.07) 0%, transparent 55%),
-        radial-gradient(ellipse at 90% 80%, rgba(96,165,250,0.08) 0%, transparent 50%),
-        linear-gradient(160deg, #f0f7ff 0%, #ffffff 60%, #e8f0fe 100%);
-    color: var(--text-dark);
-}
+        <aside class="sidebar">
+            <h2 class="sidebar-title">Список студентов</h2>
+            <div class="search-block">
+                <input type="text" id="searchInput" class="search-input" placeholder="Поиск...">
+                <button class="search-btn" id="searchBtn">найти</button>
+            </div>
+            <ul class="student-list" id="studentList"></ul>
+        </aside>
 
-.page-wrapper { width: 100%; min-height: 100vh; }
+        <main class="detail" id="detailPanel">
+            <p class="hint" id="hintText">Выберите студента из списка</p>
 
-/* ── Шапка ── */
-.header {
-    padding: 14px 36px;
-    background: rgba(255,255,255,0.82);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(191,219,254,0.5);
-    box-shadow: 0 1px 12px rgba(37,99,235,0.06);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
+            <div id="studentDetail" style="display:none;">
+                <div class="field-row">
+                    <label class="field-label">Ссылка</label>
+                    <input type="text" id="githubLink" class="field-input"
+                           placeholder="ссылка на github репозиторий" readonly>
+                </div>
 
-.logo {
-    font-family: 'Playfair Display', serif;
-    font-size: 22px;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--blue-deep), var(--blue-mid));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
+                <div class="field-row">
+                    <div id="dockerBlock"></div>
+                </div>
 
-/* ── Навигация ── */
-.nav-tabs {
-    display: flex;
-    gap: 4px;
-    padding: 10px 36px;
-    border-bottom: 1px solid rgba(191,219,254,0.4);
-    background: rgba(255,255,255,0.5);
-}
+                <div class="field-row">
+                    <label class="field-label">Готовая ссылка:</label>
+                    <div style="flex: 1; display: flex; align-items: center;">
+                        <input type="text" id="containerLink" class="field-input"
+                               placeholder="ссылка для запуска docker контейнера" readonly>
+                        <div id="consoleLinkContainer" style="margin-left: 10px;"></div>
+                    </div>
+                </div>
 
-.tab {
-    text-decoration: none;
-    color: var(--text-muted);
-    font-size: 14px;
-    font-weight: 500;
-    padding: 6px 14px;
-    border-radius: 8px;
-    transition: background 0.2s, color 0.2s;
-}
+                <div class="field-row grade-row">
+                    <label class="field-label">Оценка:</label>
+                    <div class="grade-form" id="gradeForm">
+                        {% for grade in [2, 3, 4, 5] %}
+                        <button class="grade-btn" data-grade="{{ grade }}">{{ grade }}</button>
+                        {% endfor %}
+                    </div>
+                </div>
 
-.tab:hover { background: var(--blue-pale); color: var(--blue-mid); }
+                <div class="field-row comment-row">
+                    <label class="field-label">Оставить комментарий</label>
+                    <textarea class="comment-input" id="commentInput" rows="4"></textarea>
+                    <button class="btn-save" id="saveCommentBtn">Сохранить</button>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
 
-.tab.active {
-    background: var(--blue-pale);
-    color: var(--blue-deep);
-    font-weight: 600;
-}
-
-/* ── Layout ── */
-.main-layout {
-    display: flex;
-    height: calc(100vh - 112px);
-}
-
-/* ── Сайдбар ── */
-.sidebar {
-    width: 300px;
-    min-width: 260px;
-    border-right: 1px solid rgba(191,219,254,0.4);
-    padding: 20px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    background: rgba(255,255,255,0.45);
-    backdrop-filter: blur(8px);
-}
-
-.sidebar-title {
-    font-size: 13px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: var(--blue-mid);
-    text-align: center;
-}
-
-.search-block { display: flex; gap: 0; }
-
-.search-input {
-    flex: 1;
-    padding: 8px 12px;
-    border: 1.5px solid var(--blue-border);
-    border-right: none;
-    border-radius: 10px 0 0 10px;
-    font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
-    background: rgba(239,246,255,0.6);
-    color: var(--text-dark);
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.search-input:focus {
-    border-color: var(--blue-mid);
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.08);
-    background: var(--white);
-}
-
-.search-btn {
-    padding: 8px 14px;
-    background: linear-gradient(135deg, var(--blue-deep), var(--blue-mid));
-    color: var(--white);
-    border: none;
-    border-radius: 0 10px 10px 0;
-    font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 500;
-    cursor: pointer;
-    transition: opacity 0.2s;
-}
-
-.search-btn:hover { opacity: 0.88; }
-
-/* ── Список студентов ── */
-.student-list {
-    list-style: none;
-    overflow-y: auto;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.student-list::-webkit-scrollbar { width: 4px; }
-.student-list::-webkit-scrollbar-track { background: transparent; }
-.student-list::-webkit-scrollbar-thumb { background: var(--blue-border); border-radius: 4px; }
-
-.student-item { border-radius: 10px; overflow: hidden; }
-
-.student-link {
-    display: block;
-    padding: 10px 12px;
-    text-decoration: none;
-    color: var(--text-dark);
-    font-size: 14px;
-    font-weight: 400;
-    border-radius: 10px;
-    transition: background 0.18s, color 0.18s;
-}
-
-.student-link:hover {
-    background: var(--blue-pale);
-    color: var(--blue-mid);
-}
-
-.student-item.active .student-link {
-    background: linear-gradient(135deg, rgba(30,58,138,0.10), rgba(37,99,235,0.12));
-    color: var(--blue-deep);
-    font-weight: 600;
-    border-left: 3px solid var(--blue-mid);
-    padding-left: 9px;
-}
-
-/* ── Панель деталей ── */
-.detail {
-    flex: 1;
-    padding: 28px 32px;
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-    overflow-y: auto;
-}
-
-.hint {
-    color: var(--text-muted);
-    font-size: 14px;
-    margin: auto;
-    text-align: center;
-    font-style: italic;
-}
-
-/* ── Поля ── */
-.field-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
-
-.field-label {
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-muted);
-    white-space: nowrap;
-    min-width: 110px;
-}
-
-.field-input {
-    flex: 1;
-    border: none;
-    border-bottom: 1.5px solid var(--blue-border);
-    padding: 7px 0;
-    font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
-    color: var(--text-dark);
-    background: transparent;
-    outline: none;
-    transition: border-color 0.2s;
-}
-
-.field-input:focus { border-bottom-color: var(--blue-mid); }
-
-/* ── Docker кнопка ── */
-.btn-docker {
-    padding: 9px 22px;
-    background: linear-gradient(135deg, var(--blue-deep), var(--blue-mid));
-    color: var(--white);
-    border: none;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 600;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-    box-shadow: 0 3px 10px rgba(37,99,235,0.20);
-    transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
-}
-
-.btn-docker:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 5px 16px rgba(37,99,235,0.28);
-}
-
-.btn-docker:disabled {
-    opacity: 0.6;
-    transform: none;
-    cursor: not-allowed;
-}
-
-/* ── Оценки ── */
-.grade-row { align-items: center; }
-
-.grade-form { display: flex; gap: 6px; }
-
-.grade-btn {
-    width: 40px; height: 40px;
-    border: 1.5px solid var(--blue-border);
-    border-radius: 10px;
-    background: var(--white);
-    cursor: pointer;
-    font-size: 15px;
-    font-weight: 600;
-    font-family: 'DM Sans', sans-serif;
-    color: var(--text-muted);
-    transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.15s;
-}
-
-.grade-btn:hover {
-    background: var(--blue-pale);
-    border-color: var(--blue-mid);
-    color: var(--blue-mid);
-    transform: translateY(-1px);
-}
-
-.grade-btn.selected {
-    background: linear-gradient(135deg, var(--blue-deep), var(--blue-mid));
-    border-color: transparent;
-    color: var(--white);
-    box-shadow: 0 3px 8px rgba(37,99,235,0.25);
-}
-
-/* ── Комментарий ── */
-.comment-row {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.comment-input {
-    width: 100%;
-    padding: 10px 14px;
-    border: 1.5px solid var(--blue-border);
-    border-radius: 12px;
-    font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
-    background: rgba(239,246,255,0.5);
-    color: var(--text-dark);
-    resize: vertical;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.comment-input:focus {
-    border-color: var(--blue-mid);
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.10);
-    background: var(--white);
-}
-
-.btn-save {
-    padding: 9px 24px;
-    background: linear-gradient(135deg, var(--blue-deep), var(--blue-mid));
-    color: var(--white);
-    border: none;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 600;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-    box-shadow: 0 3px 10px rgba(37,99,235,0.20);
-    transition: transform 0.15s, box-shadow 0.15s;
-}
-
-.btn-save:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 5px 16px rgba(37,99,235,0.28);
-}
-
-/* ── Консольная ссылка ── */
-.console-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 6px 14px;
-    background: #dcfce7;
-    color: var(--success);
-    border: 1px solid #bbf7d0;
-    text-decoration: none;
-    border-radius: 9px;
-    font-size: 13px;
-    font-weight: 600;
-    transition: background 0.2s;
-}
-
-.console-link:hover { background: #bbf7d0; }
-
-/* ── Уведомления ── */
-.notification {
-    position: fixed;
-    top: 20px; right: 20px;
-    padding: 12px 20px;
-    border-radius: 12px;
-    z-index: 1000;
-    font-size: 13px;
-    font-weight: 500;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-    animation: slideIn 0.3s cubic-bezier(0.22,1,0.36,1);
-}
-
-.notification.success { background: #dcfce7; color: var(--success); border: 1px solid #bbf7d0; }
-.notification.error   { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
-.notification.info    { background: var(--blue-pale); color: var(--blue-mid); border: 1px solid var(--blue-border); }
-
-@keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to   { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes slideOut {
-    from { transform: translateX(0); opacity: 1; }
-    to   { transform: translateX(100%); opacity: 0; }
-}
+<script>
+    const LAB_ID = {{ lab.lab_id }};
+</script>
+<script src="{{ url_for('static', filename='js/student_list.js') }}"></script>
+</body>
+</html>

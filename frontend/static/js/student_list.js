@@ -101,17 +101,10 @@
 
         // Docker кнопка
         const dockerBlock = document.getElementById('dockerBlock');
-        if (data.container?.status === 'running') {
-            const isGui = data.container.link?.includes('vnc.html');
-            dockerBlock.innerHTML = `
-                <a href="${data.container.link}" target="_blank" class="btn-docker">
-                    ${isGui ? '🖥 Открыть GUI' : '💻 Открыть консоль'}
-                </a>`;
-        } else {
-            dockerBlock.innerHTML = `
-                <button class="btn-docker" id="buildBtn">Осуществить сборку</button>`;
-            document.getElementById('buildBtn').addEventListener('click', () => buildContainer(userId));
-        }
+        dockerBlock.innerHTML = `
+            <button class="btn-docker" id="buildBtn">Осуществить сборку</button>`;
+        document.getElementById('buildBtn').addEventListener('click', () => buildContainer(userId));
+    };
 
     // --- Сборка контейнера ---
     async function buildContainer(userId) {
