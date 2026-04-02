@@ -1,3 +1,5 @@
+/* frontend/static/css/container_gui.css */
+
 * {
     margin: 0;
     padding: 0;
@@ -26,7 +28,17 @@ body {
     font-family: Arial, sans-serif;
 }
 
+.program-info {
+    color: #98c379;
+    background: #1e1e1e;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+}
+
 .btn-stop {
+    margin-left: auto;
     padding: 6px 16px;
     background: #c0392b;
     color: white;

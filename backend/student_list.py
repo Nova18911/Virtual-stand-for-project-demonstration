@@ -3,8 +3,8 @@ from backend.core.connect import get_db_connection
 import sys
 import os
 from datetime import datetime
-from backend.core.docker.build_pipeline import build_and_run
-from backend.core.runner import get_container_info
+from backend.core.runner import run_container, get_container_info, stop_container_by_project
+import docker
 
 task_detail_bp = Blueprint('task_detail', __name__)
 
@@ -57,7 +57,7 @@ def get_student_detail(lab_id, student_id):
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT sp.project_id, sp.github_link, sp.grade, sp.teacher_comment
+        SELECT sp.project_id, sp.github_link, sp.grade, sp.teacher_comment, sp.build_info
         FROM student_projects sp
         WHERE sp.lab_id = %s AND sp.user_id = %s
     """, (lab_id, student_id))
@@ -73,19 +73,26 @@ def get_student_detail(lab_id, student_id):
         return jsonify({'ok': False, 'error': 'Студент не найден'}), 404
 
     comment = project_row[3] if project_row else ''
-    if comment and '[СКЛОНИРОВАНО' in comment:
+    build_info = project_row[4] if project_row else ''
+
+    # Проверяем, был ли уже собран проект
+    if build_info and '[ОБРАЗ СОЗДАН]' in build_info:
         build_success = True
     else:
         build_success = False
+
     project_type = None
     main_file = None
+    image_name = None
 
     if build_success:
-        for line in comment.split('\n'):
+        for line in build_info.split('\n'):
             if '[ТИП ПРОЕКТА]' in line:
                 project_type = line.split(']')[1].strip()
             elif '[ОСНОВНОЙ ФАЙЛ]' in line:
                 main_file = line.split(']')[1].strip()
+            elif '[ИМЯ ОБРАЗА]' in line:
+                image_name = line.split(']')[1].strip()
 
     return jsonify({
         'ok': True,
@@ -94,20 +101,39 @@ def get_student_detail(lab_id, student_id):
         'github_link': project_row[1] if project_row else '',
         'grade': project_row[2] if project_row else None,
         'teacher_comment': comment,
+        'build_info': build_info,
         'project_id': project_row[0] if project_row else None,
         'build_success': build_success,
         'project_type': project_type,
-        'main_file': main_file
+        'main_file': main_file,
+        'image_name': image_name
     })
 
 
-# --- API: сборка контейнера ---
+# --- Функция для проверки существования образа ---
+def image_exists(image_name):
+    """Проверяет, существует ли Docker образ"""
+    try:
+        client = docker.from_env()
+        client.images.get(image_name)
+        return True
+    except docker.errors.ImageNotFound:
+        return False
+    except Exception as e:
+        print(f"❌ Ошибка проверки образа: {e}")
+        return False
+
+
+# --- API: сборка контейнера (основной маршрут для фронтенда) ---
 @task_detail_bp.route('/api/task/<int:lab_id>/student/<int:student_id>/build', methods=['POST'])
-def build_container(lab_id, student_id):
+def build_container_compat(lab_id, student_id):
+    """Собирает или запускает контейнер"""
+    from backend.core.docker.build_pipeline import build_and_run, rebuild_project
+
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT project_id, github_link FROM student_projects
+        SELECT project_id, github_link, build_info FROM student_projects
         WHERE lab_id = %s AND user_id = %s
     """, (lab_id, student_id))
     project_row = cursor.fetchone()
@@ -119,14 +145,99 @@ def build_container(lab_id, student_id):
 
     project_id = project_row[0]
     github_url = project_row[1]
+    build_info = project_row[2] or ''
     image_name = f"student_{student_id}_lab_{lab_id}"
 
-    result = build_and_run(github_url, project_id, image_name)
+    # Проверяем параметр force_rebuild в запросе
+    force_rebuild = request.args.get('force', 'false') == 'true'
+
+    if force_rebuild:
+        # Принудительная пересборка
+        result = rebuild_project(github_url, project_id, image_name)
+    else:
+        # Обычная сборка (с проверкой существования образа)
+        result = build_and_run(github_url, project_id, image_name)
 
     if not result['ok']:
         return jsonify({'ok': False, 'error': result['error']}), 500
 
     return jsonify({'ok': True, 'link': result['link']})
+
+
+# --- API: запуск контейнера (без пересборки) ---
+@task_detail_bp.route('/api/task/<int:lab_id>/student/<int:student_id>/run', methods=['POST'])
+def run_container_api(lab_id, student_id):
+    """Запускает контейнер из уже существующего образа"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT project_id, build_info FROM student_projects
+        WHERE lab_id = %s AND user_id = %s
+    """, (lab_id, student_id))
+    project_row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if not project_row:
+        return jsonify({'ok': False, 'error': 'Работа студента не найдена'}), 404
+
+    project_id = project_row[0]
+    build_info = project_row[1] or ''
+
+    # Извлекаем имя образа из build_info
+    image_name = None
+    project_type = 'console'
+    main_file = 'main.py'
+
+    for line in build_info.split('\n'):
+        if '[ИМЯ ОБРАЗА]' in line:
+            image_name = line.split(']')[1].strip()
+        elif '[ТИП ПРОЕКТА]' in line:
+            project_type = line.split(']')[1].strip()
+        elif '[ОСНОВНОЙ ФАЙЛ]' in line:
+            main_file = line.split(']')[1].strip()
+
+    if not image_name:
+        return jsonify({'ok': False, 'error': 'Образ не найден. Сначала соберите проект.'}), 404
+
+    # Проверяем, существует ли образ
+    if not image_exists(image_name):
+        return jsonify({'ok': False, 'error': f'Образ {image_name} не найден. Требуется пересборка.'}), 404
+
+    # Запускаем контейнер
+    container, link = run_container(image_name, project_id, project_type, main_file)
+
+    if not container:
+        return jsonify({'ok': False, 'error': 'Не удалось запустить контейнер'}), 500
+
+    return jsonify({
+        'ok': True,
+        'link': link,
+        'message': 'Контейнер запущен'
+    })
+
+
+# --- API: остановка контейнера ---
+@task_detail_bp.route('/api/task/<int:lab_id>/student/<int:student_id>/stop', methods=['POST'])
+def stop_container_api(lab_id, student_id):
+    """Останавливает контейнер"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT project_id FROM student_projects
+        WHERE lab_id = %s AND user_id = %s
+    """, (lab_id, student_id))
+    project_row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if not project_row:
+        return jsonify({'ok': False, 'error': 'Проект не найден'}), 404
+
+    project_id = project_row[0]
+    success, message = stop_container_by_project(project_id)
+
+    return jsonify({'ok': success, 'message': message})
 
 
 # --- API: статус контейнера ---
@@ -195,3 +306,34 @@ def set_comment(lab_id, student_id):
     conn.close()
 
     return jsonify({'ok': True})
+
+
+# --- API: пересборка проекта ---
+@task_detail_bp.route('/api/task/<int:lab_id>/student/<int:student_id>/rebuild', methods=['POST'])
+def rebuild_container(lab_id, student_id):
+    """Принудительная пересборка проекта"""
+    from backend.core.docker.build_pipeline import rebuild_project
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT project_id, github_link FROM student_projects
+        WHERE lab_id = %s AND user_id = %s
+    """, (lab_id, student_id))
+    project_row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if not project_row:
+        return jsonify({'ok': False, 'error': 'Работа студента не найдена'}), 404
+
+    project_id = project_row[0]
+    github_url = project_row[1]
+    image_name = f"student_{student_id}_lab_{lab_id}"
+
+    result = rebuild_project(github_url, project_id, image_name)
+
+    if not result['ok']:
+        return jsonify({'ok': False, 'error': result['error']}), 500
+
+    return jsonify({'ok': True, 'link': result['link']})
