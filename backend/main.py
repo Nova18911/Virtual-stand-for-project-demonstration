@@ -42,6 +42,8 @@ app.register_blueprint(task_detail_bp)
 app.register_blueprint(admin_import)
 app.register_blueprint(streamer_bp)
 
+
+
 @app.route('/')
 def login_page():
     return render_template('login.html')
@@ -57,14 +59,6 @@ def register_page():
 @app.route('/regist')
 def register_redirect():
     return redirect(url_for('login_page'))
-
-@app.route('/main')
-def main_page():
-    return render_template('mainpage.html')
-
-@app.route('/main_page')
-def main_redirect():
-    return redirect(url_for('main_page'))
 
 @app.route('/mail')
 def mail_page():
