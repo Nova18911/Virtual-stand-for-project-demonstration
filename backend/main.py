@@ -60,6 +60,14 @@ def register_page():
 def register_redirect():
     return redirect(url_for('login_page'))
 
+@app.route('/main')
+def main_page():
+    return render_template('mainpage.html')
+
+@app.route('/main_page')
+def main_redirect():
+    return redirect(url_for('main_page'))
+
 @app.route('/mail')
 def mail_page():
     return render_template('index.html')
