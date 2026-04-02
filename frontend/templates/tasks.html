@@ -28,11 +28,13 @@
         {% if role == 'teacher' %}
         <div class="bottom-bar">
             <button id="openModalBtn" class="btn btn-add">Добавить задание</button>
+            <button id="openAddStudentBtn" class="btn btn-add-student">Добавить студента</button>
         </div>
         {% endif %}
     </main>
 </div>
 
+<!-- ── Модалка: добавить задание ── -->
 {% if role == 'teacher' %}
 <div id="addTaskModal" class="modal-overlay" style="display:none;">
     <div class="modal-box">
@@ -40,9 +42,7 @@
             <span>Добавить задание</span>
             <button id="closeModalBtn" class="modal-close">✕</button>
         </div>
-
         <div id="modalError" class="flash danger" style="display:none;"></div>
-
         <div class="modal-body">
             <div class="form-group">
                 <label>Название задания</label>
@@ -66,27 +66,22 @@
                 <span id="fileName">Файл не выбран</span>
             </div>
         </div>
-
         <div class="modal-footer">
             <button id="submitTaskBtn" class="btn btn-add">Принять</button>
             <button id="cancelModalBtn" class="btn btn-cancel">Отменить</button>
         </div>
     </div>
 </div>
-{% endif %}
 
-{% if role == 'teacher' %}
+<!-- ── Модалка: редактировать задание ── -->
 <div id="editTaskModal" class="modal-overlay" style="display:none;">
     <div class="modal-box">
         <div class="modal-header">
             <span>Редактировать задание</span>
             <button id="editCloseBtn" class="modal-close">✕</button>
         </div>
-
         <div id="editModalError" class="flash danger" style="display:none;"></div>
-
         <input type="hidden" id="editLabId" />
-
         <div class="modal-body">
             <div class="form-group">
                 <label>Название задания</label>
@@ -110,10 +105,36 @@
                 <span id="editFileName">Файл не выбран</span>
             </div>
         </div>
-
         <div class="modal-footer">
             <button id="editSubmitBtn" class="btn btn-add">Сохранить</button>
             <button id="editCancelBtn" class="btn btn-cancel">Отменить</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Модалка: добавить студента ── -->
+<div id="addStudentModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-header">
+            <span>Добавить студента на курс</span>
+            <button id="closeAddStudentBtn" class="modal-close">✕</button>
+        </div>
+        <div id="studentModalError" class="flash danger" style="display:none;"></div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Поиск студента</label>
+                <input type="text" id="studentSearch" placeholder="Введите имя..." autocomplete="off" />
+            </div>
+            <div class="form-group">
+                <label>Выберите студента</label>
+                <select id="studentSelect" size="6" style="height: auto;">
+                    <option disabled>Загрузка...</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="submitAddStudentBtn" class="btn btn-add">Добавить</button>
+            <button id="cancelAddStudentBtn" class="btn btn-cancel">Отменить</button>
         </div>
     </div>
 </div>
