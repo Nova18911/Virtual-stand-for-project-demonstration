@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Панель администратора</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_main.css') }}">
-</head>   
+</head>
 <body>
 
 <header class="header">
@@ -58,11 +58,12 @@
 
                 <div class="form-group">
                     <label>Преподаватель</label>
-                    <select name="teacher">
+                    <!-- Передаём teacher_id вместо имени -->
+                    <select name="teacher_id">
                         <option value="">— выберите —</option>
                         {% for t in teachers %}
-                        <option value="{{ t.full_name }}"
-                            {% if selected and selected.teacher == t.full_name %}selected{% endif %}>
+                        <option value="{{ t.user_id }}"
+                            {% if selected and selected.teacher_id == t.user_id %}selected{% endif %}>
                             {{ t.full_name }}
                         </option>
                         {% endfor %}
