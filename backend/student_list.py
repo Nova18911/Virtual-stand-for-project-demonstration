@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for
 from backend.core.connect import get_db_connection
 import sys
