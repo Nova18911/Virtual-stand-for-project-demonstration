@@ -17,9 +17,9 @@
 </header>
 
 <nav class="navbar">
-    <a href="{{ url_for('admin_main.index') }}" class="navbar__link">Главная</a>
+    <a href="'{{ url_for('adminlogin.admin_mainpage') }}'" class="navbar__link">Главная</a>
     <a href="#" class="navbar__link navbar__link--active">Экспорт</a>
-    <a href="{{ url_for('admin_import.index') }}" class="navbar__link">Импорт</a>
+    <a href="'{{ url_for('admin_import.index') }}'" class="navbar__link">Импорт</a>
 </nav>
 
 <main class="main">
