@@ -16,9 +16,9 @@
 </header>
 
 <nav class="navbar">
-    <a href="#" class="navbar__link navbar__link--active">Главная</a>  <!-- а это лучше просто текстом сделать мы всё равно на главной -->
-    <a href="{{ url_for('adminlogin.admin_export_page') }}" class="navbar__link">Экспорт</a>
-    <a href="/admin/import/" class="navbar__link">Импорт</a>  <!-- здесь будет перенаправление на импорт -->
+    <a href="{{ url_for('admin_main.index') }}" class="navbar__link navbar__link--active">Главная</a>
+    <a href="{{ url_for('adminexport.export_page') }}" class="navbar__link">Экспорт</a>
+    <a href="{{ url_for('admin_import.index') }}" class="navbar__link">Импорт</a>
 </nav>
 
 <main class="main">
@@ -30,7 +30,6 @@
 
     <div class="panel">
 
-        <!-- Список курсов -->
         <div class="courses">
             <div class="courses__label">Курсы</div>
             <div class="courses__list">
@@ -43,7 +42,6 @@
             </div>
         </div>
 
-        <!-- Форма курса -->
         <div class="info">
             <div class="info__title">Информация о курсе</div>
             <form method="POST" action="{{ url_for('admin_main.course_save') }}">
@@ -73,16 +71,20 @@
 
                 <div class="form-actions">
                     <button type="submit" class="btn">Добавить</button>
+                    {% if selected %}
+                    <button type="button" class="btn"
+                        onclick="document.getElementById('deleteForm').submit()">Удалить</button>
+                    {% else %}
+                    <button class="btn" disabled>Удалить</button>
+                    {% endif %}
                 </div>
             </form>
 
             {% if selected %}
-            <form method="POST" action="{{ url_for('admin_main.course_delete') }}" style="margin-top: 8px;">
+            <form id="deleteForm" method="POST"
+                  action="{{ url_for('admin_main.course_delete') }}" style="display:none">
                 <input type="hidden" name="course_id" value="{{ selected.course_id }}">
-                <button type="submit" class="btn">Удалить</button>
             </form>
-            {% else %}
-            <button class="btn" disabled>Удалить</button>
             {% endif %}
         </div>
 

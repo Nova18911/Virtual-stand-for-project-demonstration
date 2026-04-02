@@ -4,6 +4,31 @@ from core.connect import get_db_connection
 admin_main = Blueprint('admin_main', __name__, url_prefix='/admin')
 
 
+def get_db():
+    conn = pg8000.connect(
+        host='127.0.0.1',
+        port=5432,
+        database='course_management',
+        user='admin',
+        password='12345678'
+    )
+    return conn
+
+
+def rows_to_dicts(cursor, rows):
+    """Converts a list of pg8000 row tuples to a list of dicts using cursor.description."""
+    if rows is None:
+        return None
+    cols = [desc[0] for desc in cursor.description]
+    return [dict(zip(cols, row)) for row in rows]
+
+
+def row_to_dict(cursor, row):
+    """Converts a single pg8000 row tuple to a dict."""
+    if row is None:
+        return None
+    cols = [desc[0] for desc in cursor.description]
+    return dict(zip(cols, row))
 def get_courses(cur):
     cur.execute('SELECT course_id, name, teacher FROM courses ORDER BY course_id')
     rows = cur.fetchall()
@@ -25,6 +50,19 @@ def get_teachers(cur):
 # /admin/admin_main — главная страница после входа
 @admin_main.route('/admin_main')
 def index():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute('SELECT course_id, name, teacher FROM courses ORDER BY course_id')
+    courses = rows_to_dicts(cur, cur.fetchall())
+
+    cur.execute('''
+                SELECT u.user_id, u.full_name
+                FROM users u
+                JOIN roles r ON u.access_id = r.access_id
+                WHERE r.access_rights = %s
+                ORDER BY u.full_name
+            ''', ('teacher',))
+    teachers = rows_to_dicts(cur, cur.fetchall())
     if 'user_id' not in session or session.get('user_role') != 'admin':
         return redirect(url_for('adminlogin.admin_login_page'))
 
@@ -45,6 +83,22 @@ def index():
 # /admin/course/<id> — выбор курса
 @admin_main.route('/course/<int:course_id>')
 def course_detail(course_id):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute('SELECT course_id, name, teacher FROM courses ORDER BY course_id')
+    courses = rows_to_dicts(cur, cur.fetchall())
+
+    cur.execute('SELECT course_id, name, teacher FROM courses WHERE course_id = %s', (course_id,))
+    selected = row_to_dict(cur, cur.fetchone())
+
+    cur.execute('''
+                SELECT u.user_id, u.full_name
+                FROM users u
+                JOIN roles r ON u.access_id = r.access_id
+                WHERE r.access_rights = %s
+                ORDER BY u.full_name
+            ''', ('teacher',))
+    teachers = rows_to_dicts(cur, cur.fetchall())
     if 'user_id' not in session or session.get('user_role') != 'admin':
         return redirect(url_for('adminlogin.admin_login_page'))
 
