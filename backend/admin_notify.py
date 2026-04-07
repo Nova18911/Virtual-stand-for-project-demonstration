@@ -16,7 +16,7 @@ def get_db_connection():
         port=5432,
         database="course_management",
         user="postgres",
-        password="endermen"
+        password="12345"
     )
 
 @admin_notify_bp.route('/', methods=['GET'])
