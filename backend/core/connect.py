@@ -4,7 +4,7 @@ DB_HOST = 'localhost'
 DB_PORT = 5432
 DB_NAME = 'course_management'
 DB_USER = 'postgres'
-DB_PASS = '12345678'
+DB_PASS = '12345'
 
 def get_db_connection():
     return pg8000.connect(
