@@ -62,8 +62,15 @@ def register_api():
         )
         user_id = cur.fetchone()[0]
 
-        # БЛОК АВТОМАТИЧЕСКОЙ ЗАПИСИ УДАЛЕН. 
-        # Теперь студент создается без привязки к курсам.
+        # Если студент — записываем на все существующие курсы
+        if role == 'student':
+            cur.execute("SELECT course_id FROM courses")
+            courses = cur.fetchall()
+            for course in courses:
+                cur.execute(
+                    "INSERT INTO course_user (course_id, user_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                    (course[0], user_id)
+                )
 
         conn.commit()
         conn.close()

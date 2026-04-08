@@ -42,8 +42,6 @@ app.register_blueprint(task_detail_bp)
 app.register_blueprint(admin_import)
 app.register_blueprint(streamer_bp)
 
-
-
 @app.route('/')
 def login_page():
     return render_template('login.html')
