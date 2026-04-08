@@ -10,6 +10,7 @@
 
         <header class="header">
             <div class="logo">Virtual Stand</div>
+            <div class="program-info">📄 {{ main_file }}</div>
             <span class="status-badge" id="status-badge">🟢 Подключение...</span>
         </header>
 
@@ -23,6 +24,7 @@
                    class="terminal-input"
                    placeholder="Введите данные для программы...">
             <button class="send-btn" id="send-btn">Отправить</button>
+            <button class="stop-btn" id="stop-btn">⏹️ Остановить</button>
         </div>
 
     </div>
@@ -33,6 +35,7 @@
         const statusBadge = document.getElementById('status-badge');
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
+        const stopBtn = document.getElementById('stop-btn');
 
         let eventSource = null;
         let isRunning = true;
@@ -46,6 +49,7 @@
         }
 
         function connectToLogs() {
+            // ИСПРАВЛЕНО: убираем /streamer префикс
             eventSource = new EventSource(`/container/${projectId}/logs`);
 
             eventSource.onopen = function() {
@@ -56,7 +60,6 @@
 
             eventSource.onmessage = function(event) {
                 if (event.data) {
-                    // Проверяем, не является ли сообщение командой запуска
                     if (event.data.includes('🚀 Запуск программы')) {
                         addLine(event.data, 'info');
                     } else {
@@ -84,24 +87,57 @@
             };
         }
 
-        function sendInput() {
+        async function sendInput() {
             const value = userInput.value.trim();
             if (!value) return;
 
             addLine(`> ${value}`, 'input');
 
-            fetch(`/container/${projectId}/input`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: `input=${encodeURIComponent(value)}`
-            }).catch(err => {
+            try {
+                // ИСПРАВЛЕНО: убираем /streamer префикс
+                await fetch(`/container/${projectId}/input`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `input=${encodeURIComponent(value)}`
+                });
+            } catch (err) {
                 addLine(`❌ Ошибка отправки: ${err.message}`, 'error');
-            });
+            }
 
             userInput.value = '';
         }
 
+        async function stopContainer() {
+            if (!confirm('Остановить контейнер?')) return;
+
+            try {
+                // ИСПРАВЛЕНО: убираем /streamer префикс
+                const response = await fetch(`/container/${projectId}/stop`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    addLine('⏹️ Контейнер остановлен', 'info');
+                    statusBadge.textContent = '🔴 Остановлен';
+                    statusBadge.className = 'status-badge stopped';
+                    isRunning = false;
+                    userInput.disabled = true;
+                    sendBtn.disabled = true;
+                    if (eventSource) {
+                        eventSource.close();
+                    }
+                } else {
+                    addLine(`❌ Ошибка: ${data.error}`, 'error');
+                }
+            } catch (err) {
+                addLine(`❌ Ошибка: ${err.message}`, 'error');
+            }
+        }
+
         sendBtn.addEventListener('click', sendInput);
+        stopBtn.addEventListener('click', stopContainer);
+
         userInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 sendInput();

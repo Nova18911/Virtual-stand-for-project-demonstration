@@ -57,10 +57,6 @@ body {
     margin-right: auto;
 }
 
-.search-block {
-    display: flex;
-    gap: 0;
-}
 
 .search-input {
     padding: 8px 14px;

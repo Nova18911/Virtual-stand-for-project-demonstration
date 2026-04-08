@@ -8,6 +8,7 @@
 <body>
     <div class="toolbar">
         <span>🖥 GUI приложение</span>
+        <span class="program-info">📄 {{ main_file }}</span>
         <button class="btn-stop" id="stopBtn">Остановить</button>
     </div>
 
@@ -15,7 +16,26 @@
 
     <script>
         const PROJECT_ID = {{ project_id }};
+
+        document.getElementById('stopBtn').addEventListener('click', async () => {
+            if (!confirm('Остановить контейнер?')) return;
+
+            try {
+                const response = await fetch(`/streamer/container/${PROJECT_ID}/stop`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Контейнер остановлен');
+                    window.close();
+                } else {
+                    alert('Ошибка: ' + data.error);
+                }
+            } catch (err) {
+                alert('Ошибка при остановке контейнера: ' + err.message);
+            }
+        });
     </script>
-    <script src="{{ url_for('static', filename='js/container_gui.js') }}"></script>
 </body>
 </html>
