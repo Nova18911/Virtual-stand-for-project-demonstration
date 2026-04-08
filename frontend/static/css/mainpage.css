@@ -198,23 +198,7 @@ body {
     margin: 0;
     font-weight: 400;
 }
-/* Стиль для всей карточки, если она заблокирована */
-.course-locked {
-    filter: grayscale(1); /* Делаем черно-белым */
-    opacity: 0.6;         /* Делаем полупрозрачным */
-    border: 1px dashed #ccc;
-}
 
-/* Стиль для ссылки закрытого курса */
-.course-link.locked {
-    cursor: not-allowed;
-    color: #888;
-    text-decoration: none;
-}
-
-.course-link.locked:hover {
-    color: #555;
-}
 @media (max-width: 600px) {
     .searchContainer { padding: 12px 16px; }
     .cards-wrapper { padding: 0 16px; margin: 24px auto; }
