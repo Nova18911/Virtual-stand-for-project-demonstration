@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
+from backend.core.connect import get_db_connection
 import pg8000
 
 admin_main = Blueprint('admin_main', __name__, url_prefix='/admin')
@@ -9,8 +10,8 @@ def get_db():
         host='127.0.0.1',
         port=5432,
         database='course_management',
-        user='admin',
-        password='12345678'
+        user='postgres',
+        password='12345'
     )
 
     def dict_row(cursor, row):

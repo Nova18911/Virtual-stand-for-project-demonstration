@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, send_file
+from backend.core.connect import get_db_connection
 import pg8000
 import json
 import io
@@ -6,16 +7,6 @@ import zipfile
 from datetime import datetime
 
 admexp_bp = Blueprint('adminexport', __name__)
-
-
-def get_db_connection():
-    return pg8000.connect(
-        host="127.0.0.1",
-        port=5432,
-        database="course_management",
-        user="postgres",
-        password="12345678"
-    )
 
 
 def get_tables_from_db():
@@ -60,7 +51,7 @@ def get_table_data(table_name):
     return result
 
 
-def generate_sql_dump(table_name, data):
+def generate_postgresql_dump(table_name, data):
     sql_lines = []
 
     if not data:
@@ -87,8 +78,11 @@ def generate_sql_dump(table_name, data):
                 values.append('TRUE' if val else 'FALSE')
             elif isinstance(val, datetime):
                 values.append(f"'{val.isoformat()}'")
+            elif isinstance(val, (bytes, bytearray)):
+                values.append(f"'\\x{val.hex()}'")
             else:
-                values.append(f"'{str(val)}'")
+                escaped_val = str(val).replace("'", "''")
+                values.append(f"'{escaped_val}'")
 
         values_str = ', '.join(values)
         sql_lines.append(f'INSERT INTO "{table_name}" ({columns_str}) VALUES ({values_str});')
@@ -96,95 +90,149 @@ def generate_sql_dump(table_name, data):
     return sql_lines
 
 
-def generate_json_backup(tables_data):
-    backup = {
-        'created_at': datetime.now().isoformat(),
-        'version': '1.0',
-        'tables': tables_data
-    }
-    return json.dumps(backup, ensure_ascii=False, indent=2, default=str)
+def generate_mysql_dump(table_name, data):
+    sql_lines = []
+
+    if not data:
+        sql_lines.append(f"-- Table {table_name} is empty")
+        return sql_lines
+
+    columns = list(data[0].keys())
+    columns_str = ', '.join([f'`{col}`' for col in columns])
+
+    sql_lines.append(f'-- Data for table `{table_name}`')
+
+    for row in data:
+        values = []
+        for col in columns:
+            val = row[col]
+            if val is None:
+                values.append('NULL')
+            elif isinstance(val, str):
+                escaped_val = val.replace("'", "''").replace("\\", "\\\\")
+                values.append(f"'{escaped_val}'")
+            elif isinstance(val, (int, float)):
+                values.append(str(val))
+            elif isinstance(val, bool):
+                values.append('1' if val else '0')
+            elif isinstance(val, datetime):
+                values.append(f"'{val.strftime('%Y-%m-%d %H:%M:%S')}'")
+            elif isinstance(val, (bytes, bytearray)):
+                values.append(f"X'{val.hex()}'")
+            else:
+                escaped_val = str(val).replace("'", "''").replace("\\", "\\\\")
+                values.append(f"'{escaped_val}'")
+
+        values_str = ', '.join(values)
+        sql_lines.append(f'INSERT INTO `{table_name}` ({columns_str}) VALUES ({values_str});')
+
+    return sql_lines
 
 
 @admexp_bp.route('/api/tables')
 def get_tables():
-    tables = get_tables_from_db()
-    return jsonify(tables)
+    try:
+        tables = get_tables_from_db()
+        return jsonify(tables)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @admexp_bp.route('/api/backup', methods=['POST'])
 def create_backup():
-    data = request.json
-    backup_type = data.get('type', 'partial')
-    selected_tables = data.get('tables', [])
-    file_format = data.get('format', 'PostgreSQL')
-    need_zip = data.get('zip', False)
-    filename = data.get('filename', f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
+    try:
+        data = request.json
+        backup_type = data.get('type', 'partial')
+        selected_tables = data.get('tables', [])
+        db_type = data.get('db_type', 'PostgreSQL')  # PostgreSQL, MySQL, MSSQL, Oracle
+        file_format = data.get('format', 'SQL')  # SQL или JSON
+        need_zip = data.get('zip', False)
+        filename = data.get('filename', f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
 
-    all_tables = get_tables_from_db()
-    all_table_names = [t['name'] for t in all_tables]
+        all_tables = get_tables_from_db()
+        all_table_names = [t['name'] for t in all_tables]
 
-    if backup_type == 'full':
-        tables_to_backup = all_table_names
-    else:
-        tables_to_backup = [t for t in selected_tables if t in all_table_names]
+        if backup_type == 'full':
+            tables_to_backup = all_table_names
+        else:
+            tables_to_backup = [t for t in selected_tables if t in all_table_names]
 
-    if not tables_to_backup:
-        return jsonify({'error': 'Нет таблиц для бекапа'}), 400
+        if not tables_to_backup:
+            return jsonify({'error': 'Нет таблиц для бекапа'}), 400
 
-    backup_data = {}
-    for table_name in tables_to_backup:
-        table_data = get_table_data(table_name)
-        backup_data[table_name] = table_data
+        backup_data = {}
+        for table_name in tables_to_backup:
+            table_data = get_table_data(table_name)
+            backup_data[table_name] = table_data
 
-    if file_format == 'MySQL':
-        sql_lines = [
-            f"-- Database Backup",
-            f"-- Created: {datetime.now().isoformat()}",
-            f"-- Type: {backup_type} backup",
-            f"-- Tables: {', '.join(tables_to_backup)}",
-            ""
-        ]
+        # Выбор формата вывода
+        if file_format == 'JSON':
+            # JSON формат (универсальный)
+            backup_json = {
+                'metadata': {
+                    'created_at': datetime.now().isoformat(),
+                    'type': backup_type,
+                    'db_type': db_type,
+                    'tables': tables_to_backup,
+                    'version': '1.0'
+                },
+                'data': backup_data
+            }
+            file_content = json.dumps(backup_json, ensure_ascii=False, indent=2, default=str).encode('utf-8')
+            file_extension = '.json'
+            mime_type = 'application/json'
+        else:
+            # SQL формат в зависимости от СУБД
+            sql_lines = [
+                f"-- {db_type} Database Backup",
+                f"-- Created: {datetime.now().isoformat()}",
+                f"-- Type: {backup_type} backup",
+                f"-- Database: {db_type}",
+                f"-- Tables: {', '.join(tables_to_backup)}",
+                ""
+            ]
 
-        for table_name, table_data in backup_data.items():
-            sql_lines.extend(generate_sql_dump(table_name, table_data))
-            sql_lines.append("")
+            # Выбор функции генерации SQL в зависимости от СУБД
+            if db_type == 'PostgreSQL':
+                sql_func = generate_postgresql_dump
+                comment_prefix = "--"
+            elif db_type == 'MySQL':
+                sql_func = generate_mysql_dump
+                comment_prefix = "--"
+            else:
+                sql_func = generate_postgresql_dump
 
-        file_content = '\n'.join(sql_lines).encode('utf-8')
-        file_extension = '.sql'
-        mime_type = 'application/sql'
-    else:
-        backup_json = {
-            'metadata': {
-                'created_at': datetime.now().isoformat(),
-                'type': backup_type,
-                'format': 'postgresql',
-                'tables': tables_to_backup
-            },
-            'data': backup_data
-        }
-        file_content = json.dumps(backup_json, ensure_ascii=False, indent=2, default=str).encode('utf-8')
-        file_extension = '.json'
-        mime_type = 'application/json'
+            for table_name, table_data in backup_data.items():
+                sql_lines.extend(sql_func(table_name, table_data))
+                sql_lines.append("")
 
-    if need_zip:
-        memory_file = io.BytesIO()
-        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
-            zf.writestr(f"{filename}{file_extension}", file_content)
-        memory_file.seek(0)
+            file_content = '\n'.join(sql_lines).encode('utf-8')
+            file_extension = '.sql'
+            mime_type = 'application/sql'
 
-        return send_file(
-            memory_file,
-            mimetype='application/zip',
-            as_attachment=True,
-            download_name=f"{filename}.zip"
-        )
-    else:
-        memory_file = io.BytesIO(file_content)
-        memory_file.seek(0)
+        # Создание ZIP архива если нужно
+        if need_zip:
+            memory_file = io.BytesIO()
+            with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+                zf.writestr(f"{filename}{file_extension}", file_content)
+            memory_file.seek(0)
 
-        return send_file(
-            memory_file,
-            mimetype=mime_type,
-            as_attachment=True,
-            download_name=f"{filename}{file_extension}"
-        )
+            return send_file(
+                memory_file,
+                mimetype='application/zip',
+                as_attachment=True,
+                download_name=f"{filename}.zip"
+            )
+        else:
+            memory_file = io.BytesIO(file_content)
+            memory_file.seek(0)
+
+            return send_file(
+                memory_file,
+                mimetype=mime_type,
+                as_attachment=True,
+                download_name=f"{filename}{file_extension}"
+            )
+
+    except Exception as e:
+        return jsonify({'error': f'Ошибка при создании бэкапа: {str(e)}'}), 500
