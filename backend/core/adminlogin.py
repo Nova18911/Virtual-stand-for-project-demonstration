@@ -1,10 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from backend.core.connect import get_db_connection
 import pg8000
 from backend.core.connect import get_db_connection
 
 logadm_bp = Blueprint('adminlogin', __name__)
-
-
 
 @logadm_bp.route('/loginadmin', methods=['GET', 'POST'])
 def admin_login_page():
