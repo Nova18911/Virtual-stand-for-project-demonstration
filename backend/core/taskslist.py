@@ -1,11 +1,15 @@
-from flask import Blueprint, jsonify, request, session, Response
+from flask import Blueprint, jsonify, request, session, Response, send_file
 from backend.core.connect import get_db_connection
 from datetime import datetime, timedelta
+import os
+import io
+from urllib.parse import quote
 
 taskslist_bp = Blueprint('taskslist', __name__)
 
+
 def format_date(date_val):
-    """Вспомогательная функция для безопасного форматирования даты, 
+    """Вспомогательная функция для безопасного форматирования даты,
     даже если БД возвращает строку вместо объекта datetime"""
     if not date_val:
         return None
@@ -20,12 +24,13 @@ def format_date(date_val):
             return date_val
     return str(date_val)
 
+
 @taskslist_bp.route('/api/course/<int:course_id>/labs', methods=['GET'])
 def get_course_labs(course_id):
     user_id = session.get('user_id')
-    role    = session.get('user_role', 'student')
+    role = session.get('user_role', 'student')
 
-    conn   = get_db_connection()
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     if role == 'student' and user_id:
@@ -37,7 +42,8 @@ def get_course_labs(course_id):
                 l.start_date,
                 l.end_date,
                 CASE WHEN sp.project_id IS NOT NULL THEN true ELSE false END AS submitted,
-                CASE WHEN l.task_file IS NOT NULL AND length(l.task_file) > 0 THEN true ELSE false END AS has_file
+                CASE WHEN l.task_file IS NOT NULL AND length(l.task_file) > 0 THEN true ELSE false END AS has_file,
+                l.task_filename
             FROM labs l
             LEFT JOIN student_projects sp
                 ON sp.lab_id = l.lab_id AND sp.user_id = %s
@@ -53,7 +59,8 @@ def get_course_labs(course_id):
                 start_date,
                 end_date,
                 false AS submitted,
-                CASE WHEN task_file IS NOT NULL AND length(task_file) > 0 THEN true ELSE false END AS has_file
+                CASE WHEN task_file IS NOT NULL AND length(task_file) > 0 THEN true ELSE false END AS has_file,
+                task_filename
             FROM labs
             WHERE course_id = %s
             ORDER BY lab_id
@@ -65,13 +72,14 @@ def get_course_labs(course_id):
 
     return jsonify([
         {
-            'id':         lab[0],
-            'name':       lab[1],
-            'task':       lab[2],
+            'id': lab[0],
+            'name': lab[1],
+            'task': lab[2],
             'start_date': format_date(lab[3]),
-            'end_date':   format_date(lab[4]),
-            'submitted':  lab[5],
-            'has_file':   lab[6],
+            'end_date': format_date(lab[4]),
+            'submitted': lab[5],
+            'has_file': lab[6],
+            'filename': lab[7] if len(lab) > 7 else None,
         }
         for lab in labs
     ])
@@ -83,12 +91,13 @@ def get_task(lab_id):
     if role != 'teacher':
         return jsonify({'ok': False, 'error': 'Недостаточно прав.'}), 403
 
-    conn   = get_db_connection()
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
         SELECT lab_id, name, task, end_date,
                CASE WHEN task_file IS NOT NULL AND length(task_file) > 0 
-                    THEN true ELSE false END AS has_file
+                    THEN true ELSE false END AS has_file,
+               task_filename
         FROM labs WHERE lab_id = %s
     """, (lab_id,))
     row = cursor.fetchone()
@@ -108,34 +117,50 @@ def get_task(lab_id):
         formatted_raw = ''
 
     return jsonify({
-        'id':           row[0],
-        'name':         row[1],
-        'task':         row[2],
+        'id': row[0],
+        'name': row[1],
+        'task': row[2],
         'end_date_raw': formatted_raw,
-        'has_file':     row[4],
+        'has_file': row[4],
+        'filename': row[5],
     })
 
 
 @taskslist_bp.route('/api/task/<int:lab_id>/file', methods=['GET'])
 def download_task_file(lab_id):
-    conn   = get_db_connection()
+    """Скачивание файла задания (доступно и студентам, и преподавателям)"""
+    conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT task_file, name FROM labs WHERE lab_id = %s", (lab_id,))
+    cursor.execute("SELECT task_file, task_filename, name FROM labs WHERE lab_id = %s", (lab_id,))
     row = cursor.fetchone()
     cursor.close()
     conn.close()
 
-    if not row or not row[0]:
+    if not row or not row[0] or len(row[0]) == 0:
         return jsonify({'ok': False, 'error': 'Файл не найден.'}), 404
 
     file_bytes = bytes(row[0])
-    file_name  = f"{row[1]}"
 
-    return Response(
+    # Получаем имя файла
+    if row[1] and row[1] != '':
+        filename = row[1]
+    else:
+        # Если нет сохраненного имени, используем название задания
+        filename = f"{row[2]}.pdf"
+
+    # Кодируем имя файла для HTTP заголовков (поддержка русских символов)
+    encoded_filename = quote(filename)
+
+    # Создаем response с правильными заголовками для кириллицы
+    response = Response(
         file_bytes,
         mimetype='application/octet-stream',
-        headers={'Content-Disposition': f'attachment; filename="{file_name}"'}
+        headers={
+            'Content-Disposition': f"attachment; filename=\"{encoded_filename}\"; filename*=UTF-8''{encoded_filename}"
+        }
     )
+
+    return response
 
 
 @taskslist_bp.route('/api/task/add', methods=['POST'])
@@ -144,11 +169,11 @@ def add_task():
     if role != 'teacher':
         return jsonify({'ok': False, 'error': 'Недостаточно прав.'}), 403
 
-    course_id   = request.form.get('course_id', '').strip()
-    name        = request.form.get('name', '').strip()
-    deadline    = request.form.get('deadline', '').strip()
+    course_id = request.form.get('course_id', '').strip()
+    name = request.form.get('name', '').strip()
+    deadline = request.form.get('deadline', '').strip()
     description = request.form.get('description', '').strip()
-    file        = request.files.get('file')
+    file = request.files.get('file')
 
     if not name:      return jsonify({'ok': False, 'error': 'Введите название задания.'}), 400
     if not deadline:  return jsonify({'ok': False, 'error': 'Укажите срок сдачи.'}), 400
@@ -158,20 +183,28 @@ def add_task():
         selected_date = datetime.strptime(deadline, '%Y-%m-%d').date()
         min_date = datetime.now().date() + timedelta(days=1)
         if selected_date < min_date:
-            return jsonify({'ok': False, 'error': f'Срок сдачи должен быть не раньше {min_date.strftime("%d.%m.%Y")}.'}), 400
+            return jsonify(
+                {'ok': False, 'error': f'Срок сдачи должен быть не раньше {min_date.strftime("%d.%m.%Y")}.'}), 400
     except ValueError:
         return jsonify({'ok': False, 'error': 'Некорректный формат даты.'}), 400
 
-    file_bytes = file.read() if file and file.filename else b''
+    # Читаем файл и сохраняем его имя
+    file_bytes = b''
+    filename = None
+
+    if file and file.filename:
+        file_bytes = file.read()
+        # Сохраняем оригинальное имя файла с расширением
+        filename = file.filename
 
     try:
-        conn   = get_db_connection()
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO labs (name, course_id, task, task_file, end_date)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO labs (name, course_id, task, task_file, task_filename, end_date)
+            VALUES (%s, %s, %s, %s, %s, %s)
             RETURNING lab_id
-        """, (name, int(course_id), description, file_bytes, deadline))
+        """, (name, int(course_id), description, file_bytes, filename, deadline))
         lab_id = cursor.fetchone()[0]
         conn.commit()
         cursor.close()
@@ -188,11 +221,12 @@ def edit_task():
     if role != 'teacher':
         return jsonify({'ok': False, 'error': 'Недостаточно прав.'}), 403
 
-    lab_id      = request.form.get('lab_id', '').strip()
-    name        = request.form.get('name', '').strip()
-    deadline    = request.form.get('deadline', '').strip()
+    lab_id = request.form.get('lab_id', '').strip()
+    name = request.form.get('name', '').strip()
+    deadline = request.form.get('deadline', '').strip()
     description = request.form.get('description', '').strip()
-    file        = request.files.get('file')
+    file = request.files.get('file')
+    delete_file = request.form.get('delete_file', 'false') == 'true'
 
     if not name:     return jsonify({'ok': False, 'error': 'Введите название.'}), 400
     if not deadline: return jsonify({'ok': False, 'error': 'Укажите срок сдачи.'}), 400
@@ -201,21 +235,31 @@ def edit_task():
         selected_date = datetime.strptime(deadline, '%Y-%m-%d').date()
         min_date = datetime.now().date() + timedelta(days=1)
         if selected_date < min_date:
-            return jsonify({'ok': False, 'error': f'Нельзя установить срок сдачи раньше {min_date.strftime("%d.%m.%Y")}.'}), 400
+            return jsonify(
+                {'ok': False, 'error': f'Нельзя установить срок сдачи раньше {min_date.strftime("%d.%m.%Y")}.'}), 400
     except ValueError:
         return jsonify({'ok': False, 'error': 'Некорректный формат даты.'}), 400
 
     try:
-        conn   = get_db_connection()
+        conn = get_db_connection()
         cursor = conn.cursor()
 
-        if file and file.filename and len(file.filename) > 0:
-            file_bytes = file.read()
+        if delete_file:
+            # Удаляем файл
             cursor.execute("""
-                UPDATE labs SET name=%s, task=%s, end_date=%s, task_file=%s
+                UPDATE labs SET name=%s, task=%s, end_date=%s, task_file=NULL, task_filename=NULL
                 WHERE lab_id=%s
-            """, (name, description, deadline, file_bytes, int(lab_id)))
+            """, (name, description, deadline, int(lab_id)))
+        elif file and file.filename and len(file.filename) > 0:
+            # Обновляем с новым файлом
+            file_bytes = file.read()
+            filename = file.filename
+            cursor.execute("""
+                UPDATE labs SET name=%s, task=%s, end_date=%s, task_file=%s, task_filename=%s
+                WHERE lab_id=%s
+            """, (name, description, deadline, file_bytes, filename, int(lab_id)))
         else:
+            # Обновляем без изменения файла
             cursor.execute("""
                 UPDATE labs SET name=%s, task=%s, end_date=%s
                 WHERE lab_id=%s
