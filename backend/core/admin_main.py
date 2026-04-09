@@ -11,7 +11,7 @@ def get_db():
         port=5432,
         database='course_management',
         user='postgres',
-        password='12345'
+        password='12345678'
     )
 def rows_to_dicts(cursor, rows):
     if rows is None:
