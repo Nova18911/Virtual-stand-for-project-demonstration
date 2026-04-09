@@ -1,16 +1,60 @@
 # backend/core/docker/project_analyzer.py
 
 import os
+import re
+import ast
+from collections import defaultdict
 
+# Популярные пакеты и их имена в импортах
+PACKAGE_MAPPING = {
+    # Data Science
+    'pandas': 'pandas',
+    'numpy': 'numpy',
 
+    # Визуализация
+    'matplotlib': 'matplotlib',
+    'seaborn': 'seaborn',
+    'plotly': 'plotly',
+
+    # Machine Learning
+    'sklearn': 'scikit-learn',           # ← важно!
+    'scikit-learn': 'scikit-learn',
+
+    # Научные вычисления
+    'scipy': 'scipy',
+    'sympy': 'sympy',
+    'statsmodels': 'statsmodels',
+
+    # Работа с файлами и веб
+    'requests': 'requests',
+    'beautifulsoup4': 'beautifulsoup4',
+    'openpyxl': 'openpyxl',
+    'pillow': 'pillow',
+
+    # Удобства для консоли
+    'tabulate': 'tabulate',
+    'colorama': 'colorama',
+    'tqdm': 'tqdm',
+
+    # Стандартная библиотека (не устанавливаем)
+    'os': None,
+    'sys': None,
+    'math': None,
+    'random': None,
+    'datetime': None,
+    'time': None,
+    'json': None,
+    'csv': None,
+    'collections': None,
+}
 def analyze_project(repo_path: str) -> dict:
     """
-    Упрощенный анализ только для tkinter проектов
+    Анализирует проект: находит главный файл + автоматически определяет зависимости
     """
     result = {
         'main_file': None,
         'requirements': [],
-        'project_type': 'gui',  # Всегда gui для tkinter
+        'project_type': 'console',
         'error': None
     }
 
@@ -18,36 +62,66 @@ def analyze_project(repo_path: str) -> dict:
         result['error'] = 'Папка репозитория не найдена'
         return result
 
-    # 1. Ищем основной файл
-    main_candidates = ['main.py', 'app.py', 'run.py', 'start.py', 'gui.py']
+    # 1. Поиск главного файла
+    main_candidates = ['main.py', 'app.py', 'run.py', 'start.py']
+    py_files = []
 
-    for filename in main_candidates:
-        if os.path.exists(os.path.join(repo_path, filename)):
-            result['main_file'] = filename
-            break
-
-    if not result['main_file']:
-        # Ищем любой .py файл в корне
-        for entry in os.scandir(repo_path):
-            if entry.is_file() and entry.name.endswith('.py'):
+    for entry in os.scandir(repo_path):
+        if entry.is_file() and entry.name.endswith('.py'):
+            py_files.append(entry.name)
+            if entry.name in main_candidates:
                 result['main_file'] = entry.name
                 break
 
+    # Если не нашли по кандидатам — берём первый .py файл
+    if not result['main_file'] and py_files:
+        result['main_file'] = py_files[0]
+
     if not result['main_file']:
-        result['error'] = 'Не найден Python файл для запуска'
+        result['error'] = 'Не найден главный Python файл'
         return result
 
-    # 2. Проверяем существующий requirements.txt
-    req_path = os.path.join(repo_path, 'requirements.txt')
-    if os.path.exists(req_path):
-        try:
-            with open(req_path, 'r', encoding='utf-8') as f:
-                result['requirements'] = [
-                    line.strip() for line in f
-                    if line.strip() and not line.startswith('#')
-                ]
-        except:
-            pass
+    print(f"✅ Главный файл: {result['main_file']}")
 
-    print(f"✅ Найден tkinter проект: {result['main_file']}")
+    # 2. Автоматический сбор зависимостей
+    dependencies = set()
+
+    for py_file in py_files:
+        file_path = os.path.join(repo_path, py_file)
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                code = f.read()
+
+            tree = ast.parse(code)
+
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        pkg = alias.name.split('.')[0]
+                        if pkg in PACKAGE_MAPPING and PACKAGE_MAPPING[pkg]:
+                            dependencies.add(PACKAGE_MAPPING[pkg])
+
+                elif isinstance(node, ast.ImportFrom):
+                    if node.module:
+                        pkg = node.module.split('.')[0]
+                        if pkg in PACKAGE_MAPPING and PACKAGE_MAPPING[pkg]:
+                            dependencies.add(PACKAGE_MAPPING[pkg])
+
+        except Exception as e:
+            print(f"⚠️ Не удалось проанализировать {py_file}: {e}")
+
+    result['requirements'] = sorted(list(dependencies))
+
+    # Принудительно перезаписываем requirements.txt при каждом анализе
+    req_path = os.path.join(repo_path, "requirements.txt")
+    try:
+        with open(req_path, "w", encoding="utf-8") as f:
+            if result['requirements']:
+                f.write("\n".join(result['requirements']) + "\n")
+                print(f"📦 Создан requirements.txt: {result['requirements']}")
+            else:
+                f.write("# Нет автоматически обнаруженных зависимостей\n")
+    except Exception as e:
+        print(f"⚠️ Не удалось создать requirements.txt: {e}")
+
     return result

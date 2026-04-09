@@ -4,91 +4,115 @@ import os
 import subprocess
 
 
-# backend/core/docker/create_dockerfile.py
+def create_dockerfile(repo_path: str, project_type: str, main_file: str) -> dict:
+    """Создаёт Dockerfile для консольного проекта (с поддержкой pandas и др.)"""
+    try:
+        dockerfile_content = f'''# Dockerfile для консольного Python проекта
+FROM python:3.11-slim
 
-def create_dockerfile(repo_path: str, project_type: str, main_file: str, system_deps: list = None) -> dict:
-    """Минимальный Dockerfile только для tkinter"""
-
-    # Самый минимальный Dockerfile - только то, что нужно
-    dockerfile_content = '''FROM python:3.9-slim
-
-# Устанавливаем только минимально необходимое для tkinter
+# Устанавливаем системные зависимости для сборки тяжёлых пакетов (pandas, numpy и т.д.)
 RUN apt-get update && apt-get install -y --no-install-recommends \\
-    python3-tk \\
-    xvfb \\
+    gcc \\
+    python3-dev \\
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
+# Сначала копируем только requirements.txt — чтобы кэшировать установку зависимостей
+COPY requirements.txt .
+
+# Устанавливаем зависимости
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Копируем весь код проекта
 COPY . .
 
-# Контейнер должен жить
-CMD ["tail", "-f", "/dev/null"]
+# Запускаем программу
+CMD ["python", "-u", "{main_file}"]
 '''
 
-    dockerfile_path = os.path.join(repo_path, 'Dockerfile')
-
-    try:
-        with open(dockerfile_path, 'w', encoding='utf-8') as f:
+        dockerfile_path = os.path.join(repo_path, "Dockerfile")
+        with open(dockerfile_path, "w", encoding="utf-8") as f:
             f.write(dockerfile_content)
 
-        print(f"✅ Создан минимальный Dockerfile")
-        return {'success': True, 'path': dockerfile_path, 'error': None}
+        print("✅ Создан Dockerfile с поддержкой тяжёлых пакетов (pandas и др.)")
+        return {'success': True}
+
     except Exception as e:
-        return {'success': False, 'path': None, 'error': str(e)}
+        print(f"❌ Ошибка создания Dockerfile: {e}")
+        return {'success': False, 'error': str(e)}
 
 
-def save_requirements_file(repo_path: str, dependencies: list) -> dict:
-    """Создает requirements.txt если его нет"""
-    req_path = os.path.join(repo_path, 'requirements.txt')
-
-    if os.path.exists(req_path):
-        return {'success': True, 'path': req_path, 'error': None}
-
-    # tkinter не требует pip установки
+def save_requirements_file(repo_path: str, requirements: list):
+    """Создаёт requirements.txt"""
+    req_path = os.path.join(repo_path, "requirements.txt")
     try:
-        with open(req_path, 'w', encoding='utf-8') as f:
-            f.write("# Только внешние зависимости (если есть)\n")
-            f.write("# tkinter встроен в Python\n")
-        return {'success': True, 'path': req_path, 'error': None}
+        with open(req_path, "w", encoding="utf-8") as f:
+            if requirements:
+                f.write("\n".join(requirements) + "\n")
+            else:
+                f.write("# Нет дополнительных зависимостей\n")
+        print("✅ requirements.txt создан")
     except Exception as e:
-        return {'success': False, 'path': None, 'error': f'Ошибка: {str(e)}'}
+        print(f"⚠️ Ошибка создания requirements.txt: {e}")
 
 
-def create_dockerignore(repo_path: str) -> dict:
-    """Создает .dockerignore"""
-    dockerignore_content = '''__pycache__
+def create_dockerignore(repo_path: str):
+    """Создаёт .dockerignore"""
+    content = """__pycache__/
 *.pyc
+*.pyo
 .git
-.venv
-venv
-.DS_Store
-'''
-    dockerignore_path = os.path.join(repo_path, '.dockerignore')
-
+.gitignore
+README.md
+*.md
+.vscode/
+.idea/
+.env
+"""
     try:
-        with open(dockerignore_path, 'w', encoding='utf-8') as f:
-            f.write(dockerignore_content)
-        return {'success': True, 'path': dockerignore_path, 'error': None}
-    except Exception as e:
-        return {'success': False, 'path': None, 'error': f'Ошибка: {str(e)}'}
+        with open(os.path.join(repo_path, ".dockerignore"), "w", encoding="utf-8") as f:
+            f.write(content)
+        print("✅ .dockerignore создан")
+    except:
+        pass
 
-
-# backend/core/docker/create_dockerfile.py
 
 def build_docker_image(repo_path: str, image_name: str) -> dict:
-    """Максимально простая сборка Docker образа"""
-    print(f"🔨 Сборка образа {image_name}...")
+    """Улучшенная сборка с выводом логов в реальном времени"""
+    print(f"🔨 Начинаем сборку образа {image_name}...")
 
-    # Создаем команду
-    cmd = f'cd /d "{repo_path}" && docker build -t {image_name} .'
-    print(f"🔧 Команда: {cmd}")
+    try:
+        # Важно: используем shell=True + --progress=plain для Windows
+        cmd = f'cd /d "{repo_path}" && docker build --progress=plain -t {image_name} .'
 
-    # Используем os.system для простоты
-    result = os.system(cmd)
+        process = subprocess.Popen(
+            cmd,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding='utf-8',
+            errors='replace'
+        )
 
-    if result == 0:
-        print(f"✅ Образ {image_name} успешно собран!")
-        return {'success': True}
-    else:
-        print(f"❌ Ошибка сборки (код: {result})")
-        return {'success': False, 'error': f'Ошибка сборки (код: {result})'}
+        output_lines = []
+        for line in process.stdout:
+            line = line.strip()
+            if line:
+                print("   " + line)          # ← выводим в консоль в реальном времени
+                output_lines.append(line)
+
+        process.wait()
+
+        if process.returncode == 0:
+            print(f"✅ Образ {image_name} успешно собран!")
+            return {'success': True, 'output': '\n'.join(output_lines)}
+        else:
+            error_text = '\n'.join(output_lines[-30:])  # последние 30 строк
+            print(f"❌ Сборка завершилась с ошибкой (код {process.returncode})")
+            return {'success': False, 'error': error_text}
+
+    except Exception as e:
+        print(f"❌ Критическая ошибка при сборке: {e}")
+        return {'success': False, 'error': str(e)}
