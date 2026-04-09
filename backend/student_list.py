@@ -7,7 +7,7 @@ from backend.core.runner import run_container, get_container_info, stop_containe
 import docker
 
 task_detail_bp = Blueprint('task_detail', __name__)
-
+#пул
 
 @task_detail_bp.route('/task/<int:lab_id>')
 def task_detail(lab_id):
