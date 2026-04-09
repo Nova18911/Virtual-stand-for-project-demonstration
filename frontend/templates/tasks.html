@@ -54,12 +54,15 @@
             </div>
             <div class="form-group">
                 <label>Файл задания</label>
-                <label class="file-label">
-                    📎
-                    <input type="file" id="taskFile" style="display:none;"
-                           onchange="document.getElementById('fileName').textContent = this.files[0]?.name || 'Файл не выбран'" />
-                </label>
-                <span id="fileName">Файл не выбран</span>
+                <div class="file-upload-area">
+                    <label class="file-label">
+                        <span class="file-label-icon">📎</span>
+                        <span>Выберите файл</span>
+                        <input type="file" id="taskFile" style="display:none;"
+                               onchange="document.getElementById('fileName').textContent = this.files[0]?.name || 'Файл не выбран'" />
+                    </label>
+                    <span id="fileName" class="file-name-display">Файл не выбран</span>
+                </div>
             </div>
         </div>
         <div class="modal-footer">
@@ -93,12 +96,16 @@
             </div>
             <div class="form-group">
                 <label>Файл задания</label>
-                <label class="file-label">
-                    📎
-                    <input type="file" id="editTaskFile" style="display:none;"
-                           onchange="document.getElementById('editFileName').textContent = this.files[0]?.name || 'Файл не выбран'" />
-                </label>
-                <span id="editFileName">Файл не выбран</span>
+                <div class="file-upload-area">
+                    <label class="file-label">
+                        <span class="file-label-icon">📎</span>
+                        <span>Выберите новый файл</span>
+                        <input type="file" id="editTaskFile" style="display:none;"
+                               onchange="document.getElementById('editFileName').textContent = this.files[0]?.name || 'Файл не выбран'" />
+                    </label>
+                    <span id="editFileName" class="file-name-display">Файл не выбран</span>
+                </div>
+                <small class="file-hint">* Если выберите новый файл, он заменит старый</small>
             </div>
         </div>
         <div class="modal-footer">

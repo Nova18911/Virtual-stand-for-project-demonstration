@@ -20,13 +20,22 @@
             const li = document.createElement('li');
             li.className = 'task-item';
 
-            const fileBtn = lab.has_file
-                ? `<a href="/api/task/${lab.id}/file" class="btn" download>📎 Файл</a>`
-                : '';
+            // Кнопка скачивания файла с отображением имени
+            let fileBtn = '';
+            if (lab.has_file) {
+                const fileName = lab.filename || 'Файл';
+                fileBtn = `
+                    <div class="task-file-info">
+                        <a href="/api/task/${lab.id}/file" class="btn btn-file" download>
+                            📎 ${escapeHtml(fileName)}
+                        </a>
+                    </div>
+                `;
+            }
 
             if (ROLE === 'teacher') {
                 li.innerHTML = `
-                    <a href="/task/${lab.id}" class="task-name">${lab.name}</a>
+                    <a href="/task/${lab.id}" class="task-name">${escapeHtml(lab.name)}</a>
                     <div class="task-actions">
                         <span class="task-dates">${lab.start_date} — ${lab.end_date}</span>
                         ${fileBtn}
@@ -35,7 +44,7 @@
                 `;
             } else {
                 li.innerHTML = `
-                    <a href="/tasks/${lab.id}" class="task-name">${lab.name}</a>
+                    <a href="/tasks/${lab.id}" class="task-name">${escapeHtml(lab.name)}</a>
                     <div class="task-actions">
                         <span class="task-dates">${lab.start_date} — ${lab.end_date}</span>
                         ${fileBtn}
@@ -48,7 +57,18 @@
             list.appendChild(li);
         });
     }
-                
+
+    // Функция для экранирования HTML
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
     // ── Только для преподавателя ──────────────────────────────────
     if (ROLE === 'teacher') {
 
@@ -57,10 +77,10 @@
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             const minDateStr = tomorrow.toISOString().split('T')[0];
-            
+
             const addInput = document.getElementById('taskDeadline');
             const editInput = document.getElementById('editTaskDeadline');
-            
+
             if (addInput) addInput.setAttribute('min', minDateStr);
             if (editInput) editInput.setAttribute('min', minDateStr);
         }
@@ -74,7 +94,7 @@
         const modalError = document.getElementById('modalError');
 
         openBtn.addEventListener('click',   () => {
-            setMinDeadline(); // Устанавливаем ограничение перед открытием
+            setMinDeadline();
             addModal.style.display = 'flex';
         });
         closeBtn.addEventListener('click',  () => closeAddModal());
@@ -88,6 +108,7 @@
             document.getElementById('taskDeadline').value    = '';
             document.getElementById('taskDescription').value = '';
             document.getElementById('fileName').textContent  = 'Файл не выбран';
+            document.getElementById('taskFile').value = '';
         }
 
         submitBtn.addEventListener('click', async () => {
@@ -112,6 +133,7 @@
                 if (!data.ok) { modalError.textContent = data.error; modalError.style.display = 'block'; return; }
                 closeAddModal();
                 loadTasks();
+                showNotification('Задание успешно добавлено', 'success');
             } catch (err) {
                 modalError.textContent   = 'Ошибка соединения с сервером.';
                 modalError.style.display = 'block';
@@ -132,6 +154,8 @@
         function closeEditModal() {
             editModal.style.display = 'none';
             editError.style.display = 'none';
+            document.getElementById('editTaskFile').value = '';
+            document.getElementById('editFileName').textContent = 'Файл не выбран';
         }
 
         window.openEditModal = async function (labId) {
@@ -139,7 +163,7 @@
                 const response = await fetch(`/api/task/${labId}`);
                 const lab      = await response.json();
 
-                setMinDeadline(); // Устанавливаем ограничение перед заполнением полей
+                setMinDeadline();
 
                 document.getElementById('editLabId').value           = lab.id;
                 document.getElementById('editTaskName').value        = lab.name;
@@ -148,7 +172,8 @@
 
                 const fileStatus = document.getElementById('editFileName');
                 if (lab.has_file) {
-                    fileStatus.textContent = '✔ Файл прикреплён (загрузите новый чтобы заменить)';
+                    const fileName = lab.filename || 'файл';
+                    fileStatus.textContent = `✔ Файл прикреплён: ${fileName} (загрузите новый чтобы заменить)`;
                     fileStatus.style.color = '#2a7a2a';
                 } else {
                     fileStatus.textContent = 'Файл не выбран';
@@ -185,6 +210,7 @@
                 if (!data.ok) { editError.textContent = data.error; editError.style.display = 'block'; return; }
                 closeEditModal();
                 loadTasks();
+                showNotification('Задание успешно обновлено', 'success');
             } catch (err) {
                 editError.textContent   = 'Ошибка соединения с сервером.';
                 editError.style.display = 'block';
@@ -232,7 +258,6 @@
             });
         }
 
-        // Фильтрация по поиску
         studentSearch.addEventListener('input', () => {
             const q = studentSearch.value.toLowerCase();
             const filtered = allStudents.filter(s => s.full_name.toLowerCase().includes(q));
@@ -272,8 +297,6 @@
                 }
 
                 closeStudentModal();
-
-                // Показываем уведомление
                 const name = studentSelect.options[studentSelect.selectedIndex].textContent;
                 showNotification(`${name} добавлен на курс`, 'success');
 

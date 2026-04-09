@@ -41,22 +41,27 @@ CREATE TABLE IF NOT EXISTS users (
         ON DELETE CASCADE
 );
 
--- Курсы
+-- Курсы (добавлено поле teacher_id)
 CREATE TABLE IF NOT EXISTS courses (
-    course_id SERIAL PRIMARY KEY,
-    name      VARCHAR(50)  NOT NULL UNIQUE,
-    teacher   VARCHAR(100) NOT NULL
+    course_id  SERIAL PRIMARY KEY,
+    name       VARCHAR(50)  NOT NULL UNIQUE,
+    teacher    VARCHAR(100) NOT NULL,
+    teacher_id INTEGER,
+    FOREIGN KEY (teacher_id) REFERENCES users(user_id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
 );
 
--- Лабораторные работы
+-- Лабораторные работы (добавлено поле task_filename)
 CREATE TABLE IF NOT EXISTS labs (
-    lab_id     SERIAL PRIMARY KEY,
-    name       VARCHAR(50) NOT NULL UNIQUE,
-    course_id  INTEGER     NOT NULL,
-    task       TEXT,
-    task_file  BYTEA       NOT NULL DEFAULT '\x',
-    start_date TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    end_date   TIMESTAMP   NOT NULL,
+    lab_id        SERIAL PRIMARY KEY,
+    name          VARCHAR(50) NOT NULL UNIQUE,
+    course_id     INTEGER     NOT NULL,
+    task          TEXT,
+    task_file     BYTEA       NOT NULL DEFAULT '\x',
+    task_filename VARCHAR(255),
+    start_date    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    end_date      TIMESTAMP   NOT NULL,
     FOREIGN KEY (course_id) REFERENCES courses(course_id)
         ON UPDATE CASCADE
         ON DELETE CASCADE
@@ -129,7 +134,7 @@ INSERT INTO roles (access_rights) VALUES
     ('admin'),
     ('teacher'),
     ('student')
-ON CONFLICT DO NOTHING;
+ON CONFLICT (access_rights) DO NOTHING;
 
 -- Логины и пароли
 INSERT INTO passwords (login, password) VALUES
@@ -146,72 +151,74 @@ ON CONFLICT (login) DO NOTHING;
 -- Пользователи
 INSERT INTO users (full_name, access_id, login_id)
 SELECT 'Администратор',
-       (SELECT access_id FROM roles    WHERE access_rights = 'admin'),
-       (SELECT login_id  FROM passwords WHERE login = 'admin@vstand.ru')
+       (SELECT access_id FROM roles WHERE access_rights = 'admin'),
+       (SELECT login_id FROM passwords WHERE login = 'admin@vstand.ru')
 WHERE NOT EXISTS (
     SELECT 1 FROM users WHERE login_id = (SELECT login_id FROM passwords WHERE login = 'admin@vstand.ru')
 );
 
 INSERT INTO users (full_name, access_id, login_id)
 SELECT 'Самоделкин Павел Андреевич',
-       (SELECT access_id FROM roles    WHERE access_rights = 'teacher'),
-       (SELECT login_id  FROM passwords WHERE login = 'samodelkin@vstand.ru')
+       (SELECT access_id FROM roles WHERE access_rights = 'teacher'),
+       (SELECT login_id FROM passwords WHERE login = 'samodelkin@vstand.ru')
 WHERE NOT EXISTS (
     SELECT 1 FROM users WHERE login_id = (SELECT login_id FROM passwords WHERE login = 'samodelkin@vstand.ru')
 );
 
 INSERT INTO users (full_name, access_id, login_id)
 SELECT 'Жилова Юлия Андреевна',
-       (SELECT access_id FROM roles    WHERE access_rights = 'teacher'),
-       (SELECT login_id  FROM passwords WHERE login = 'zhilova@vstand.ru')
+       (SELECT access_id FROM roles WHERE access_rights = 'teacher'),
+       (SELECT login_id FROM passwords WHERE login = 'zhilova@vstand.ru')
 WHERE NOT EXISTS (
     SELECT 1 FROM users WHERE login_id = (SELECT login_id FROM passwords WHERE login = 'zhilova@vstand.ru')
 );
 
 INSERT INTO users (full_name, access_id, login_id)
 SELECT 'Иванов Иван Иванович',
-       (SELECT access_id FROM roles    WHERE access_rights = 'student'),
-       (SELECT login_id  FROM passwords WHERE login = 'ivanov@vstand.ru')
+       (SELECT access_id FROM roles WHERE access_rights = 'student'),
+       (SELECT login_id FROM passwords WHERE login = 'ivanov@vstand.ru')
 WHERE NOT EXISTS (
     SELECT 1 FROM users WHERE login_id = (SELECT login_id FROM passwords WHERE login = 'ivanov@vstand.ru')
 );
 
 INSERT INTO users (full_name, access_id, login_id)
 SELECT 'Петров Пётр Петрович',
-       (SELECT access_id FROM roles    WHERE access_rights = 'student'),
-       (SELECT login_id  FROM passwords WHERE login = 'petrov@vstand.ru')
+       (SELECT access_id FROM roles WHERE access_rights = 'student'),
+       (SELECT login_id FROM passwords WHERE login = 'petrov@vstand.ru')
 WHERE NOT EXISTS (
     SELECT 1 FROM users WHERE login_id = (SELECT login_id FROM passwords WHERE login = 'petrov@vstand.ru')
 );
 
 INSERT INTO users (full_name, access_id, login_id)
 SELECT 'Сидорова Анна Сергеевна',
-       (SELECT access_id FROM roles    WHERE access_rights = 'student'),
-       (SELECT login_id  FROM passwords WHERE login = 'sidorova@vstand.ru')
+       (SELECT access_id FROM roles WHERE access_rights = 'student'),
+       (SELECT login_id FROM passwords WHERE login = 'sidorova@vstand.ru')
 WHERE NOT EXISTS (
     SELECT 1 FROM users WHERE login_id = (SELECT login_id FROM passwords WHERE login = 'sidorova@vstand.ru')
 );
 
 INSERT INTO users (full_name, access_id, login_id)
 SELECT 'Козлова Мария Александровна',
-       (SELECT access_id FROM roles    WHERE access_rights = 'student'),
-       (SELECT login_id  FROM passwords WHERE login = 'kozlova@vstand.ru')
+       (SELECT access_id FROM roles WHERE access_rights = 'student'),
+       (SELECT login_id FROM passwords WHERE login = 'kozlova@vstand.ru')
 WHERE NOT EXISTS (
     SELECT 1 FROM users WHERE login_id = (SELECT login_id FROM passwords WHERE login = 'kozlova@vstand.ru')
 );
 
 INSERT INTO users (full_name, access_id, login_id)
 SELECT 'Новиков Дмитрий Олегович',
-       (SELECT access_id FROM roles    WHERE access_rights = 'student'),
-       (SELECT login_id  FROM passwords WHERE login = 'novikov@vstand.ru')
+       (SELECT access_id FROM roles WHERE access_rights = 'student'),
+       (SELECT login_id FROM passwords WHERE login = 'novikov@vstand.ru')
 WHERE NOT EXISTS (
     SELECT 1 FROM users WHERE login_id = (SELECT login_id FROM passwords WHERE login = 'novikov@vstand.ru')
 );
 
--- Курсы
-INSERT INTO courses (name, teacher) VALUES
-    ('МДК 07.02',                           'Самоделкин Павел Андреевич'),
-    ('Информационные системы и технологии', 'Жилова Юлия Андреевна')
+-- Курсы (с заполненным teacher_id)
+INSERT INTO courses (name, teacher, teacher_id) VALUES
+    ('МДК 07.02', 'Самоделкин Павел Андреевич',
+     (SELECT user_id FROM users WHERE full_name = 'Самоделкин Павел Андреевич')),
+    ('Информационные системы и технологии', 'Жилова Юлия Андреевна',
+     (SELECT user_id FROM users WHERE full_name = 'Жилова Юлия Андреевна'))
 ON CONFLICT (name) DO NOTHING;
 
 -- Лабораторные работы
@@ -261,65 +268,65 @@ SELECT c.course_id, u.user_id
 FROM courses c, users u
 JOIN roles r ON r.access_id = u.access_id
 WHERE r.access_rights = 'student'
-ON CONFLICT DO NOTHING;
+ON CONFLICT (course_id, user_id) DO NOTHING;
 
 -- Работы студентов
 INSERT INTO student_projects (user_id, lab_id, github_link, grade, teacher_comment, grade_date)
 SELECT
     (SELECT user_id FROM users u JOIN passwords p ON u.login_id = p.login_id WHERE p.login = 'ivanov@vstand.ru'),
-    (SELECT lab_id  FROM labs WHERE name = 'Лабораторная работа №1'),
+    (SELECT lab_id FROM labs WHERE name = 'Лабораторная работа №1'),
     'https://github.com/ivanov/lab1',
     5, 'Отличная работа!', '2026-02-10 12:00:00'
 WHERE NOT EXISTS (
     SELECT 1 FROM student_projects
     WHERE user_id = (SELECT user_id FROM users u JOIN passwords p ON u.login_id = p.login_id WHERE p.login = 'ivanov@vstand.ru')
-      AND lab_id  = (SELECT lab_id FROM labs WHERE name = 'Лабораторная работа №1')
+      AND lab_id = (SELECT lab_id FROM labs WHERE name = 'Лабораторная работа №1')
 );
 
 INSERT INTO student_projects (user_id, lab_id, github_link, grade, teacher_comment, grade_date)
 SELECT
     (SELECT user_id FROM users u JOIN passwords p ON u.login_id = p.login_id WHERE p.login = 'ivanov@vstand.ru'),
-    (SELECT lab_id  FROM labs WHERE name = 'Лабораторная работа №2'),
+    (SELECT lab_id FROM labs WHERE name = 'Лабораторная работа №2'),
     'https://github.com/ivanov/lab2',
     4, 'Хорошо, но есть замечания по документации.', '2026-03-05 14:00:00'
 WHERE NOT EXISTS (
     SELECT 1 FROM student_projects
     WHERE user_id = (SELECT user_id FROM users u JOIN passwords p ON u.login_id = p.login_id WHERE p.login = 'ivanov@vstand.ru')
-      AND lab_id  = (SELECT lab_id FROM labs WHERE name = 'Лабораторная работа №2')
+      AND lab_id = (SELECT lab_id FROM labs WHERE name = 'Лабораторная работа №2')
 );
 
 INSERT INTO student_projects (user_id, lab_id, github_link, grade, teacher_comment, grade_date)
 SELECT
     (SELECT user_id FROM users u JOIN passwords p ON u.login_id = p.login_id WHERE p.login = 'petrov@vstand.ru'),
-    (SELECT lab_id  FROM labs WHERE name = 'Лабораторная работа №1'),
+    (SELECT lab_id FROM labs WHERE name = 'Лабораторная работа №1'),
     'https://github.com/petrov/lab1',
     3, 'Нужно доработать обработку ошибок.', '2026-02-12 10:00:00'
 WHERE NOT EXISTS (
     SELECT 1 FROM student_projects
     WHERE user_id = (SELECT user_id FROM users u JOIN passwords p ON u.login_id = p.login_id WHERE p.login = 'petrov@vstand.ru')
-      AND lab_id  = (SELECT lab_id FROM labs WHERE name = 'Лабораторная работа №1')
+      AND lab_id = (SELECT lab_id FROM labs WHERE name = 'Лабораторная работа №1')
 );
 
 INSERT INTO student_projects (user_id, lab_id, github_link, grade, teacher_comment, grade_date)
 SELECT
     (SELECT user_id FROM users u JOIN passwords p ON u.login_id = p.login_id WHERE p.login = 'sidorova@vstand.ru'),
-    (SELECT lab_id  FROM labs WHERE name = 'Лабораторная работа №1'),
+    (SELECT lab_id FROM labs WHERE name = 'Лабораторная работа №1'),
     'https://github.com/sidorova/lab1',
     5, 'Превосходно! Чистый код и хорошая документация.', '2026-02-11 09:00:00'
 WHERE NOT EXISTS (
     SELECT 1 FROM student_projects
     WHERE user_id = (SELECT user_id FROM users u JOIN passwords p ON u.login_id = p.login_id WHERE p.login = 'sidorova@vstand.ru')
-      AND lab_id  = (SELECT lab_id FROM labs WHERE name = 'Лабораторная работа №1')
+      AND lab_id = (SELECT lab_id FROM labs WHERE name = 'Лабораторная работа №1')
 );
 
 INSERT INTO student_projects (user_id, lab_id, github_link, grade, teacher_comment, grade_date)
 SELECT
     (SELECT user_id FROM users u JOIN passwords p ON u.login_id = p.login_id WHERE p.login = 'kozlova@vstand.ru'),
-    (SELECT lab_id  FROM labs WHERE name = 'Лабораторная работа №1'),
+    (SELECT lab_id FROM labs WHERE name = 'Лабораторная работа №1'),
     'https://github.com/kozlova/lab1',
     4, 'Хорошая работа, небольшие замечания по стилю кода.', '2026-02-13 11:00:00'
 WHERE NOT EXISTS (
     SELECT 1 FROM student_projects
     WHERE user_id = (SELECT user_id FROM users u JOIN passwords p ON u.login_id = p.login_id WHERE p.login = 'kozlova@vstand.ru')
-      AND lab_id  = (SELECT lab_id FROM labs WHERE name = 'Лабораторная работа №1')
+      AND lab_id = (SELECT lab_id FROM labs WHERE name = 'Лабораторная работа №1')
 );
