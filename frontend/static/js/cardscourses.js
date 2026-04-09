@@ -4,10 +4,9 @@ async function loadCoursesFromServer() {
     try {
         const response = await fetch('/api/courses');
         cardsData = await response.json();
-        renderCards(cardsData); // ✅ передаём cardsData явно
+        renderCards(cardsData); 
     } catch (error) {
         console.error('Ошибка при загрузке курсов:', error);
-        // Скрипт не падает — кнопки и события продолжают работать
     }
 }
 
@@ -23,6 +22,7 @@ function renderCards(data) {
     data.forEach(item => {
         const article = document.createElement('article');
 
+        // Визуальное оформление закрытого курса
         if (!item.is_enrolled) {
             article.classList.add('course-locked');
         }
@@ -30,18 +30,20 @@ function renderCards(data) {
         const courseLink = document.createElement('a');
 
         if (item.is_enrolled) {
-            courseLink.href = `/tasks/course/${item.id}`;
+            // Доступ есть: обычная ссылка
+            courseLink.href = `/course/${item.id}`;
             courseLink.className = 'course-link';
+            courseLink.textContent = item.course;
         } else {
+            // Доступа нет: блокируем переход и выводим сообщение
             courseLink.href = '#';
             courseLink.className = 'course-link locked';
+            courseLink.textContent = `🔒 ${item.course}`;
             courseLink.onclick = (e) => {
                 e.preventDefault();
-                alert('У вас нет доступа к этому курсу. Обратитесь к преподавателю.');
+                alert('У вас нет доступа к этому курсу. Обратитесь к администратору или преподавателю для добавления.');
             };
         }
-
-        courseLink.textContent = item.is_enrolled ? item.course : `🔒 ${item.course}`;
 
         const teacherP = document.createElement('p');
         teacherP.textContent = `Преподаватель: ${item.teacher}`;
@@ -72,12 +74,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('searchForm');
     const input = document.getElementById('searchInput');
 
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        filterCourses(input.value);
-    });
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            filterCourses(input.value);
+        });
+    }
 
-    input.addEventListener('input', () => {
-        filterCourses(input.value);
-    });
+    if (input) {
+        input.addEventListener('input', () => {
+            filterCourses(input.value);
+        });
+    }
 });
