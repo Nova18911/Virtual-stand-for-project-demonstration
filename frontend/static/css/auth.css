@@ -147,12 +147,17 @@ body::after {
     opacity: 1;
 }
 
-/* Ссылки */
+/* Ссылки (ИСПРАВЛЕНО: удалена кнопка "Забыли пароль" через стили) */
 .auth-links {
     display: flex;
-    justify-content: space-between;
+    justify-content: center; /* Центрируем регистрацию */
     margin-top: 18px;
     font-size: 13px;
+}
+
+/* Скрываем первую ссылку, если их две (обычно это "Забыли пароль") */
+.auth-links a:first-child:not(:only-child) {
+    display: none;
 }
 
 .auth-links a {
@@ -166,7 +171,7 @@ body::after {
     color: #7c3aed;
 }
 
-/* Флеш */
+/* Флеш сообщения */
 .flash {
     padding: 10px 14px;
     border-radius: 10px;
@@ -177,7 +182,7 @@ body::after {
     border: 1px solid #fca5a5;
 }
 
-/* Ошибки */
+/* Ошибки ввода */
 .input-error {
     border-color: #f87171 !important;
     box-shadow: 0 0 0 3px rgba(248,113,113,0.15) !important;
