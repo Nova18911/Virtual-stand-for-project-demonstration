@@ -5,37 +5,39 @@ import subprocess
 
 
 def create_dockerfile(repo_path: str, project_type: str, main_file: str) -> dict:
-    """Создаёт минимальный Dockerfile ТОЛЬКО для консольных проектов"""
-    if not os.path.exists(repo_path):
-        return {'success': False, 'error': 'Папка репозитория не найдена'}
-
-    dockerfile_content = f'''# Минимальный Dockerfile для консольного Python проекта
+    """Создаёт Dockerfile для консольного проекта (с поддержкой pandas и др.)"""
+    try:
+        dockerfile_content = f'''# Dockerfile для консольного Python проекта
 FROM python:3.11-slim
 
-# Устанавливаем только базовые утилиты (без tkinter, xvfb и прочего GUI!)
+# Устанавливаем системные зависимости для сборки тяжёлых пакетов (pandas, numpy и т.д.)
 RUN apt-get update && apt-get install -y --no-install-recommends \\
+    gcc \\
+    python3-dev \\
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Копируем и устанавливаем зависимости
+# Сначала копируем только requirements.txt — чтобы кэшировать установку зависимостей
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt || echo "No requirements or installation skipped"
 
-# Копируем весь код
+# Устанавливаем зависимости
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Копируем весь код проекта
 COPY . .
 
-# Запуск консольного приложения
+# Запускаем программу
 CMD ["python", "-u", "{main_file}"]
 '''
 
-    dockerfile_path = os.path.join(repo_path, "Dockerfile")
-
-    try:
+        dockerfile_path = os.path.join(repo_path, "Dockerfile")
         with open(dockerfile_path, "w", encoding="utf-8") as f:
             f.write(dockerfile_content)
-        print("✅ Создан минимальный консольный Dockerfile")
+
+        print("✅ Создан Dockerfile с поддержкой тяжёлых пакетов (pandas и др.)")
         return {'success': True}
+
     except Exception as e:
         print(f"❌ Ошибка создания Dockerfile: {e}")
         return {'success': False, 'error': str(e)}
