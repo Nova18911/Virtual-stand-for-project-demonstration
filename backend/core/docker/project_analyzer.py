@@ -4,13 +4,11 @@ import os
 
 
 def analyze_project(repo_path: str) -> dict:
-    """
-    Упрощенный анализ только для tkinter проектов
-    """
+    """Анализ только консольных проектов"""
     result = {
         'main_file': None,
         'requirements': [],
-        'project_type': 'gui',  # Всегда gui для tkinter
+        'project_type': 'console',
         'error': None
     }
 
@@ -18,16 +16,16 @@ def analyze_project(repo_path: str) -> dict:
         result['error'] = 'Папка репозитория не найдена'
         return result
 
-    # 1. Ищем основной файл
-    main_candidates = ['main.py', 'app.py', 'run.py', 'start.py', 'gui.py']
+    # Ищем основной файл
+    main_candidates = ['main.py', 'app.py', 'run.py', 'start.py']
 
     for filename in main_candidates:
         if os.path.exists(os.path.join(repo_path, filename)):
             result['main_file'] = filename
             break
 
+    # Если не нашли — берём первый .py файл в корне
     if not result['main_file']:
-        # Ищем любой .py файл в корне
         for entry in os.scandir(repo_path):
             if entry.is_file() and entry.name.endswith('.py'):
                 result['main_file'] = entry.name
@@ -37,7 +35,7 @@ def analyze_project(repo_path: str) -> dict:
         result['error'] = 'Не найден Python файл для запуска'
         return result
 
-    # 2. Проверяем существующий requirements.txt
+    # requirements.txt
     req_path = os.path.join(repo_path, 'requirements.txt')
     if os.path.exists(req_path):
         try:
@@ -49,5 +47,5 @@ def analyze_project(repo_path: str) -> dict:
         except:
             pass
 
-    print(f"✅ Найден tkinter проект: {result['main_file']}")
+    print(f"✅ Консольный проект: {result['main_file']}")
     return result

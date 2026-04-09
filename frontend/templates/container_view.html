@@ -1,3 +1,4 @@
+<!-- frontend/templates/container_view.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -6,146 +7,31 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/container_view.css') }}">
 </head>
 <body>
-    <div class="page-wrapper">
+    <!-- Главный контейнер с data-атрибутом для project_id -->
+    <div id="container-view" data-project-id="{{ project_id }}">
 
-        <header class="header">
-            <div class="logo">Virtual Stand</div>
-            <div class="program-info">📄 {{ main_file }}</div>
-            <span class="status-badge" id="status-badge">🟢 Подключение...</span>
-        </header>
+        <div class="page-wrapper">
+            <header class="header">
+                <div class="logo">Virtual Stand</div>
+                <div class="program-info">📄 {{ main_file }}</div>
+                <span class="status-badge running" id="status-badge">🟢 Подключение...</span>
+            </header>
 
-        <div class="terminal" id="terminal">
-            <div class="terminal-output" id="output"></div>
-        </div>
+            <div class="terminal" id="terminal">
+                <div class="terminal-output" id="output"></div>
+            </div>
 
-        <div class="input-block">
-            <input type="text"
-                   id="user-input"
-                   class="terminal-input"
-                   placeholder="Введите данные для программы...">
-            <button class="send-btn" id="send-btn">Отправить</button>
-            <button class="stop-btn" id="stop-btn">⏹️ Остановить</button>
+            <div class="input-block">
+                <input type="text" id="user-input" class="terminal-input"
+                       placeholder="Введите данные и нажмите Enter...">
+                <button class="send-btn" id="send-btn">Отправить</button>
+                <button class="stop-btn" id="stop-btn">⏹️ Остановить</button>
+            </div>
         </div>
 
     </div>
 
-    <script>
-        const projectId = {{ project_id }};
-        const output = document.getElementById('output');
-        const statusBadge = document.getElementById('status-badge');
-        const userInput = document.getElementById('user-input');
-        const sendBtn = document.getElementById('send-btn');
-        const stopBtn = document.getElementById('stop-btn');
-
-        let eventSource = null;
-        let isRunning = true;
-
-        function addLine(text, type = 'output') {
-            const line = document.createElement('div');
-            line.className = `output-line ${type}`;
-            line.textContent = text;
-            output.appendChild(line);
-            output.scrollTop = output.scrollHeight;
-        }
-
-        function connectToLogs() {
-            // ИСПРАВЛЕНО: убираем /streamer префикс
-            eventSource = new EventSource(`/container/${projectId}/logs`);
-
-            eventSource.onopen = function() {
-                addLine('✅ Подключено к контейнеру', 'info');
-                statusBadge.textContent = '🟢 Работает';
-                statusBadge.className = 'status-badge running';
-            };
-
-            eventSource.onmessage = function(event) {
-                if (event.data) {
-                    if (event.data.includes('🚀 Запуск программы')) {
-                        addLine(event.data, 'info');
-                    } else {
-                        addLine(event.data, 'output');
-                    }
-                }
-            };
-
-            eventSource.addEventListener('close', function(event) {
-                addLine('🔌 Программа завершила работу', 'error');
-                statusBadge.textContent = '🔴 Завершено';
-                statusBadge.className = 'status-badge stopped';
-                isRunning = false;
-                userInput.disabled = true;
-                sendBtn.disabled = true;
-                eventSource.close();
-            });
-
-            eventSource.onerror = function() {
-                if (isRunning) {
-                    addLine('⚠️ Потеря соединения с сервером', 'error');
-                    statusBadge.textContent = '🔴 Ошибка';
-                    statusBadge.className = 'status-badge stopped';
-                }
-            };
-        }
-
-        async function sendInput() {
-            const value = userInput.value.trim();
-            if (!value) return;
-
-            addLine(`> ${value}`, 'input');
-
-            try {
-                // ИСПРАВЛЕНО: убираем /streamer префикс
-                await fetch(`/container/${projectId}/input`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                    body: `input=${encodeURIComponent(value)}`
-                });
-            } catch (err) {
-                addLine(`❌ Ошибка отправки: ${err.message}`, 'error');
-            }
-
-            userInput.value = '';
-        }
-
-        async function stopContainer() {
-            if (!confirm('Остановить контейнер?')) return;
-
-            try {
-                // ИСПРАВЛЕНО: убираем /streamer префикс
-                const response = await fetch(`/container/${projectId}/stop`, {
-                    method: 'POST'
-                });
-                const data = await response.json();
-
-                if (data.success) {
-                    addLine('⏹️ Контейнер остановлен', 'info');
-                    statusBadge.textContent = '🔴 Остановлен';
-                    statusBadge.className = 'status-badge stopped';
-                    isRunning = false;
-                    userInput.disabled = true;
-                    sendBtn.disabled = true;
-                    if (eventSource) {
-                        eventSource.close();
-                    }
-                } else {
-                    addLine(`❌ Ошибка: ${data.error}`, 'error');
-                }
-            } catch (err) {
-                addLine(`❌ Ошибка: ${err.message}`, 'error');
-            }
-        }
-
-        sendBtn.addEventListener('click', sendInput);
-        stopBtn.addEventListener('click', stopContainer);
-
-        userInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                sendInput();
-            }
-        });
-
-        // Подключаемся к логам
-        connectToLogs();
-    </script>
+    <!-- Подключаем внешний JS-файл -->
+    <script src="{{ url_for('static', filename='js/container_view.js') }}"></script>
 </body>
 </html>
