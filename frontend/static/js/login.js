@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         box.style.display = 'block';
     }
 
+    // Валидация при потере фокуса
     emailInput.addEventListener('blur', () => {
         if (!isValidEmail(emailInput.value)) {
             showError(emailInput, 'Введите корректный email');
@@ -50,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Обработка отправки формы
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -84,6 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // Перенаправление при успехе
             window.location.href = data.redirect;
 
         } catch (err) {
