@@ -1,9 +1,14 @@
 let cardsData = [];
 
 async function loadCoursesFromServer() {
-    const response = await fetch('/api/courses');
-    cardsData = await response.json();
-    renderCards(cardsData);
+    try {
+        const response = await fetch('/api/courses');
+        cardsData = await response.json();
+        renderCards(cardsData); // ✅ передаём cardsData явно
+    } catch (error) {
+        console.error('Ошибка при загрузке курсов:', error);
+        // Скрипт не падает — кнопки и события продолжают работать
+    }
 }
 
 function renderCards(data) {
@@ -18,13 +23,28 @@ function renderCards(data) {
     data.forEach(item => {
         const article = document.createElement('article');
 
+        if (!item.is_enrolled) {
+            article.classList.add('course-locked');
+        }
+
         const courseLink = document.createElement('a');
-        courseLink.href = `/tasks/course/${item.id}`;
-        courseLink.textContent = item.course;
-        courseLink.className = 'course-link';
+
+        if (item.is_enrolled) {
+            courseLink.href = `/tasks/course/${item.id}`;
+            courseLink.className = 'course-link';
+        } else {
+            courseLink.href = '#';
+            courseLink.className = 'course-link locked';
+            courseLink.onclick = (e) => {
+                e.preventDefault();
+                alert('У вас нет доступа к этому курсу. Обратитесь к преподавателю.');
+            };
+        }
+
+        courseLink.textContent = item.is_enrolled ? item.course : `🔒 ${item.course}`;
 
         const teacherP = document.createElement('p');
-        teacherP.textContent = item.teacher;
+        teacherP.textContent = `Преподаватель: ${item.teacher}`;
         teacherP.className = 'teacher-text';
 
         article.appendChild(courseLink);
@@ -52,13 +72,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('searchForm');
     const input = document.getElementById('searchInput');
 
-    // Поиск при отправке формы (кнопка «Искать»)
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         filterCourses(input.value);
     });
 
-    // Поиск в реальном времени по мере набора
     input.addEventListener('input', () => {
         filterCourses(input.value);
     });
