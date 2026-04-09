@@ -13,63 +13,76 @@ def get_db():
         user='postgres',
         password='12345'
     )
+def rows_to_dicts(cursor, rows):
+    if rows is None:
+        return None
+    cols = [desc[0] for desc in cursor.description]
+    return [dict(zip(cols, row)) for row in rows]
 
-    def dict_row(cursor, row):
-        d = {}
-        for idx, col in enumerate(cursor.description):
-            d[col.name] = row[idx]
-        return d
 
-    conn.row_factory = dict_row
-    return conn
+def row_to_dict(cursor, row):
+    if row is None:
+        return None
+    cols = [desc[0] for desc in cursor.description]
+    return dict(zip(cols, row))
 
-@admin_main.route('/admin/main')
-def admin_main_page():
-    return render_template('admin_main.html')
+
+def get_courses(cur):
+    cur.execute('SELECT course_id, name, teacher, teacher_id FROM courses ORDER BY course_id')
+    rows = cur.fetchall()
+    return [{'course_id': r[0], 'name': r[1], 'teacher': r[2], 'teacher_id': r[3]} for r in rows]
+
+
+def get_teachers(cur):
+    cur.execute("""
+        SELECT u.user_id, u.full_name
+        FROM users u
+        JOIN roles r ON u.access_id = r.access_id
+        WHERE r.access_rights = 'teacher'
+        ORDER BY u.full_name
+    """)
+    rows = cur.fetchall()
+    return [{'user_id': r[0], 'full_name': r[1]} for r in rows]
+
+
+def require_admin():
+    return 'user_id' not in session or session.get('user_role') != 'admin'
+
 
 @admin_main.route('/admin_main')
 def index():
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute('SELECT course_id, name, teacher FROM courses ORDER BY course_id')
-    courses = cur.fetchall()
+    if require_admin():
+        return redirect(url_for('adminlogin.admin_login_page'))
 
-    cur.execute('''
-                SELECT u.user_id, u.full_name
-                FROM users u
-                JOIN roles r ON u.access_id = r.access_id
-                WHERE r.access_rights = %s
-                ORDER BY u.full_name
-            ''', ('teacher',))
-    teachers = cur.fetchall()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    courses = get_courses(cur)
+    teachers = get_teachers(cur)
+    cur.close()
     conn.close()
 
     return render_template('admin_main.html',
-                       courses=courses,
-                       teachers=teachers,
-                       selected=None,
-                       user_name=session.get('user_name', 'Админ'))
-
+                           courses=courses,
+                           teachers=teachers,
+                           selected=None,
+                           user_name=session.get('user_name', 'Админ'))
 
 
 @admin_main.route('/course/<int:course_id>')
 def course_detail(course_id):
-    conn = get_db()
+    if require_admin():
+        return redirect(url_for('adminlogin.admin_login_page'))
+
+    conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT course_id, name, teacher FROM courses ORDER BY course_id')
-    courses = cur.fetchall()
+    courses = get_courses(cur)
+    teachers = get_teachers(cur)
 
-    cur.execute('SELECT course_id, name, teacher FROM courses WHERE course_id = %s', (course_id,))
-    selected = cur.fetchone()
+    cur.execute('SELECT course_id, name, teacher, teacher_id FROM courses WHERE course_id = %s', (course_id,))
+    row = cur.fetchone()
+    selected = {'course_id': row[0], 'name': row[1], 'teacher': row[2], 'teacher_id': row[3]} if row else None
 
-    cur.execute('''
-                SELECT u.user_id, u.full_name
-                FROM users u
-                JOIN roles r ON u.access_id = r.access_id
-                WHERE r.access_rights = %s
-                ORDER BY u.full_name
-            ''', ('teacher',))
-    teachers = cur.fetchall()
+    cur.close()
     conn.close()
 
     return render_template('admin_main.html',
@@ -81,25 +94,38 @@ def course_detail(course_id):
 
 @admin_main.route('/course/save', methods=['POST'])
 def course_save():
+    if require_admin():
+        return redirect(url_for('adminlogin.admin_login_page'))
+
     name = request.form.get('name', '').strip()
-    teacher = request.form.get('teacher', '').strip()
+    teacher_id = request.form.get('teacher_id', '').strip()
     course_id = request.form.get('course_id', '').strip()
 
-    if not name or not teacher:
-        flash('Заполните название и преподавателя.', 'error')
+    if not name or not teacher_id:
+        flash('Заполните название и выберите преподавателя.', 'error')
         return redirect(url_for('admin_main.index'))
 
-    conn = get_db()
+    conn = get_db_connection()
     try:
         cur = conn.cursor()
+
+        # Получаем имя преподавателя по его user_id
+        cur.execute('SELECT full_name FROM users WHERE user_id = %s', (int(teacher_id),))
+        row = cur.fetchone()
+        teacher_name = row[0] if row else ''
+
         if course_id:
-            # Обновляем существующий курс
-            cur.execute('UPDATE courses SET name = %s, teacher = %s WHERE course_id = %s',
-                        (name, teacher, course_id))
+            cur.execute(
+                'UPDATE courses SET name=%s, teacher=%s, teacher_id=%s WHERE course_id=%s',
+                (name, teacher_name, int(teacher_id), int(course_id))
+            )
         else:
-            # Создаём новый курс
-            cur.execute('INSERT INTO courses (name, teacher) VALUES (%s, %s)', (name, teacher))
+            cur.execute(
+                'INSERT INTO courses (name, teacher, teacher_id) VALUES (%s, %s, %s)',
+                (name, teacher_name, int(teacher_id))
+            )
         conn.commit()
+        cur.close()
     finally:
         conn.close()
 
@@ -109,15 +135,19 @@ def course_save():
 
 @admin_main.route('/course/delete', methods=['POST'])
 def course_delete():
+    if require_admin():
+        return redirect(url_for('adminlogin.admin_login_page'))
+
     course_id = request.form.get('course_id', '').strip()
     if not course_id:
         return redirect(url_for('admin_main.index'))
 
-    conn = get_db()
+    conn = get_db_connection()
     try:
         cur = conn.cursor()
-        cur.execute('DELETE FROM courses WHERE course_id = %s', (course_id,))
+        cur.execute('DELETE FROM courses WHERE course_id=%s', (int(course_id),))
         conn.commit()
+        cur.close()
     finally:
         conn.close()
 

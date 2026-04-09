@@ -1,22 +1,53 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
 import pg8000
 from backend.core.connect import get_db_connection
+from datetime import datetime
 
 task_bp = Blueprint('task', __name__, url_prefix='/tasks')
 
+def ensure_datetime(date_val):
+    """Преобразует дату из БД в объект datetime. 
+    Если это уже datetime, возвращает его. 
+    Если это строка, пытается распарсить её. 
+    Если парсинг не удался или это None, возвращает текущее время или заглушку."""
+    if not date_val:
+        return datetime.now() # Или можно вернуть None, если в шаблоне есть проверка
+    
+    if isinstance(date_val, datetime):
+        return date_val
+    
+    if isinstance(date_val, str):
+        # Очищаем строку от лишних пробелов
+        date_str = date_val.strip()
+        # Список возможных форматов из разных версий БД
+        formats = [
+            '%Y-%m-%d %H:%M:%S',
+            '%Y-%m-%d %H:%M:%S.%f',
+            '%Y-%m-%dT%H:%M:%S',
+            '%Y-%m-%d'
+        ]
+        for fmt in formats:
+            try:
+                return datetime.strptime(date_str[:19] if len(date_str) > 19 else date_str, fmt)
+            except (ValueError, TypeError):
+                continue
+    
+    # Если ничего не помогло, возвращаем объект datetime, 
+    # чтобы .strftime() в шаблоне не вызывал ошибку
+    return datetime.now()
 
 def dict_fetchone(cursor):
     row = cursor.fetchone()
     if row is None:
         return None
-    columns = [col[0] for col in cursor.description]  # col[0] - это имя колонки
+    columns = [col[0] for col in cursor.description]
     return dict(zip(columns, row))
 
 def dict_fetchall(cursor):
     rows = cursor.fetchall()
     if not rows:
         return []
-    columns = [col[0] for col in cursor.description]  # col[0] - это имя колонки
+    columns = [col[0] for col in cursor.description]
     return [dict(zip(columns, row)) for row in rows]
 
 
@@ -29,7 +60,7 @@ def index(lab_id):
     try:
         cur = conn.cursor()
 
-        # Получаем данные задания из labs
+        # 1. Получаем данные задания
         cur.execute('''
             SELECT l.lab_id, l.name, l.task, l.start_date, l.end_date, l.course_id
             FROM labs l
@@ -40,16 +71,17 @@ def index(lab_id):
         if lab is None:
             return 'Задание не найдено', 404
 
-        course_id = lab.get('course_id')
+        # КОРРЕКТИРОВКА ДАТ ДЛЯ JINJA2
+        lab['start_date'] = ensure_datetime(lab.get('start_date'))
+        lab['end_date'] = ensure_datetime(lab.get('end_date'))
 
-        # Сохраняем course_id в сессию для навигации
+        course_id = lab.get('course_id')
         if course_id:
             session['current_course_id'] = course_id
         else:
-            # Если нет course_id в базе, используем из сессии
             course_id = session.get('current_course_id', 1)
 
-        # Получаем ответ студента из student_projects
+        # 2. Данные студента
         project = None
         if role == 'student' and user_id:
             cur.execute('''
@@ -58,8 +90,10 @@ def index(lab_id):
                 WHERE lab_id = %s AND user_id = %s
             ''', (lab_id, user_id))
             project = dict_fetchone(cur)
+            if project:
+                project['submission_date'] = ensure_datetime(project.get('submission_date'))
 
-        # Преподаватель видит все ответы студентов
+        # 3. Список для преподавателя
         students = None
         if role == 'teacher':
             cur.execute('''
@@ -72,6 +106,8 @@ def index(lab_id):
                 ORDER BY sp.submission_date DESC
             ''', (lab_id,))
             students = dict_fetchall(cur)
+            for s in students:
+                s['submission_date'] = ensure_datetime(s.get('submission_date'))
 
     finally:
         conn.close()
@@ -82,7 +118,6 @@ def index(lab_id):
                            students=students,
                            role=role,
                            course_id=course_id)
-
 
 @task_bp.route('/<int:lab_id>/submit', methods=['POST'])
 def submit(lab_id):
@@ -98,12 +133,7 @@ def submit(lab_id):
     conn = get_db_connection()
     try:
         cur = conn.cursor()
-
-        # Если ответ уже есть — обновляем, иначе создаём
-        cur.execute('''
-            SELECT project_id FROM student_projects
-            WHERE lab_id = %s AND user_id = %s
-        ''', (lab_id, user_id))
+        cur.execute('SELECT project_id FROM student_projects WHERE lab_id = %s AND user_id = %s', (lab_id, user_id))
         existing = dict_fetchone(cur)
 
         if existing:
@@ -120,15 +150,12 @@ def submit(lab_id):
 
         conn.commit()
         flash('Ссылка сохранена.', 'success')
-
     except Exception as e:
         conn.rollback()
-        flash(f'Ошибка при сохранении: {e}', 'error')
+        flash(f'Ошибка: {e}', 'error')
     finally:
         conn.close()
-
     return redirect(url_for('task.index', lab_id=lab_id))
-
 
 @task_bp.route('/<int:lab_id>/grade', methods=['POST'])
 def grade(lab_id):
@@ -140,12 +167,11 @@ def grade(lab_id):
     grade_val = request.form.get('grade', '').strip()
     comment = request.form.get('comment', '').strip()
 
-    # Проверка оценки: только 2-5 по структуре БД
     if grade_val:
         try:
             g = int(grade_val)
             if g < 2 or g > 5:
-                flash('Оценка должна быть от 2 до 5.', 'error')
+                flash('Оценка от 2 до 5.', 'error')
                 return redirect(url_for('task.index', lab_id=lab_id))
         except ValueError:
             flash('Оценка должна быть числом.', 'error')
@@ -156,18 +182,14 @@ def grade(lab_id):
         cur = conn.cursor()
         cur.execute('''
             UPDATE student_projects
-            SET grade = %s,
-                teacher_comment = %s,
-                grade_date = CURRENT_TIMESTAMP
+            SET grade = %s, teacher_comment = %s, grade_date = CURRENT_TIMESTAMP
             WHERE project_id = %s
         ''', (int(grade_val) if grade_val else None, comment, project_id))
         conn.commit()
         flash('Оценка сохранена.', 'success')
-
     except Exception as e:
         conn.rollback()
-        flash(f'Ошибка при сохранении оценки: {e}', 'error')
+        flash(f'Ошибка: {e}', 'error')
     finally:
         conn.close()
-
     return redirect(url_for('task.index', lab_id=lab_id))

@@ -1,8 +1,24 @@
 from flask import Blueprint, jsonify, request, session, Response
 from backend.core.connect import get_db_connection
+from datetime import datetime, timedelta
 
 taskslist_bp = Blueprint('taskslist', __name__)
 
+def format_date(date_val):
+    """Вспомогательная функция для безопасного форматирования даты, 
+    даже если БД возвращает строку вместо объекта datetime"""
+    if not date_val:
+        return None
+    if isinstance(date_val, datetime):
+        return date_val.strftime('%d.%m.%Y')
+    if isinstance(date_val, str):
+        try:
+            # Пробуем распарсить стандартный формат ISO YYYY-MM-DD
+            dt = datetime.strptime(date_val[:10], '%Y-%m-%d')
+            return dt.strftime('%d.%m.%Y')
+        except:
+            return date_val
+    return str(date_val)
 
 @taskslist_bp.route('/api/course/<int:course_id>/labs', methods=['GET'])
 def get_course_labs(course_id):
@@ -52,8 +68,8 @@ def get_course_labs(course_id):
             'id':         lab[0],
             'name':       lab[1],
             'task':       lab[2],
-            'start_date': lab[3].strftime('%d.%m.%Y') if lab[3] else None,
-            'end_date':   lab[4].strftime('%d.%m.%Y') if lab[4] else None,
+            'start_date': format_date(lab[3]),
+            'end_date':   format_date(lab[4]),
             'submitted':  lab[5],
             'has_file':   lab[6],
         }
@@ -82,11 +98,20 @@ def get_task(lab_id):
     if not row:
         return jsonify({'ok': False, 'error': 'Задание не найдено.'}), 404
 
+    # Для input type="date" нужен формат YYYY-MM-DD
+    raw_date = row[3]
+    if isinstance(raw_date, datetime):
+        formatted_raw = raw_date.strftime('%Y-%m-%d')
+    elif isinstance(raw_date, str):
+        formatted_raw = raw_date[:10]
+    else:
+        formatted_raw = ''
+
     return jsonify({
         'id':           row[0],
         'name':         row[1],
         'task':         row[2],
-        'end_date_raw': row[3].strftime('%Y-%m-%d') if row[3] else '',
+        'end_date_raw': formatted_raw,
         'has_file':     row[4],
     })
 
@@ -129,6 +154,14 @@ def add_task():
     if not deadline:  return jsonify({'ok': False, 'error': 'Укажите срок сдачи.'}), 400
     if not course_id: return jsonify({'ok': False, 'error': 'Не указан курс.'}), 400
 
+    try:
+        selected_date = datetime.strptime(deadline, '%Y-%m-%d').date()
+        min_date = datetime.now().date() + timedelta(days=1)
+        if selected_date < min_date:
+            return jsonify({'ok': False, 'error': f'Срок сдачи должен быть не раньше {min_date.strftime("%d.%m.%Y")}.'}), 400
+    except ValueError:
+        return jsonify({'ok': False, 'error': 'Некорректный формат даты.'}), 400
+
     file_bytes = file.read() if file and file.filename else b''
 
     try:
@@ -165,25 +198,24 @@ def edit_task():
     if not deadline: return jsonify({'ok': False, 'error': 'Укажите срок сдачи.'}), 400
 
     try:
+        selected_date = datetime.strptime(deadline, '%Y-%m-%d').date()
+        min_date = datetime.now().date() + timedelta(days=1)
+        if selected_date < min_date:
+            return jsonify({'ok': False, 'error': f'Нельзя установить срок сдачи раньше {min_date.strftime("%d.%m.%Y")}.'}), 400
+    except ValueError:
+        return jsonify({'ok': False, 'error': 'Некорректный формат даты.'}), 400
+
+    try:
         conn   = get_db_connection()
         cursor = conn.cursor()
 
-        # Читаем файл только если он реально загружен
         if file and file.filename and len(file.filename) > 0:
             file_bytes = file.read()
-            if len(file_bytes) > 0:
-                cursor.execute("""
-                    UPDATE labs SET name=%s, task=%s, end_date=%s, task_file=%s
-                    WHERE lab_id=%s
-                """, (name, description, deadline, file_bytes, int(lab_id)))
-            else:
-                # Файл пустой — не обновляем task_file
-                cursor.execute("""
-                    UPDATE labs SET name=%s, task=%s, end_date=%s
-                    WHERE lab_id=%s
-                """, (name, description, deadline, int(lab_id)))
+            cursor.execute("""
+                UPDATE labs SET name=%s, task=%s, end_date=%s, task_file=%s
+                WHERE lab_id=%s
+            """, (name, description, deadline, file_bytes, int(lab_id)))
         else:
-            # Файл не загружен — оставляем старый
             cursor.execute("""
                 UPDATE labs SET name=%s, task=%s, end_date=%s
                 WHERE lab_id=%s

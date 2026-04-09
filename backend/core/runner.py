@@ -1,209 +1,176 @@
 # backend/core/docker/runner.py
 
-import socket
 import docker
-import pg8000
 from datetime import datetime
 from backend.core.connect import get_db_connection
+import os
 
 
-def find_free_port():
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(('', 0))
-        return s.getsockname()[1]
-
-
-def run_container(image_name, project_id, project_type=None):
-    conn = None
-    cursor = None
+def run_container(image_name, project_id, project_type, main_file='main.py'):
+    """
+    Запускает контейнер (как в рабочей версии)
+    """
     try:
-        print(f"🔧 Запуск контейнера: image={image_name}, project_id={project_id}, type={project_type}")
+        print(f"🔧 Запуск контейнера: {image_name}")
 
         client = docker.from_env()
 
-        # Проверяем, существует ли образ
+        # Проверяем образ
         try:
             client.images.get(image_name)
-            print(f"✅ Образ {image_name} найден")
         except docker.errors.ImageNotFound:
-            print(f"❌ Образ {image_name} не найден")
+            print(f"❌ Образ не найден")
             return None, None
 
-        if project_type == 'web':
-            print("🌐 Запуск как веб-приложение")
-            port = find_free_port()
-            container = client.containers.run(
-                image_name,
-                detach=True,
-                ports={'5000/tcp': port},
-                mem_limit='512m'
-            )
-            link = f"http://localhost:{port}"
-            port_value = port
-            print(f"✅ Веб-контейнер запущен на порту {port}")
+        # КЛЮЧЕВОЙ МОМЕНТ: контейнер должен жить постоянно
+        container = client.containers.run(
+            image_name,
+            detach=True,
+            stdin_open=True,
+            tty=True,
+            mem_limit='512m',
+            command=["tail", "-f", "/dev/null"]  # Контейнер живет!
+        )
 
-        else:
-            print("💻 Запуск как консольное приложение")
-            container = client.containers.run(
-                image_name,
-                detach=True,
-                stdin_open=True,
-                tty=True,
-                mem_limit='512m',
-                command=["tail", "-f", "/dev/null"]
-            )
-            link = f"/container/{project_id}/view"
-            port_value = None  # Для консольных приложений порт не нужен
-            print(f"✅ Консольный контейнер запущен: {container.id[:12]}")
-
-            # Проверяем, что контейнер работает
-            container.reload()
-            print(f"📊 Статус контейнера: {container.status}")
+        print(f"✅ Контейнер запущен: {container.id[:12]}")
 
         # Сохраняем в БД
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Проверяем, существует ли таблица
         cursor.execute("""
-            SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_name = 'docker_containers'
-            );
+            CREATE TABLE IF NOT EXISTS docker_containers (
+                id SERIAL PRIMARY KEY,
+                container_id VARCHAR(64) UNIQUE,
+                project_id INTEGER,
+                image_name VARCHAR(255),
+                started_at TIMESTAMP,
+                status VARCHAR(20),
+                project_type VARCHAR(20),
+                main_file VARCHAR(255)
+            )
         """)
-        table_exists = cursor.fetchone()[0]
-
-        if not table_exists:
-            print("❌ Таблица docker_containers не существует! Создайте её в БД.")
-            # Создаем таблицу на лету
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS docker_containers (
-                    id SERIAL PRIMARY KEY,
-                    container_id VARCHAR(64) NOT NULL UNIQUE,
-                    project_id INTEGER NOT NULL,
-                    port INTEGER,
-                    image_name VARCHAR(255) NOT NULL,
-                    started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    stopped_at TIMESTAMP,
-                    status VARCHAR(20) DEFAULT 'running'
-                );
-            """)
-            conn.commit()
-            print("✅ Таблица docker_containers создана")
-
-        # Вставляем данные
-        cursor.execute("""
-            INSERT INTO docker_containers (container_id, project_id, port, image_name, started_at, status)
-            VALUES (%s, %s, %s, %s, %s, 'running')
-        """, (container.id, project_id, port_value, image_name, datetime.now()))
         conn.commit()
-        print(f"💾 Информация сохранена в БД")
+
+        cursor.execute("""
+            INSERT INTO docker_containers 
+                (container_id, project_id, image_name, started_at, status, project_type, main_file)
+            VALUES (%s, %s, %s, %s, 'running', %s, %s)
+        """, (container.id, project_id, image_name, datetime.now(), project_type, main_file))
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        link = f"/container/{project_id}/view"
+        print(f"🔗 Ссылка: {link}")
 
         return container, link
 
     except Exception as e:
-        print(f"❌ Ошибка в run_container: {e}")
+        print(f"❌ Ошибка: {e}")
         import traceback
         traceback.print_exc()
         return None, None
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
 
 
 def get_container_info(project_id):
-    conn = None
-    cursor = None
+    """
+    Получает информацию о запущенном контейнере из БД
+    """
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
+
         cursor.execute("""
-            SELECT container_id, port, image_name, started_at, status
+            SELECT container_id, status, project_type, main_file
             FROM docker_containers
-            WHERE project_id = %s
+            WHERE project_id = %s AND status = 'running'
             ORDER BY started_at DESC
             LIMIT 1
         """, (project_id,))
+
         row = cursor.fetchone()
+        cursor.close()
+        conn.close()
 
         if not row:
             return None
 
-        link = None
-        if row[4] == 'running':
-            if row[1]:  # Если есть порт
-                link = f"http://localhost:{row[1]}"
-            else:
-                link = f"/container/{project_id}/view"
+        container_id, status, project_type, main_file = row
+
+        # Определяем ссылку в зависимости от типа
+        if project_type == 'gui':
+            link = f"/container/{project_id}/gui"
+        else:
+            link = f"/container/{project_id}/view"
 
         return {
-            'container_id': row[0],
-            'port': row[1],
-            'image_name': row[2],
-            'started_at': row[3],
-            'status': row[4],
+            'container_id': container_id,
+            'status': status,
+            'project_type': project_type,
+            'main_file': main_file,
             'link': link
         }
 
     except Exception as e:
-        print(f"❌ Ошибка получения данных контейнера: {e}")
+        print(f"❌ Ошибка получения информации о контейнере: {e}")
         return None
 
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+
+def stop_container_by_project(project_id):
+    """
+    Останавливает контейнер по ID проекта
+    """
+    try:
+        # Сначала получаем информацию о контейнере
+        container_info = get_container_info(project_id)
+
+        if not container_info:
+            return False, "Контейнер не найден или уже остановлен"
+
+        container_id = container_info['container_id']
+
+        # Останавливаем и удаляем контейнер в Docker
+        client = docker.from_env()
+        container = client.containers.get(container_id)
+        container.stop(timeout=5)
+        container.remove()
+
+        # Обновляем статус в БД
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            UPDATE docker_containers 
+            SET status = 'stopped', stopped_at = CURRENT_TIMESTAMP
+            WHERE container_id = %s
+        """, (container_id,))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        print(f"✅ Контейнер {container_id[:12]} остановлен")
+        return True, "Контейнер успешно остановлен"
+
+    except docker.errors.NotFound:
+        return False, "Контейнер не найден в Docker"
+    except Exception as e:
+        print(f"❌ Ошибка остановки контейнера: {e}")
+        return False, str(e)
 
 
-def _run_web_container(image_name, project_id, client):
-    """Запуск веб-приложения"""
-    port = find_free_port()
-
-    container = client.containers.run(
-        image_name,
-        detach=True,
-        ports={'5000/tcp': port},
-        mem_limit='512m'
-    )
-
-    # Сохраняем в БД
-    _save_container_info(container.id, project_id, port, image_name)
-
-    link = f"http://localhost:{port}"
-    return container, link
-
-
-def _run_console_container(image_name, project_id, client):
-    """Запуск консольного приложения с возможностью ввода"""
-    # Для консольных приложений используем интерактивный режим
-    container = client.containers.run(
-        image_name,
-        detach=True,
-        stdin_open=True,  # Открыть stdin
-        tty=True,  # Выделить псевдо-TTY
-        mem_limit='256m',
-        command=["python", "-u", "test.py"]  # -u для unbuffered output
-    )
-
-    # Для консольных приложений порт не нужен
-    _save_container_info(container.id, project_id, None, image_name)
-
-    # Ссылка для консольного приложения - это WebSocket для ввода/вывода
-    link = f"ws://localhost/console/{container.id}"
-    return container, link
-
-
-def _save_container_info(container_id, project_id, port, image_name):
-    """Сохраняет информацию о контейнере в БД"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO docker_containers (container_id, project_id, port, image_name, started_at, status)
-        VALUES (%s, %s, %s, %s, %s, 'running')
-    """, (container_id, project_id, port, image_name, datetime.now()))
-    conn.commit()
-    cursor.close()
-    conn.close()
+def image_exists(image_name):
+    """
+    Проверяет, существует ли Docker образ
+    """
+    try:
+        client = docker.from_env()
+        client.images.get(image_name)
+        return True
+    except docker.errors.ImageNotFound:
+        return False
+    except Exception as e:
+        print(f"❌ Ошибка проверки образа: {e}")
+        return False

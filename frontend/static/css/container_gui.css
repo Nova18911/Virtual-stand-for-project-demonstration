@@ -1,0 +1,60 @@
+/* frontend/static/css/container_gui.css */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #1e1e1e;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    background: #2d2d2d;
+    border-bottom: 1px solid #444;
+}
+
+.toolbar span {
+    color: #ccc;
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+}
+
+.program-info {
+    color: #98c379;
+    background: #1e1e1e;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+}
+
+.btn-stop {
+    margin-left: auto;
+    padding: 6px 16px;
+    background: #c0392b;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.btn-stop:hover {
+    background: #e74c3c;
+}
+
+iframe {
+    flex: 1;
+    width: 100%;
+    border: none;
+    background: #000;
+}

@@ -1,185 +1,170 @@
-body {
-    font-family: Arial, Helvetica, sans-serif;
-    background-color: #f5f5f5;
+* {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 
-.top-bar {
-    background-color: #333;
-    color: white;
-    padding: 15px 30px;
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 15px;
+    color: #2d2d2d;
+    background: #fff;
+}
+
+.header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 3px solid #666;
+    padding: 14px 28px;
+    border-bottom: 1px solid #d1d5db;
 }
 
-.top-bar h1 {
-    font-size: 18px;
-    font-weight: normal;
+.header__title {
+    font-size: 17px;
+    font-weight: 600;
 }
 
-.page {
-    min-height: 100vh;
+.header__user {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.navbar {
     display: flex;
-    flex-direction: column;
+    gap: 8px;
+    padding: 10px 28px;
+    border-bottom: 2px solid #d1d5db;
 }
 
-.sidebar {
-    background-color: #444;
-    padding: 10px 30px;
+.navbar__link {
+    padding: 6px 12px;
+    font-size: 14px;
+    color: #2d2d2d;
+    text-decoration: none;
+}
+
+.navbar__link:hover {
+    text-decoration: underline;
+}
+
+.navbar__link--active {
+    font-weight: 600;
+}
+
+.main {
+    padding: 28px 32px;
+}
+
+.main__title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+/* Панель экспорта — три колонки */
+
+.export-panel {
     display: flex;
-    gap: 20px;
-    border-bottom: 1px solid #555;
+    gap: 24px;
+    align-items: flex-start;
 }
 
-.sidebar button {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 16px;
-    padding: 5px 10px;
-    cursor: pointer;
-}
-
-.sidebar button:hover {
-    background-color: #555;
-}
-
-.content {
-    display: flex;
+.export-col {
     flex: 1;
-    padding: 20px;
-    gap: 20px;
-    background-color: #fff;
+    border: 1px solid #d1d5db;
+    padding: 16px;
+    min-height: 200px;
 }
 
-.leftsidebar {
-    flex: 1;
-    background-color: #fff;
-    padding: 15px;
-    border: 1px solid #ddd;
-}
-
-.midsidebar {
+.export-col--wide {
     flex: 2;
-    background-color: #fff;
-    padding: 15px;
-    border: 1px solid #ddd;
 }
 
-.rightsidebar {
-    flex: 1;
-    background-color: #fff;
-    padding: 15px;
-    border: 1px solid #ddd;
+.col__title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #2d2d2d;
 }
 
-h2 {
-    font-size: 18px;
-    margin-bottom: 15px;
-    color: #333;
-    font-weight: bold;
-}
+/* Чекбоксы */
 
-form {
-    margin-bottom: 10px;
-}
-
-label {
+.checkbox-label {
     display: flex;
     align-items: center;
     gap: 8px;
     font-size: 14px;
-    color: #333;
+    color: #2d2d2d;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
     cursor: pointer;
 }
 
-input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-}
+/* Таблица */
 
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 15px;
-    border: 1px solid #ddd;
+    margin-top: 8px;
+    font-size: 13px;
 }
 
 th, td {
-    border: 1px solid #ddd;
-    padding: 8px;
+    border: 1px solid #d1d5db;
+    padding: 7px 10px;
     text-align: left;
-    font-size: 14px;
 }
 
 th {
-    background-color: #f0f0f0;
-    font-weight: bold;
+    background: #f9fafb;
+    font-weight: 600;
 }
 
-.btn-login {
-    background-color: #4a90e2;
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    font-size: 14px;
-    cursor: pointer;
+/* Поля */
+
+select,
+input[type="text"] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
     border-radius: 3px;
-    margin-top: 10px;
-}
-
-.btn-login:hover {
-    background-color: #357abd;
-}
-
-select {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
     font-size: 14px;
-    margin-bottom: 15px;
-    background-color: white;
+    font-family: inherit;
+    outline: none;
+    background: #fff;
+    margin-bottom: 16px;
 }
 
-input[type="namefile"] {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
+select:focus,
+input[type="text"]:focus {
+    border-color: #555;
+}
+
+/* Кнопка */
+
+.btn {
+    padding: 8px 24px;
     font-size: 14px;
-    margin-top: 5px;
+    border: 1px solid #d1d5db;
+    border-radius: 3px;
+    cursor: pointer;
+    background: #fff;
+    font-family: inherit;
+    transition: background 0.15s;
+    margin-top: 8px;
 }
 
-#selectAll {
-    margin-bottom: 10px;
-}
-
-#tables {
-    margin-top: 15px;
+.btn:hover {
+    background: #f5f5f5;
 }
 
 #result {
-    margin-top: 15px;
-    font-size: 14px;
-    color: #333;
-}
-
-.leftsidebar input[type="checkbox"] {
-    accent-color: #333;
-}
-
-.midsidebar h2 {
-    margin-bottom: 10px;
-}
-
-.midsidebar > label {
-    margin-bottom: 5px;
-}
-
-.rightsidebar select {
-    width: 100%;
-    padding: 5px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: #6b7280;
 }

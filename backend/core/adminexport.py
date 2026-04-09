@@ -5,8 +5,10 @@ import json
 import io
 import zipfile
 from datetime import datetime
+from backend.core.connect import get_db_connection
 
 admexp_bp = Blueprint('adminexport', __name__)
+
 
 
 def get_tables_from_db():

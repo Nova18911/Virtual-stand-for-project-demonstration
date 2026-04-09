@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
-from backend.core.connect import get_db_connection
+from core.connect import get_db_connection
 
 auth_bp = Blueprint('auth', __name__)
 
