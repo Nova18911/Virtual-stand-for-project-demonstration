@@ -1,7 +1,7 @@
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from flask import Flask,redirect, render_template, url_for
+from flask import Flask, redirect, render_template, url_for
 from auth import auth_bp
 from core.registration import register_bp
 from core.mainpage import mainpage_bp
@@ -13,10 +13,9 @@ from core.tasks import tasks_bp
 from core.admin_main import admin_main
 from backend.student_list import task_detail_bp
 from core.docker.streamer import streamer_bp
-
 from core.admin_import import admin_import
+from admin_notify import admin_notify_bp  
 
-# Указываем Flask, где искать папки со страницами и стилями
 app = Flask(__name__,
             template_folder='../frontend/templates',
             static_folder='../frontend/static')
@@ -35,6 +34,8 @@ app.register_blueprint(admin_main)
 app.register_blueprint(task_detail_bp)
 app.register_blueprint(admin_import)
 app.register_blueprint(streamer_bp)
+app.register_blueprint(admin_notify_bp)  
+
 
 
 
