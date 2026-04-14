@@ -16,3 +16,4 @@ JOIN roles r ON u.access_id = r.access_id
 WHERE r.access_rights = 'teacher'
   AND u.full_name = c.teacher
   AND c.teacher_id IS NULL;
+
