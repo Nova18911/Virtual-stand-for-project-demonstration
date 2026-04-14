@@ -103,13 +103,8 @@
 
         if (data.build_success) {
             dockerBlock.innerHTML = `
-                <button class="btn-docker" id="runBtn">▶️ Запустить</button>
-                <button class="btn-docker" id="rebuildBtn">🔄 Пересобрать</button>
+                <span class="build-success">✅ Проект собран</span>
             `;
-
-            document.getElementById('runBtn').addEventListener('click', () => runContainer(userId));
-            document.getElementById('rebuildBtn').addEventListener('click', () => rebuildContainer(userId));
-
         } else {
             dockerBlock.innerHTML = `
                 <button class="btn-docker" id="buildBtn">Осуществить сборку</button>
@@ -118,30 +113,52 @@
         }
     };
 
-    // --- Сборка контейнера ---
+    // --- Сборка контейнера с проверкой изменения ссылки ---
     async function buildContainer(userId) {
-        const btn = document.getElementById('buildBtn') || document.getElementById('rebuildBtn');
+        const btn = document.getElementById('buildBtn');
         if (!btn) return;
 
         btn.disabled = true;
-        btn.textContent = '⏳ Сборка...';
+        btn.textContent = '⏳ Проверка...';
 
         try {
-            const response = await fetch(`/api/task/${LAB_ID}/student/${userId}/build`, {
-                method: 'POST'
-            });
+            // Получаем свежие данные студента
+            const detailResponse = await fetch(`/api/task/${LAB_ID}/student/${userId}`);
+            const currentData = await detailResponse.json();
+
+            if (!currentData.ok) {
+                alert('Не удалось получить данные студента');
+                resetBuildButton(btn);
+                return;
+            }
+
+            const currentGithubLink = currentData.github_link || '';
+
+            // Определяем, нужно ли делать force rebuild
+            const shouldForceRebuild = !currentData.build_success ||
+                                      (currentData.github_link && currentData.github_link !== currentGithubLink);
+
+            let url = `/api/task/${LAB_ID}/student/${userId}/build`;
+
+            if (shouldForceRebuild) {
+                url += '?force=true';
+                showNotification('Обнаружена новая ссылка на GitHub → выполняется пересборка...', 'info');
+            } else {
+                showNotification('Сборка проекта...', 'info');
+            }
+
+            const response = await fetch(url, { method: 'POST' });
             const data = await response.json();
 
             if (!data.ok) {
                 alert(data.error || 'Ошибка при сборке');
-                btn.disabled = false;
-                btn.textContent = 'Осуществить сборку';
+                resetBuildButton(btn);
                 return;
             }
 
-            showNotification('Сборка началась...', 'info');
+            showNotification('Сборка запущена...', 'info');
 
-            // Обновляем информацию через небольшую задержку
+            // Обновляем информацию
             setTimeout(() => {
                 loadStudentDetail(userId);
             }, 2000);
@@ -149,56 +166,14 @@
         } catch (err) {
             console.error('Ошибка:', err);
             alert('Ошибка соединения с сервером');
-            btn.disabled = false;
-            btn.textContent = 'Осуществить сборку';
+            resetBuildButton(btn);
         }
     }
 
-    // --- Запуск контейнера ---
-    async function runContainer(userId) {
-        try {
-            const res = await fetch(`/api/task/${LAB_ID}/student/${userId}/run`, {
-                method: 'POST'
-            });
-            const data = await res.json();
-
-            if (data.ok) {
-                showNotification('Контейнер запущен!', 'success');
-                loadStudentDetail(userId);
-            } else {
-                alert(data.error || 'Не удалось запустить контейнер');
-            }
-        } catch (e) {
-            alert('Ошибка запуска контейнера');
-        }
-    }
-
-    // --- Пересборка ---
-    async function rebuildContainer(userId) {
-        if (!confirm('Пересобрать проект? Старый образ будет удалён.')) return;
-
-        const btn = document.getElementById('rebuildBtn');
-        btn.disabled = true;
-        btn.textContent = '🔄 Пересборка...';
-
-        try {
-            const res = await fetch(`/api/task/${LAB_ID}/student/${userId}/rebuild`, {
-                method: 'POST'
-            });
-            const data = await res.json();
-
-            if (data.ok) {
-                showNotification('Пересборка началась...', 'success');
-                setTimeout(() => loadStudentDetail(userId), 2500);
-            } else {
-                alert(data.error || 'Ошибка пересборки');
-            }
-        } catch (e) {
-            alert('Ошибка соединения');
-        } finally {
-            btn.disabled = false;
-            btn.textContent = '🔄 Пересобрать';
-        }
+    // Вспомогательная функция для сброса кнопки
+    function resetBuildButton(btn) {
+        btn.disabled = false;
+        btn.textContent = 'Осуществить сборку';
     }
 
     // --- Оценки ---

@@ -33,6 +33,11 @@ CREATE TABLE IF NOT EXISTS users (
     full_name VARCHAR(100) NOT NULL,
     access_id INTEGER NOT NULL,
     login_id  INTEGER NOT NULL,
+    status VARCHAR(20) DEFAULT 'approved',
+    is_approved BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    approved_at TIMESTAMP,
+    rejected_at TIMESTAMP,
     FOREIGN KEY (access_id) REFERENCES roles(access_id)
         ON UPDATE CASCADE
         ON DELETE RESTRICT,
@@ -330,8 +335,3 @@ WHERE NOT EXISTS (
     WHERE user_id = (SELECT user_id FROM users u JOIN passwords p ON u.login_id = p.login_id WHERE p.login = 'kozlova@vstand.ru')
       AND lab_id = (SELECT lab_id FROM labs WHERE name = 'Лабораторная работа №1')
 );
-ALTER TABLE users ADD COLUMN status VARCHAR(20) DEFAULT 'approved';
-ALTER TABLE users ADD COLUMN is_approved BOOLEAN DEFAULT true;
-ALTER TABLE users ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE users ADD COLUMN approved_at TIMESTAMP;
-ALTER TABLE users ADD COLUMN rejected_at TIMESTAMP;

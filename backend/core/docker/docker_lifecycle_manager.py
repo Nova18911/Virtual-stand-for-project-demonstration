@@ -11,6 +11,9 @@ import sys
 from dataclasses import dataclass
 import os
 
+from backend.core.connect import get_db_connection
+
+
 @dataclass
 class ContainerInfo:
     """Класс для хранения информации о контейнере"""
@@ -33,13 +36,7 @@ class DockerLifecycleManager:
         
         # Подключение к PostgreSQL
         try:
-            self.db_conn = pg8000.connect(
-                host="127.0.0.1",
-                port=5432,
-                database="course_management",
-                user="postgres",
-                password="endermen"
-            )
+            self.db_conn = get_db_connection()
             self.logger.info("Подключение к PostgreSQL успешно")
         except Exception as e:
             self.logger.error(f"Ошибка подключения к PostgreSQL: {e}")

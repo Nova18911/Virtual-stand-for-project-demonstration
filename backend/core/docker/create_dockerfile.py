@@ -5,43 +5,32 @@ import subprocess
 
 
 def create_dockerfile(repo_path: str, project_type: str, main_file: str) -> dict:
-    """Создаёт Dockerfile для консольного проекта (с поддержкой pandas и др.)"""
     try:
-        dockerfile_content = f'''# Dockerfile для консольного Python проекта
-FROM python:3.11-slim
+        dockerfile_content = f'''FROM python:3.11-slim-bookworm
 
-# Устанавливаем системные зависимости для сборки тяжёлых пакетов (pandas, numpy и т.д.)
+# Минимальные зависимости
 RUN apt-get update && apt-get install -y --no-install-recommends \\
-    gcc \\
-    python3-dev \\
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Сначала копируем только requirements.txt — чтобы кэшировать установку зависимостей
 COPY requirements.txt .
-
-# Устанавливаем зависимости
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копируем весь код проекта
 COPY . .
 
-# Запускаем программу
 CMD ["python", "-u", "{main_file}"]
 '''
 
-        dockerfile_path = os.path.join(repo_path, "Dockerfile")
-        with open(dockerfile_path, "w", encoding="utf-8") as f:
+        with open(os.path.join(repo_path, "Dockerfile"), "w", encoding="utf-8") as f:
             f.write(dockerfile_content)
 
-        print("✅ Создан Dockerfile с поддержкой тяжёлых пакетов (pandas и др.)")
+        print("✅ Создан стабильный Dockerfile (python:3.11-slim-bookworm)")
         return {'success': True}
 
     except Exception as e:
         print(f"❌ Ошибка создания Dockerfile: {e}")
         return {'success': False, 'error': str(e)}
-
 
 def save_requirements_file(repo_path: str, requirements: list):
     """Создаёт requirements.txt"""

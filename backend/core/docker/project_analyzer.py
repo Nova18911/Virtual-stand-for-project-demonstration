@@ -7,28 +7,23 @@ from collections import defaultdict
 
 # Популярные пакеты и их имена в импортах
 PACKAGE_MAPPING = {
-    # Data Science
+    # Основные для анализа данных (самые частые)
     'pandas': 'pandas',
     'numpy': 'numpy',
 
-    # Визуализация
+    # Визуализация (очень важно для учебных работ)
     'matplotlib': 'matplotlib',
     'seaborn': 'seaborn',
     'plotly': 'plotly',
 
-    # Machine Learning
-    'sklearn': 'scikit-learn',           # ← важно!
-    'scikit-learn': 'scikit-learn',
-
     # Научные вычисления
     'scipy': 'scipy',
     'sympy': 'sympy',
-    'statsmodels': 'statsmodels',
 
-    # Работа с файлами и веб
+    # Работа с файлами и данными
+    'openpyxl': 'openpyxl',
     'requests': 'requests',
     'beautifulsoup4': 'beautifulsoup4',
-    'openpyxl': 'openpyxl',
     'pillow': 'pillow',
 
     # Удобства для консоли
@@ -36,7 +31,7 @@ PACKAGE_MAPPING = {
     'colorama': 'colorama',
     'tqdm': 'tqdm',
 
-    # Стандартная библиотека (не устанавливаем)
+    # Стандартная библиотека Python (не устанавливаем)
     'os': None,
     'sys': None,
     'math': None,
@@ -46,7 +41,10 @@ PACKAGE_MAPPING = {
     'json': None,
     'csv': None,
     'collections': None,
+    'itertools': None,
 }
+
+
 def analyze_project(repo_path: str) -> dict:
     """
     Анализирует проект: находит главный файл + автоматически определяет зависимости

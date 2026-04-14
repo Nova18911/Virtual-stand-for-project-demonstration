@@ -280,3 +280,27 @@ def rebuild_container(lab_id, student_id):
         return jsonify({'ok': False, 'error': result['error']}), 500
 
     return jsonify({'ok': True, 'link': result['link']})
+
+# --- Обновление ссылки на GitHub (студент может менять) ---
+@task_detail_bp.route('/api/task/<int:lab_id>/student/<int:student_id>/github', methods=['POST'])
+def update_github_link(lab_id, student_id):
+    data = request.get_json()
+    new_github_link = data.get('github_link', '').strip()
+
+    if not new_github_link:
+        return jsonify({'ok': False, 'error': 'Ссылка на GitHub не может быть пустой'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE student_projects 
+        SET github_link = %s, 
+            build_info = NULL,      # сбрасываем информацию о сборке
+            grade = NULL            # сбрасываем оценку при смене ссылки
+        WHERE lab_id = %s AND user_id = %s
+    """, (new_github_link, lab_id, student_id))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({'ok': True, 'message': 'Ссылка обновлена. При следующей сборке будет использована новая версия.'})
