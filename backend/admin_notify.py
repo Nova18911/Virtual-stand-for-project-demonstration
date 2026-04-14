@@ -1,5 +1,5 @@
 from flask import Flask, Blueprint, render_template, request, jsonify
-import pg8000
+from backend.core.connect import get_db_connection
 import os
 import sys
 
@@ -9,15 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Создаем Blueprint
 admin_notify_bp = Blueprint('admin_notify', __name__, url_prefix='/admin-notify')
 
-def get_db_connection():
-    """Подключение к базе данных PostgreSQL"""
-    return pg8000.connect(
-        host="localhost",
-        port=5432,
-        database="course_management",
-        user="postgres",
-        password="12345"
-    )
+
 
 @admin_notify_bp.route('/', methods=['GET'])
 def admin_notify_page():
