@@ -1,5 +1,6 @@
 (function () {
 
+    // ── Загрузка заданий ──────────────────────────────────────────
     async function loadTasks() {
         const response = await fetch(`/api/course/${COURSE_ID}/labs`);
         const labs     = await response.json();
@@ -19,25 +20,31 @@
             const li = document.createElement('li');
             li.className = 'task-item';
 
-            const fileBtn = lab.has_file
-                ? `<a href="/api/task/${lab.id}/file" class="btn" download>📎 Файл</a>`
-                : '';
+            // Кнопка скачивания файла с отображением имени
+            let fileBtn = '';
+            if (lab.has_file) {
+                const fileName = lab.filename || 'Файл';
+                fileBtn = `
+                    <div class="task-file-info">
+                        <a href="/api/task/${lab.id}/file" class="btn btn-file" download>
+                            📎 ${escapeHtml(fileName)}
+                        </a>
+                    </div>
+                `;
+            }
 
             if (ROLE === 'teacher') {
-                // Название ведёт на список студентов
                 li.innerHTML = `
-                    <a href="/task/${lab.id}" class="task-name">${lab.name}</a>
+                    <a href="/task/${lab.id}" class="task-name">${escapeHtml(lab.name)}</a>
                     <div class="task-actions">
                         <span class="task-dates">${lab.start_date} — ${lab.end_date}</span>
                         ${fileBtn}
-                        <button class="btn btn-edit"
-                                onclick="openEditModal(${lab.id})">Редактировать</button>
+                        <button class="btn btn-edit" onclick="openEditModal(${lab.id})">Редактировать</button>
                     </div>
                 `;
             } else {
-                // Название ведёт на страницу задания
                 li.innerHTML = `
-                    <a href="/tasks/${lab.id}" class="task-name">${lab.name}</a>
+                    <a href="/tasks/${lab.id}" class="task-name">${escapeHtml(lab.name)}</a>
                     <div class="task-actions">
                         <span class="task-dates">${lab.start_date} — ${lab.end_date}</span>
                         ${fileBtn}
@@ -51,9 +58,34 @@
         });
     }
 
+    // Функция для экранирования HTML
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // ── Только для преподавателя ──────────────────────────────────
     if (ROLE === 'teacher') {
 
-        // --- Модальное окно добавления ---
+        // Функция для установки минимальной даты (сегодня + 1 день)
+        function setMinDeadline() {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const minDateStr = tomorrow.toISOString().split('T')[0];
+
+            const addInput = document.getElementById('taskDeadline');
+            const editInput = document.getElementById('editTaskDeadline');
+
+            if (addInput) addInput.setAttribute('min', minDateStr);
+            if (editInput) editInput.setAttribute('min', minDateStr);
+        }
+
+        // ── Модалка: добавить задание ──
         const addModal   = document.getElementById('addTaskModal');
         const openBtn    = document.getElementById('openModalBtn');
         const closeBtn   = document.getElementById('closeModalBtn');
@@ -61,10 +93,13 @@
         const submitBtn  = document.getElementById('submitTaskBtn');
         const modalError = document.getElementById('modalError');
 
-        openBtn.addEventListener('click',  () => addModal.style.display = 'flex');
-        closeBtn.addEventListener('click', () => closeAddModal());
-        cancelBtn.addEventListener('click',() => closeAddModal());
-        addModal.addEventListener('click', (e) => { if (e.target === addModal) closeAddModal(); });
+        openBtn.addEventListener('click',   () => {
+            setMinDeadline();
+            addModal.style.display = 'flex';
+        });
+        closeBtn.addEventListener('click',  () => closeAddModal());
+        cancelBtn.addEventListener('click', () => closeAddModal());
+        addModal.addEventListener('click',  (e) => { if (e.target === addModal) closeAddModal(); });
 
         function closeAddModal() {
             addModal.style.display   = 'none';
@@ -73,6 +108,7 @@
             document.getElementById('taskDeadline').value    = '';
             document.getElementById('taskDescription').value = '';
             document.getElementById('fileName').textContent  = 'Файл не выбран';
+            document.getElementById('taskFile').value = '';
         }
 
         submitBtn.addEventListener('click', async () => {
@@ -97,18 +133,19 @@
                 if (!data.ok) { modalError.textContent = data.error; modalError.style.display = 'block'; return; }
                 closeAddModal();
                 loadTasks();
+                showNotification('Задание успешно добавлено', 'success');
             } catch (err) {
                 modalError.textContent   = 'Ошибка соединения с сервером.';
                 modalError.style.display = 'block';
             }
         });
 
-        // --- Модальное окно редактирования ---
-        const editModal    = document.getElementById('editTaskModal');
-        const editCloseBtn = document.getElementById('editCloseBtn');
-        const editCancelBtn= document.getElementById('editCancelBtn');
-        const editSubmitBtn= document.getElementById('editSubmitBtn');
-        const editError    = document.getElementById('editModalError');
+        // ── Модалка: редактировать задание ──
+        const editModal     = document.getElementById('editTaskModal');
+        const editCloseBtn  = document.getElementById('editCloseBtn');
+        const editCancelBtn = document.getElementById('editCancelBtn');
+        const editSubmitBtn = document.getElementById('editSubmitBtn');
+        const editError     = document.getElementById('editModalError');
 
         editCloseBtn.addEventListener('click',  () => closeEditModal());
         editCancelBtn.addEventListener('click', () => closeEditModal());
@@ -117,6 +154,8 @@
         function closeEditModal() {
             editModal.style.display = 'none';
             editError.style.display = 'none';
+            document.getElementById('editTaskFile').value = '';
+            document.getElementById('editFileName').textContent = 'Файл не выбран';
         }
 
         window.openEditModal = async function (labId) {
@@ -124,19 +163,21 @@
                 const response = await fetch(`/api/task/${labId}`);
                 const lab      = await response.json();
 
+                setMinDeadline();
+
                 document.getElementById('editLabId').value           = lab.id;
                 document.getElementById('editTaskName').value        = lab.name;
                 document.getElementById('editTaskDeadline').value    = lab.end_date_raw;
                 document.getElementById('editTaskDescription').value = lab.task || '';
 
-                // Показываем есть ли уже прикреплённый файл
                 const fileStatus = document.getElementById('editFileName');
                 if (lab.has_file) {
-                    fileStatus.textContent  = '✔ Файл прикреплён (загрузите новый чтобы заменить)';
-                    fileStatus.style.color  = '#2a7a2a';
+                    const fileName = lab.filename || 'файл';
+                    fileStatus.textContent = `✔ Файл прикреплён: ${fileName} (загрузите новый чтобы заменить)`;
+                    fileStatus.style.color = '#2a7a2a';
                 } else {
-                    fileStatus.textContent  = 'Файл не выбран';
-                    fileStatus.style.color  = '#999';
+                    fileStatus.textContent = 'Файл не выбран';
+                    fileStatus.style.color = '#999';
                 }
 
                 editError.style.display = 'none';
@@ -153,8 +194,8 @@
             const description = document.getElementById('editTaskDescription').value.trim();
             const fileInput   = document.getElementById('editTaskFile');
 
-            if (!name)     { editError.textContent = 'Введите название.';    editError.style.display = 'block'; return; }
-            if (!deadline) { editError.textContent = 'Укажите срок сдачи.';  editError.style.display = 'block'; return; }
+            if (!name)     { editError.textContent = 'Введите название.';   editError.style.display = 'block'; return; }
+            if (!deadline) { editError.textContent = 'Укажите срок сдачи.'; editError.style.display = 'block'; return; }
 
             const formData = new FormData();
             formData.append('lab_id',      labId);
@@ -169,11 +210,112 @@
                 if (!data.ok) { editError.textContent = data.error; editError.style.display = 'block'; return; }
                 closeEditModal();
                 loadTasks();
+                showNotification('Задание успешно обновлено', 'success');
             } catch (err) {
                 editError.textContent   = 'Ошибка соединения с сервером.';
                 editError.style.display = 'block';
             }
         });
+
+        // ── Модалка: добавить студента ──
+        const addStudentModal    = document.getElementById('addStudentModal');
+        const openAddStudentBtn  = document.getElementById('openAddStudentBtn');
+        const closeAddStudentBtn = document.getElementById('closeAddStudentBtn');
+        const cancelAddStudentBtn= document.getElementById('cancelAddStudentBtn');
+        const submitAddStudentBtn= document.getElementById('submitAddStudentBtn');
+        const studentSelect      = document.getElementById('studentSelect');
+        const studentSearch      = document.getElementById('studentSearch');
+        const studentModalError  = document.getElementById('studentModalError');
+
+        let allStudents = [];
+
+        openAddStudentBtn.addEventListener('click', async () => {
+            addStudentModal.style.display = 'flex';
+            studentModalError.style.display = 'none';
+            studentSearch.value = '';
+            studentSelect.innerHTML = '<option disabled>Загрузка...</option>';
+
+            try {
+                const res  = await fetch(`/api/course/${COURSE_ID}/students-not-enrolled`);
+                allStudents = await res.json();
+                renderStudentOptions(allStudents);
+            } catch (err) {
+                studentSelect.innerHTML = '<option disabled>Ошибка загрузки</option>';
+            }
+        });
+
+        function renderStudentOptions(students) {
+            studentSelect.innerHTML = '';
+            if (students.length === 0) {
+                studentSelect.innerHTML = '<option disabled>Все студенты уже записаны</option>';
+                return;
+            }
+            students.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value       = s.user_id;
+                opt.textContent = s.full_name;
+                studentSelect.appendChild(opt);
+            });
+        }
+
+        studentSearch.addEventListener('input', () => {
+            const q = studentSearch.value.toLowerCase();
+            const filtered = allStudents.filter(s => s.full_name.toLowerCase().includes(q));
+            renderStudentOptions(filtered);
+        });
+
+        function closeStudentModal() {
+            addStudentModal.style.display   = 'none';
+            studentModalError.style.display = 'none';
+            studentSearch.value = '';
+        }
+
+        closeAddStudentBtn.addEventListener('click',  () => closeStudentModal());
+        cancelAddStudentBtn.addEventListener('click', () => closeStudentModal());
+        addStudentModal.addEventListener('click', (e) => { if (e.target === addStudentModal) closeStudentModal(); });
+
+        submitAddStudentBtn.addEventListener('click', async () => {
+            const selected = studentSelect.value;
+            if (!selected) {
+                studentModalError.textContent   = 'Выберите студента из списка.';
+                studentModalError.style.display = 'block';
+                return;
+            }
+
+            try {
+                const res  = await fetch(`/api/course/${COURSE_ID}/add-student`, {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ user_id: parseInt(selected) })
+                });
+                const data = await res.json();
+
+                if (!data.ok) {
+                    studentModalError.textContent   = data.error;
+                    studentModalError.style.display = 'block';
+                    return;
+                }
+
+                closeStudentModal();
+                const name = studentSelect.options[studentSelect.selectedIndex].textContent;
+                showNotification(`${name} добавлен на курс`, 'success');
+
+            } catch (err) {
+                studentModalError.textContent   = 'Ошибка соединения с сервером.';
+                studentModalError.style.display = 'block';
+            }
+        });
+
+        function showNotification(message, type = 'info') {
+            const n = document.createElement('div');
+            n.className   = `notification ${type}`;
+            n.textContent = message;
+            document.body.appendChild(n);
+            setTimeout(() => {
+                n.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => n.remove(), 300);
+            }, 3000);
+        }
     }
 
     loadTasks();

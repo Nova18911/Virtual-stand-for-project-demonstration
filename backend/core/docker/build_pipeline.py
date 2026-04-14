@@ -1,117 +1,97 @@
+# backend/core/docker/build_pipeline.py
+
 from backend.core.connect import get_db_connection
-from backend.core.docker.git_clone       import clone_repo, delete_repo
+from backend.core.docker.git_clone import clone_repo, delete_repo
 from backend.core.docker.project_analyzer import analyze_project
 from backend.core.docker.create_dockerfile import (
     create_dockerfile, save_requirements_file,
     create_dockerignore, build_docker_image
 )
 from datetime import datetime
-from backend.core.runner import run_container
+
+from backend.core.runner import image_exists
 
 
 def build_and_run(github_url: str, project_id: int, image_name: str) -> dict:
-    """
-    Полный pipeline:
-    1. Клонировать репозиторий
-    2. Проанализировать проект
-    3. Создать Dockerfile + requirements
-    4. Собрать Docker-образ
-    5. Запустить контейнер и вернуть ссылку
-    """
+    print(f"\n🚀 СБОРКА КОНСОЛЬНОГО ПРОЕКТА {project_id}")
 
-    # 1. Клонирование
     clone = clone_repo(github_url)
     if not clone['success']:
         return {'ok': False, 'error': clone['error']}
     repo_path = clone['path']
 
     try:
-        # 2. Анализ проекта
         analysis = analyze_project(repo_path)
         if analysis['error']:
             return {'ok': False, 'error': analysis['error']}
 
-        if not analysis['main_file']:
-            return {'ok': False, 'error': 'Не найден основной файл запуска (main.py, app.py и т.д.)'}
+        print(f"📄 Основной файл: {analysis['main_file']}")
+        print(f"🎯 Тип проекта: console")
 
-        # Сохраняем информацию о проекте
-        _save_project_analysis(project_id, analysis, image_name, repo_path)
-
-        # 3. Создаём вспомогательные файлы
         save_requirements_file(repo_path, analysis['requirements'])
         create_dockerignore(repo_path)
 
-        dockerfile = create_dockerfile(
+        dockerfile_result = create_dockerfile(
             repo_path,
-            analysis['project_type'],
+            'console',                    # <-- важно
             analysis['main_file']
         )
-        if not dockerfile['success']:
-            return {'ok': False, 'error': dockerfile['error']}
+        if not dockerfile_result['success']:
+            return {'ok': False, 'error': dockerfile_result['error']}
 
-        # 4. Сборка образа
         build = build_docker_image(repo_path, image_name)
         if not build['success']:
             return {'ok': False, 'error': build['error']}
 
-        # 5. Запуск контейнера с учетом типа проекта
+        _save_project_info(project_id, analysis, image_name)
+
+        # Запуск контейнера
+        from backend.core.runner import run_container
         container, link = run_container(
-            image_name,
-            project_id,
-            analysis['project_type']  # Передаем тип проекта
+            image_name, project_id, 'console', analysis['main_file']
         )
 
         if not container:
-            return {'ok': False, 'error': 'Ошибка при запуске контейнера'}
+            return {'ok': False, 'error': 'Не удалось запустить контейнер'}
 
-        return {'ok': True, 'link': link, 'container_id': container.id}
+        return {'ok': True, 'link': link}
 
+    except Exception as e:
+        print(f"❌ Ошибка сборки: {e}")
+        return {'ok': False, 'error': str(e)}
     finally:
-        # Удаляем временную папку в любом случае
         delete_repo(repo_path)
 
 
-def _save_project_analysis(project_id: int, analysis: dict, image_name: str, repo_path: str):
-    """Сохраняет анализ проекта в БД"""
+def _save_project_info(project_id: int, analysis: dict, image_name: str):
     conn = None
     cursor = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Проверяем размер образа
-        import subprocess
-        size_mb = "Unknown"
-        try:
-            result = subprocess.run(
-                ['docker', 'inspect', image_name, '--format', '{{.Size}}'],
-                capture_output=True,
-                text=True
-            )
-            if result.stdout:
-                size_bytes = int(result.stdout.strip())
-                size_mb = f"{size_bytes / 1024 / 1024:.2f} MB"
-        except:
-            pass
-
-        comment = f"""
-[СКЛОНИРОВАНО {datetime.now()}] {repo_path}
-[ТИП ПРОЕКТА] {analysis['project_type']}
+        build_info = f"""[ОБРАЗ СОЗДАН] {datetime.now()}
+[ИМЯ ОБРАЗА] {image_name}
+[ТИП ПРОЕКТА] console
 [ОСНОВНОЙ ФАЙЛ] {analysis['main_file']}
-[ЗАВИСИМОСТИ] {', '.join(analysis['requirements'][:10])}
-[СОБРАН ОБРАЗ] {image_name}
-[РАЗМЕР ОБРАЗА] {size_mb}
-[DOCKERFILE] {repo_path}/Dockerfile
-        """.strip()
+[ВРЕМЯ СБОРКИ] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"""
 
         cursor.execute("""
-            UPDATE student_projects
-            SET teacher_comment = %s
-            WHERE project_id = %s
-        """, (comment, project_id))
+            UPDATE student_projects SET build_info = %s WHERE project_id = %s
+        """, (build_info, project_id))
         conn.commit()
-    except Exception as e:
-        print(f"⚠️ Не удалось сохранить информацию: {e}")
     finally:
         if cursor: cursor.close()
         if conn: conn.close()
+
+
+def rebuild_project(github_url: str, project_id: int, image_name: str) -> dict:
+    try:
+        import docker
+        client = docker.from_env()
+        if image_exists(image_name):   # image_exists можно импортировать из runner
+            client.images.remove(image_name, force=True)
+    except:
+        pass
+
+    return build_and_run(github_url, project_id, image_name)

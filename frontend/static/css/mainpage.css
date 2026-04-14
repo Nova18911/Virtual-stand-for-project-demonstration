@@ -1,89 +1,206 @@
-body {
-    font-family: Arial, Helvetica, sans-serif;
-    background-color: white;
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+    --blue-deep:   #1e3a8a;
+    --blue-mid:    #2563eb;
+    --blue-light:  #60a5fa;
+    --blue-pale:   #eff6ff;
+    --blue-border: #bfdbfe;
+    --white:       #ffffff;
+    --text-dark:   #0f172a;
+    --text-muted:  #64748b;
 }
 
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    background:
+        radial-gradient(ellipse at 10% 20%, rgba(37,99,235,0.07) 0%, transparent 55%),
+        radial-gradient(ellipse at 90% 80%, rgba(96,165,250,0.08) 0%, transparent 50%),
+        linear-gradient(160deg, #f0f7ff 0%, #ffffff 60%, #e8f0fe 100%);
+    color: var(--text-dark);
+}
+
+/* ── Шапка ── */
 .searchContainer {
-    padding: 15px 30px;
-    border-bottom: 1px solid #ddd;
     display: flex;
     align-items: center;
-    gap: 30px;
+    gap: 24px;
+    padding: 16px 36px;
+    background: rgba(255,255,255,0.80);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(191,219,254,0.5);
+    box-shadow: 0 1px 12px rgba(37,99,235,0.06);
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .searchContainer h1 {
-    font-size: 32px;
-    font-weight: normal;
-    color: #000;
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 700;
+    white-space: nowrap;
+    background: linear-gradient(135deg, var(--blue-deep) 0%, var(--blue-mid) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.3px;
 }
 
 .searchContainer form {
     display: flex;
-    gap: 5px;
+    gap: 0;
+    flex: 1;
+    max-width: 400px;
 }
 
 .searchContainer input {
-    padding: 5px 10px;
-    border: 1px solid #ccc;
-    font-size: 16px;
+    flex: 1;
+    padding: 9px 16px;
+    border: 1.5px solid var(--blue-border);
+    border-right: none;
+    border-radius: 10px 0 0 10px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    background: rgba(239,246,255,0.6);
+    color: var(--text-dark);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.searchContainer input::placeholder { color: #a0aec0; }
+
+.searchContainer input:focus {
+    border-color: var(--blue-mid);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.10);
+    background: var(--white);
 }
 
 .searchContainer button {
-    padding: 5px 15px;
-    background-color: #f0f0f0;
-    border: 1px solid #ccc;
+    padding: 9px 20px;
+    background: linear-gradient(135deg, var(--blue-deep), var(--blue-mid));
+    color: var(--white);
+    border: none;
+    border-radius: 0 10px 10px 0;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
     cursor: pointer;
-    font-size: 16px;
+    transition: opacity 0.2s;
 }
 
+.searchContainer button:hover { opacity: 0.88; }
+
+/* ── Навигационная полоса ── */
 .top-bar {
-    padding: 10px 30px;
-    border-bottom: 1px solid #999;
+    padding: 12px 36px;
+    border-bottom: 1px solid rgba(191,219,254,0.4);
+    background: rgba(255,255,255,0.5);
 }
 
 .top-bar button {
     background: none;
     border: none;
-    font-size: 24px;
-    font-weight: normal;
-    color: #000;
-    cursor: default;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--blue-mid);
+    cursor: pointer;
+    padding: 6px 16px;
+    border-radius: 8px;
+    transition: background 0.2s, color 0.2s;
+    letter-spacing: 0.2px;
 }
 
+.top-bar button:hover {
+    background: var(--blue-pale);
+    color: var(--blue-deep);
+}
+
+/* ── Сетка карточек ── */
 .cards-wrapper {
-    max-width: 900px;
-    margin: 40px 30px;
+    max-width: 960px;
+    margin: 40px auto;
+    padding: 0 36px;
 }
 
 #cardsContainer {
-    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
 }
 
 #cardsContainer article {
-    margin-bottom: 30px;
-    border-bottom: 1px solid #e0e0e0;
-    padding-bottom: 25px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(191,219,254,0.55);
+    border-radius: 18px;
+    padding: 24px 22px 20px;
+    box-shadow:
+        0 2px 4px rgba(37,99,235,0.04),
+        0 8px 24px rgba(37,99,235,0.07);
+    transition: transform 0.2s, box-shadow 0.2s;
+    animation: cardIn 0.4s cubic-bezier(0.22,1,0.36,1) both;
 }
 
-#cardsContainer article:last-child {
-    border-bottom: none;
+#cardsContainer article:hover {
+    transform: translateY(-3px);
+    box-shadow:
+        0 4px 8px rgba(37,99,235,0.07),
+        0 16px 36px rgba(37,99,235,0.12);
+}
+
+@keyframes cardIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Небольшая задержка для каждой карточки */
+#cardsContainer article:nth-child(1) { animation-delay: 0.05s; }
+#cardsContainer article:nth-child(2) { animation-delay: 0.10s; }
+#cardsContainer article:nth-child(3) { animation-delay: 0.15s; }
+#cardsContainer article:nth-child(4) { animation-delay: 0.20s; }
+#cardsContainer article:nth-child(5) { animation-delay: 0.25s; }
+#cardsContainer article:nth-child(6) { animation-delay: 0.30s; }
+
+/* Иконка курса */
+#cardsContainer article::before {
+    content: '📘';
+    font-size: 28px;
+    display: block;
+    margin-bottom: 12px;
 }
 
 .course-link {
     display: block;
-    font-size: 22px;
-    font-weight: normal;
-    color: #0066cc;
-    text-decoration: underline;
-    margin-bottom: 5px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--blue-mid);
+    text-decoration: none;
+    margin-bottom: 8px;
+    line-height: 1.4;
+    transition: color 0.2s;
 }
 
 .course-link:hover {
-    text-decoration: none;
+    color: var(--blue-deep);
+    text-decoration: underline;
 }
 
 .teacher-text {
-    font-size: 16px;
-    color: #000;
+    font-size: 13px;
+    color: var(--text-muted);
     margin: 0;
+    font-weight: 400;
+}
+
+@media (max-width: 600px) {
+    .searchContainer { padding: 12px 16px; }
+    .cards-wrapper { padding: 0 16px; margin: 24px auto; }
+    #cardsContainer { grid-template-columns: 1fr; }
 }

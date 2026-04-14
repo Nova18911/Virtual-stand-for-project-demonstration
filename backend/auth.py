@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
-from backend.core.connect import get_db_connection
+from core.connect import get_db_connection
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -21,7 +21,7 @@ def login_api():
         cur  = conn.cursor()
 
         cur.execute("""
-            SELECT u.user_id, u.full_name, r.access_rights, p.password
+            SELECT u.user_id, u.full_name, r.access_rights, p.password, u.is_approved
             FROM users u
             JOIN passwords p ON p.login_id = u.login_id
             JOIN roles     r ON r.access_id = u.access_id
@@ -36,21 +36,19 @@ def login_api():
     if row is None or row[3] != password:
         return jsonify({'ok': False, 'error': 'Неверный логин или пароль.'}), 401
 
-    user_id, full_name, role, _ = row
+    user_id, full_name, role, _, is_approved = row
 
     if role == 'admin':
         return jsonify({'ok': False, 'error': 'Для входа администратора используйте специальную страницу.'}), 403
+
+    if role == 'teacher' and not is_approved:
+        return jsonify({'ok': False, 'error': 'Ваша заявка ещё не одобрена администратором.'}), 403
 
     session['user_id']   = user_id
     session['user_role'] = role
     session['user_name'] = full_name
 
-    if role == 'teacher':
-        redirect_url = url_for('mainpage.courses_page')
-    else:
-        redirect_url = url_for('mainpage.courses_page')
-
-    return jsonify({'ok': True, 'redirect': redirect_url})
+    return jsonify({'ok': True, 'redirect': url_for('mainpage.courses_page')})
 
 @auth_bp.route('/logout')
 def logout():

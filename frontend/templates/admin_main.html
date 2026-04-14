@@ -16,9 +16,9 @@
 </header>
 
 <nav class="navbar">
-    <a href="#" class="navbar__link navbar__link--active">Главная</a>  <!-- а это лучше просто текстом сделать мы всё равно на главной -->
-    <a href="#" onclick="window.location.href='{{ url_for('adminexport.export_page') }}'" class="navbar__link">Экспорт</a>
-    <a href="/admin/import/" class="navbar__link">Импорт</a>  <!-- здесь будет перенаправление на импорт -->
+    <a href="{{ url_for('admin_main.index') }}" class="navbar__link navbar__link--active">Главная</a>
+    <a href="{{ url_for('adminlogin.admin_export_page') }}" class="navbar__link">Экспорт</a>
+    <a href="{{ url_for('admin_import.index') }}" class="navbar__link">Импорт</a>
 </nav>
 
 <main class="main">
@@ -30,7 +30,7 @@
 
     <div class="panel">
 
-        <!-- Список курсов -->
+        <!-- ── Список курсов ── -->
         <div class="courses">
             <div class="courses__label">Курсы</div>
             <div class="courses__list">
@@ -43,7 +43,7 @@
             </div>
         </div>
 
-        <!-- Форма курса -->
+        <!-- ── Форма курса ── -->
         <div class="info">
             <div class="info__title">Информация о курсе</div>
             <form method="POST" action="{{ url_for('admin_main.course_save') }}">
@@ -60,11 +60,11 @@
 
                 <div class="form-group">
                     <label>Преподаватель</label>
-                    <select name="teacher">
+                    <select name="teacher_id">
                         <option value="">— выберите —</option>
                         {% for t in teachers %}
-                        <option value="{{ t.full_name }}"
-                            {% if selected and selected.teacher == t.full_name %}selected{% endif %}>
+                        <option value="{{ t.user_id }}"
+                            {% if selected and selected.teacher_id == t.user_id %}selected{% endif %}>
                             {{ t.full_name }}
                         </option>
                         {% endfor %}
@@ -72,22 +72,106 @@
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn">Добавить</button>
+                    <button type="submit" class="btn">Сохранить</button>
+                    {% if selected %}
+                    <button type="button" class="btn"
+                        onclick="document.getElementById('deleteForm').submit()">Удалить</button>
+                    {% else %}
+                    <button class="btn" disabled>Удалить</button>
+                    {% endif %}
                 </div>
             </form>
 
             {% if selected %}
-            <form method="POST" action="{{ url_for('admin_main.course_delete') }}" style="margin-top: 8px;">
+            <form id="deleteForm" method="POST"
+                  action="{{ url_for('admin_main.course_delete') }}" style="display:none">
                 <input type="hidden" name="course_id" value="{{ selected.course_id }}">
-                <button type="submit" class="btn">Удалить</button>
             </form>
-            {% else %}
-            <button class="btn" disabled>Удалить</button>
             {% endif %}
         </div>
 
     </div>
+
+    <!-- ── Подтверждение преподавателей ── -->
+    <div class="section-title">Заявки преподавателей</div>
+    <div id="notify-message" class="flash" style="display:none;"></div>
+    <div id="pending-users">
+        <div class="pending-loading">Загрузка...</div>
+    </div>
+
 </main>
+
+<script>
+async function loadPendingUsers() {
+    try {
+        const res  = await fetch('/admin-notify/users/pending');
+        const data = await res.json();
+
+        const container = document.getElementById('pending-users');
+
+        if (!data.success || data.users.length === 0) {
+            container.innerHTML = '<div class="pending-empty">Заявок нет</div>';
+            return;
+        }
+
+        container.innerHTML = data.users.map(u => `
+            <div class="pending-card" id="pending-card-${u.user_id}">
+                <div class="pending-info">
+                    <span class="pending-name">${escapeHtml(u.full_name)}</span>
+                    <span class="pending-email">${escapeHtml(u.email)}</span>
+                    <span class="pending-date">${u.created_at}</span>
+                </div>
+                <div class="pending-actions">
+                    <button class="btn btn-approve" onclick="approveUser(${u.user_id})">✓ Одобрить</button>
+                    <button class="btn btn-reject"  onclick="rejectUser(${u.user_id})">✗ Отклонить</button>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (e) {
+        document.getElementById('pending-users').innerHTML =
+            '<div class="pending-empty">Ошибка загрузки</div>';
+    }
+}
+
+function showNotifyMessage(text, ok) {
+    const el = document.getElementById('notify-message');
+    el.textContent   = text;
+    el.style.display = 'block';
+    el.style.background = ok ? '#dcfce7' : '#fee2e2';
+    el.style.color      = ok ? '#15803d' : '#b91c1c';
+    el.style.borderColor= ok ? '#86efac' : '#fca5a5';
+    setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
+
+async function approveUser(userId) {
+    if (!confirm('Одобрить преподавателя?')) return;
+    try {
+        const res  = await fetch(`/admin-notify/approve/${userId}`, { method: 'POST' });
+        const data = await res.json();
+        showNotifyMessage(data.message || data.error, data.success);
+        if (data.success) loadPendingUsers();
+    } catch (e) { showNotifyMessage('Ошибка соединения', false); }
+}
+
+async function rejectUser(userId) {
+    if (!confirm('Отклонить заявку?')) return;
+    try {
+        const res  = await fetch(`/admin-notify/reject/${userId}`, { method: 'POST' });
+        const data = await res.json();
+        showNotifyMessage(data.message || data.error, data.success);
+        if (data.success) loadPendingUsers();
+    } catch (e) { showNotifyMessage('Ошибка соединения', false); }
+}
+
+function escapeHtml(text) {
+    const d = document.createElement('div');
+    d.textContent = text;
+    return d.innerHTML;
+}
+
+document.addEventListener('DOMContentLoaded', loadPendingUsers);
+</script>
 
 </body>
 </html>

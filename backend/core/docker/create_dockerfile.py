@@ -1,245 +1,107 @@
-#backend/core/docker/create_docker_file.py
+# backend/core/docker/create_dockerfile.py
+
 import os
 import subprocess
 
+
 def create_dockerfile(repo_path: str, project_type: str, main_file: str) -> dict:
-    if not os.path.exists(repo_path):
-        return {'success': False, 'path': None, 'error': 'Папка репозитория не найдена'}
+    try:
+        dockerfile_content = f'''FROM python:3.11-slim-bookworm
 
-    if not main_file:
-        return {'success': False, 'path': None, 'error': 'Не найден основной файл запуска'}
-
-
-    if project_type == 'gui':
-        cmd = f'CMD ["python", "{main_file}"]'
-        expose = '# GUI приложение - требуется X11 forwarding'
-    else:
-        cmd = f'CMD ["python", "{main_file}"]'
-        expose = '# Консольное приложение'
-
-    dockerfile_content = f'''# Dockerfile для {project_type} приложения
-FROM python:3.9-slim
+# Минимальные зависимости
+RUN apt-get update && apt-get install -y --no-install-recommends \\
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt || true
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-{expose}
-
-{cmd}
+CMD ["python", "-u", "{main_file}"]
 '''
 
-    dockerfile_path = os.path.join(repo_path, 'Dockerfile')
-
-    try:
-        with open(dockerfile_path, 'w', encoding='utf-8') as f:
+        with open(os.path.join(repo_path, "Dockerfile"), "w", encoding="utf-8") as f:
             f.write(dockerfile_content)
-        return {'success': True, 'path': dockerfile_path, 'error': None}
+
+        print("✅ Создан стабильный Dockerfile (python:3.11-slim-bookworm)")
+        return {'success': True}
+
     except Exception as e:
-        return {'success': False, 'path': None, 'error': f'Ошибка сохранения Dockerfile: {str(e)}'}
+        print(f"❌ Ошибка создания Dockerfile: {e}")
+        return {'success': False, 'error': str(e)}
 
-
-def save_requirements_file(repo_path: str, dependencies: list) -> dict:
-
-    if not os.path.exists(repo_path):
-        return {'success': False, 'path': None, 'error': 'Папка репозитория не найдена'}
-
-    req_path = os.path.join(repo_path, 'requirements.txt')
-
-    # Если файл уже существует, не перезаписываем
-    if os.path.exists(req_path):
-        return {'success': True, 'path': req_path, 'error': None}
-
-    # Если зависимостей нет, создаем минимальный
-    if not dependencies:
-        dependencies = ['python']
-
+def save_requirements_file(repo_path: str, requirements: list):
+    """Создаёт requirements.txt"""
+    req_path = os.path.join(repo_path, "requirements.txt")
     try:
-        with open(req_path, 'w', encoding='utf-8') as f:
-            for dep in sorted(set(dependencies)):  # удаляем дубликаты
-                if dep and not dep.startswith('_'):
-                    f.write(f"{dep}\n")
-        return {'success': True, 'path': req_path, 'error': None}
+        with open(req_path, "w", encoding="utf-8") as f:
+            if requirements:
+                f.write("\n".join(requirements) + "\n")
+            else:
+                f.write("# Нет дополнительных зависимостей\n")
+        print("✅ requirements.txt создан")
     except Exception as e:
-        return {'success': False, 'path': None, 'error': f'Ошибка сохранения requirements.txt: {str(e)}'}
+        print(f"⚠️ Ошибка создания requirements.txt: {e}")
 
 
-def create_dockerignore(repo_path: str) -> dict:
-
-    dockerignore_content = '''# Git
-.git/
+def create_dockerignore(repo_path: str):
+    """Создаёт .dockerignore"""
+    content = """__pycache__/
+*.pyc
+*.pyo
+.git
 .gitignore
-.gitattributes
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-venv*/
-.env
-.venv
-.venv*/
-
-# IDE
+README.md
+*.md
 .vscode/
 .idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-
-# Docker
-Dockerfile
-.dockerignore
-'''
-
-    dockerignore_path = os.path.join(repo_path, '.dockerignore')
-
+.env
+"""
     try:
-        with open(dockerignore_path, 'w', encoding='utf-8') as f:
-            f.write(dockerignore_content)
-        return {'success': True, 'path': dockerignore_path, 'error': None}
-    except Exception as e:
-        return {'success': False, 'path': None, 'error': f'Ошибка сохранения .dockerignore: {str(e)}'}
+        with open(os.path.join(repo_path, ".dockerignore"), "w", encoding="utf-8") as f:
+            f.write(content)
+        print("✅ .dockerignore создан")
+    except:
+        pass
 
-def check_docker_available() -> dict:
-    result = {
-        'available': False,
-        'version': None,
-        'error': None
-    }
-
-    # 1. Проверяем, установлен ли Docker
-    try:
-        version_result = subprocess.run(
-            ['docker', '--version'],
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
-
-        if version_result.returncode == 0:
-            result['available'] = True
-            result['version'] = version_result.stdout.strip()
-        else:
-            result['error'] = 'Docker установлен, но не отвечает'
-            return result
-
-    except FileNotFoundError:
-        result['error'] = 'Docker не установлен. Установите Docker: sudo apt install docker.io'
-        return result
-    except Exception as e:
-        result['error'] = f'Ошибка при проверке Docker: {str(e)}'
-        return result
-
-    # 2. Проверяем, запущен ли демон Docker
-    try:
-        ps_result = subprocess.run(
-            ['docker', 'ps'],
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
-
-        if ps_result.returncode != 0:
-            error_msg = ps_result.stderr.lower()
-
-            if "permission denied" in error_msg:
-                result['error'] = 'Нет прав доступа к Docker. Выполните: sudo usermod -aG docker $USER'
-                result['available'] = False
-            elif "cannot connect to the docker daemon" in error_msg:
-                result['error'] = 'Docker демон не запущен. Выполните: sudo systemctl start docker'
-                result['available'] = False
-            else:
-                result['error'] = f'Docker недоступен: {ps_result.stderr}'
-                result['available'] = False
-
-    except Exception as e:
-        result['error'] = f'Ошибка при подключении к Docker: {str(e)}'
-        result['available'] = False
-
-    return result
 
 def build_docker_image(repo_path: str, image_name: str) -> dict:
-
-    docker_check = check_docker_available()
-    if not docker_check['available']:
-        return {
-            'success': False,
-            'error': docker_check['error']
-        }
-
-    print(f"🐳 Начинаем сборку образа {image_name}...")
-    print(f"📁 Путь: {repo_path}")
+    """Улучшенная сборка с выводом логов в реальном времени"""
+    print(f"🔨 Начинаем сборку образа {image_name}...")
 
     try:
-        result = subprocess.run(
-            ['docker', 'build', '-t', image_name, repo_path],
-            capture_output=True,
+        # Важно: используем shell=True + --progress=plain для Windows
+        cmd = f'cd /d "{repo_path}" && docker build --progress=plain -t {image_name} .'
+
+        process = subprocess.Popen(
+            cmd,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             text=True,
-            timeout=300  # 5 минут на сборку
+            encoding='utf-8',
+            errors='replace'
         )
 
-        if result.returncode == 0:
-            inspect_result = subprocess.run(
-                ['docker', 'inspect', image_name, '--format', '{{.Size}}'],
-                capture_output=True,
-                text=True
-            )
+        output_lines = []
+        for line in process.stdout:
+            line = line.strip()
+            if line:
+                print("   " + line)          # ← выводим в консоль в реальном времени
+                output_lines.append(line)
 
-            size_bytes = int(inspect_result.stdout.strip()) if inspect_result.stdout else 0
-            size_mb = size_bytes / 1024 / 1024
+        process.wait()
 
-            print(f"✅ Образ {image_name} успешно собран (размер: {size_mb:.2f} MB)")
-
-            return {
-                'success': True,
-                'output': result.stdout,
-                'error': None,
-                'image_size': size_mb,
-                'image_name': image_name
-            }
+        if process.returncode == 0:
+            print(f"✅ Образ {image_name} успешно собран!")
+            return {'success': True, 'output': '\n'.join(output_lines)}
         else:
-            error_msg = result.stderr
-            if "no such file or directory" in error_msg:
-                error_msg = "Dockerfile не найден. Проверьте путь."
-            elif "COPY failed" in error_msg:
-                error_msg = "Ошибка копирования файлов. Проверьте структуру проекта."
-            elif "pip install" in error_msg and "error" in error_msg:
-                error_msg = "Ошибка установки зависимостей. Проверьте requirements.txt."
+            error_text = '\n'.join(output_lines[-30:])  # последние 30 строк
+            print(f"❌ Сборка завершилась с ошибкой (код {process.returncode})")
+            return {'success': False, 'error': error_text}
 
-            print(f"❌ Ошибка сборки: {error_msg}")
-
-            return {
-                'success': False,
-                'output': result.stdout,
-                'error': error_msg
-            }
-
-    except subprocess.TimeoutExpired:
-        return {
-            'success': False,
-            'error': 'Превышено время сборки (5 минут). Возможно, проект слишком большой.'
-        }
     except Exception as e:
-        return {
-            'success': False,
-            'error': f'Ошибка при выполнении Docker: {str(e)}'
-        }
+        print(f"❌ Критическая ошибка при сборке: {e}")
+        return {'success': False, 'error': str(e)}

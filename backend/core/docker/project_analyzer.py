@@ -1,237 +1,125 @@
-#backend/core/docker/project_analyzer.py
+# backend/core/docker/project_analyzer.py
+
 import os
+import re
 import ast
+from collections import defaultdict
 
-# Имена файлов которые считаются основными точками входа
-MAIN_FILE_CANDIDATES = [
-    'main.py', 'app.py', 'run.py', 'server.py',
-    'start.py', 'index.py', 'manage.py', 'wsgi.py'
-]
+# Популярные пакеты и их имена в импортах
+PACKAGE_MAPPING = {
+    # Основные для анализа данных (самые частые)
+    'pandas': 'pandas',
+    'numpy': 'numpy',
 
-# Библиотеки по которым определяем тип проекта
-WEB_LIBS = {'flask', 'django', 'fastapi', 'tornado', 'aiohttp', 'bottle', 'starlette'}
-GUI_LIBS = {'tkinter', 'pyqt5', 'pyqt6', 'wx', 'kivy', 'pygame', 'pyside2', 'pyside6'}
+    # Визуализация (очень важно для учебных работ)
+    'matplotlib': 'matplotlib',
+    'seaborn': 'seaborn',
+    'plotly': 'plotly',
 
-# Папки которые пропускаем при сканировании
-SKIP_DIRS = {
-    'venv', 'env', '.venv', '__pycache__', 'node_modules',
-    '.git', 'dist', 'build', '.eggs', '.tox',
-    'docs', 'doc', 'documentation',
-    'examples', 'example', 'samples', 'sample',
-    'benchmarks', 'benchmark', 'tests', 'test',
-}
+    # Научные вычисления
+    'scipy': 'scipy',
+    'sympy': 'sympy',
 
-# Файлы которые пропускаем
-SKIP_FILE_PREFIXES = ('test_', 'conftest', 'setup', 'conf')
+    # Работа с файлами и данными
+    'openpyxl': 'openpyxl',
+    'requests': 'requests',
+    'beautifulsoup4': 'beautifulsoup4',
+    'pillow': 'pillow',
 
-# Python 2 / compat модули которые выглядят как сторонние, но не являются ими
-COMPAT_MODULES = {
-    'StringIO', 'cStringIO', 'dummy_threading', 'UserDict',
-    'UserList', 'UserString', 'ConfigParser', 'Queue',
-    '__builtin__', '__future__', 'exceptions',
+    # Удобства для консоли
+    'tabulate': 'tabulate',
+    'colorama': 'colorama',
+    'tqdm': 'tqdm',
+
+    # Стандартная библиотека Python (не устанавливаем)
+    'os': None,
+    'sys': None,
+    'math': None,
+    'random': None,
+    'datetime': None,
+    'time': None,
+    'json': None,
+    'csv': None,
+    'collections': None,
+    'itertools': None,
 }
 
 
 def analyze_project(repo_path: str) -> dict:
     """
-    Анализирует структуру клонированного репозитория.
-    Возвращает словарь с результатами анализа.
+    Анализирует проект: находит главный файл + автоматически определяет зависимости
     """
     result = {
         'main_file': None,
         'requirements': [],
-        'requirements_source': None,  # 'file' или 'imports'
-        'project_type': 'console',    # console / web / gui
+        'project_type': 'console',
         'error': None
     }
 
     if not os.path.exists(repo_path):
-        result['error'] = 'Папка репозитория не найдена.'
+        result['error'] = 'Папка репозитория не найдена'
         return result
 
-    # 1. Ищем основной файл
-    result['main_file'] = _find_main_file(repo_path)
+    # 1. Поиск главного файла
+    main_candidates = ['main.py', 'app.py', 'run.py', 'start.py']
+    py_files = []
 
-    # 2. Ищем зависимости
-    req_path = os.path.join(repo_path, 'requirements.txt')
-    if os.path.exists(req_path):
-        result['requirements'] = _parse_requirements_file(req_path)
-        result['requirements_source'] = 'file'
-    else:
-        result['requirements'] = _collect_imports(repo_path)
-        result['requirements_source'] = 'imports'
-
-    # 3. Определяем тип проекта по зависимостям + именам внутренних модулей
-    # (нужно для случая когда сам репозиторий и есть веб-фреймворк, напр. Flask)
-    internal_names = _get_internal_module_names(repo_path)
-    all_names = {n.lower() for n in internal_names} | {d.lower().split('==')[0].split('>=')[0].strip()
-                  for d in result["requirements"]}
-
-    if all_names & WEB_LIBS:
-        result['project_type'] = 'web'
-    elif all_names & GUI_LIBS:
-        result['project_type'] = 'gui'
-    else:
-        result['project_type'] = 'console'
-
-    return result
-
-
-def _find_main_file(repo_path: str) -> str | None:
-    """Ищет основной файл запуска в корне репозитория."""
-    for filename in MAIN_FILE_CANDIDATES:
-        if os.path.exists(os.path.join(repo_path, filename)):
-            return filename
-
-    # Если стандартных нет — берём первый .py файл в корне
     for entry in os.scandir(repo_path):
         if entry.is_file() and entry.name.endswith('.py'):
-            return entry.name
+            py_files.append(entry.name)
+            if entry.name in main_candidates:
+                result['main_file'] = entry.name
+                break
 
-    return None
+    # Если не нашли по кандидатам — берём первый .py файл
+    if not result['main_file'] and py_files:
+        result['main_file'] = py_files[0]
 
+    if not result['main_file']:
+        result['error'] = 'Не найден главный Python файл'
+        return result
 
-def _parse_requirements_file(req_path: str) -> list:
-    """Читает зависимости из requirements.txt."""
-    deps = []
+    print(f"✅ Главный файл: {result['main_file']}")
+
+    # 2. Автоматический сбор зависимостей
+    dependencies = set()
+
+    for py_file in py_files:
+        file_path = os.path.join(repo_path, py_file)
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                code = f.read()
+
+            tree = ast.parse(code)
+
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        pkg = alias.name.split('.')[0]
+                        if pkg in PACKAGE_MAPPING and PACKAGE_MAPPING[pkg]:
+                            dependencies.add(PACKAGE_MAPPING[pkg])
+
+                elif isinstance(node, ast.ImportFrom):
+                    if node.module:
+                        pkg = node.module.split('.')[0]
+                        if pkg in PACKAGE_MAPPING and PACKAGE_MAPPING[pkg]:
+                            dependencies.add(PACKAGE_MAPPING[pkg])
+
+        except Exception as e:
+            print(f"⚠️ Не удалось проанализировать {py_file}: {e}")
+
+    result['requirements'] = sorted(list(dependencies))
+
+    # Принудительно перезаписываем requirements.txt при каждом анализе
+    req_path = os.path.join(repo_path, "requirements.txt")
     try:
-        with open(req_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith('#') and not line.startswith('-'):
-                    deps.append(line)
-    except Exception:
-        pass
-    return deps
-
-
-def _collect_imports(repo_path: str) -> list:
-    """
-    Собирает сторонние импорты из .py файлов через AST.
-    AST корректно игнорирует строки, docstring и комментарии.
-    Фильтрует stdlib, внутренние модули проекта и compat-модули.
-    """
-    imports = set()
-    stdlib = _get_stdlib_modules()
-
-    # Собираем имена всех внутренних модулей рекурсивно
-    internal = _get_internal_module_names(repo_path)
-
-    for root, dirs, files in os.walk(repo_path):
-        dirs[:] = [
-            d for d in dirs
-            if d not in SKIP_DIRS and not d.startswith('.')
-        ]
-
-        for filename in files:
-            if not filename.endswith('.py'):
-                continue
-            if filename.startswith(SKIP_FILE_PREFIXES):
-                continue
-
-            filepath = os.path.join(root, filename)
-            raw = _parse_imports_via_ast(filepath)
-
-            for name in raw:
-                if (name
-                        and name not in stdlib
-                        and name not in internal
-                        and name not in COMPAT_MODULES
-                        and not name.startswith('_')):
-                    imports.add(name)
-
-    return sorted(imports)
-
-
-def _get_internal_module_names(repo_path: str) -> set:
-    """
-    Рекурсивно собирает имена всех внутренних модулей проекта:
-    каждое имя папки и каждое имя .py файла (без расширения).
-    """
-    names = set()
-    for root, dirs, files in os.walk(repo_path):
-        dirs[:] = [d for d in dirs if not d.startswith('.')]
-        for d in dirs:
-            names.add(d)
-        for f in files:
-            if f.endswith('.py'):
-                names.add(f[:-3])
-    return names
-
-
-def _parse_imports_via_ast(filepath: str) -> set:
-    """
-    Извлекает верхнеуровневые имена пакетов через AST.
-    AST парсит только реальный Python-код, игнорируя
-    строки, docstring и комментарии.
-    """
-    imports = set()
-    try:
-        with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
-            source = f.read()
-        tree = ast.parse(source)
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                for alias in node.names:
-                    top = alias.name.split('.')[0]
-                    if top:
-                        imports.add(top)
-            elif isinstance(node, ast.ImportFrom):
-                # level > 0 — относительный импорт (from . import ...), пропускаем
-                if node.level == 0 and node.module:
-                    top = node.module.split('.')[0]
-                    if top:
-                        imports.add(top)
-    except Exception:
-        pass
-    return imports
-
-
-def _get_stdlib_modules() -> set:
-    """Возвращает набор стандартных модулей Python."""
-    import sys
-    stdlib = set(sys.stdlib_module_names) if hasattr(sys, 'stdlib_module_names') else set()
-
-    stdlib.update({
-        'os', 'sys', 'io', 're', 'json', 'math', 'time', 'datetime',
-        'collections', 'itertools', 'functools', 'pathlib', 'shutil',
-        'tempfile', 'subprocess', 'threading', 'multiprocessing',
-        'socket', 'http', 'urllib', 'email', 'html', 'xml',
-        'sqlite3', 'csv', 'logging', 'unittest', 'typing',
-        'abc', 'copy', 'enum', 'hashlib', 'hmac', 'secrets',
-        'struct', 'string', 'textwrap', 'traceback', 'warnings',
-        'ast', 'dis', 'inspect', 'importlib', 'pkgutil',
-        'argparse', 'configparser', 'getpass', 'platform',
-        'random', 'statistics', 'decimal', 'fractions',
-        'base64', 'binascii', 'codecs', 'uuid', 'zipfile', 'tarfile',
-    })
-    return stdlib
-
-def _create_requirements_file(repo_path: str, requirements: list) -> bool:
-    req_path = os.path.join(repo_path, 'requirements.txt')
-
-    try:
-        with open(req_path, 'w', encoding='utf-8') as f:
-            if requirements:
-                for req in requirements:
-                    f.write(f"{req}\n")
-
-        return True
+        with open(req_path, "w", encoding="utf-8") as f:
+            if result['requirements']:
+                f.write("\n".join(result['requirements']) + "\n")
+                print(f"📦 Создан requirements.txt: {result['requirements']}")
+            else:
+                f.write("# Нет автоматически обнаруженных зависимостей\n")
     except Exception as e:
-        print(f"Ошибка при создании requirements.txt: {e}")
-        return False
+        print(f"⚠️ Не удалось создать requirements.txt: {e}")
 
-
-def update_requirements_file(repo_path: str, requirements: list) -> bool:
-    req_path = os.path.join(repo_path, 'requirements.txt')
-
-    try:
-        if os.path.exists(req_path):
-            existing_reqs = set(_parse_requirements_file(req_path))
-            all_reqs = existing_reqs.union(set(requirements))
-            requirements = sorted(all_reqs)
-
-        return _create_requirements_file(repo_path, requirements)
-    except Exception as e:
-        print(f"Ошибка при обновлении requirements.txt: {e}")
-        return False
+    return result

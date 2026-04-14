@@ -77,7 +77,6 @@
                 }
                 document.getElementById('containerLink').value = fullLink;
 
-                // Добавляем кликабельную ссылку
                 const containerLinkWrapper = document.getElementById('consoleLinkContainer');
                 containerLinkWrapper.innerHTML = `
                     <a href="${fullLink}" target="_blank" class="console-link">
@@ -99,64 +98,82 @@
             btn.classList.toggle('selected', parseInt(btn.dataset.grade) === data.grade);
         });
 
-        // Docker кнопка
+        // === Docker блок ===
         const dockerBlock = document.getElementById('dockerBlock');
-        dockerBlock.innerHTML = `
-            <button class="btn-docker" id="buildBtn">Осуществить сборку</button>`;
-        document.getElementById('buildBtn').addEventListener('click', () => buildContainer(userId));
+
+        if (data.build_success) {
+            dockerBlock.innerHTML = `
+                <span class="build-success">✅ Проект собран</span>
+            `;
+        } else {
+            dockerBlock.innerHTML = `
+                <button class="btn-docker" id="buildBtn">Осуществить сборку</button>
+            `;
+            document.getElementById('buildBtn').addEventListener('click', () => buildContainer(userId));
+        }
     };
 
-    // --- Сборка контейнера ---
+    // --- Сборка контейнера с проверкой изменения ссылки ---
     async function buildContainer(userId) {
         const btn = document.getElementById('buildBtn');
+        if (!btn) return;
+
         btn.disabled = true;
-        btn.textContent = 'Сборка...';
+        btn.textContent = '⏳ Проверка...';
 
         try {
-            const response = await fetch(
-                `/api/task/${LAB_ID}/student/${userId}/build`,
-                { method: 'POST' }
-            );
+            // Получаем свежие данные студента
+            const detailResponse = await fetch(`/api/task/${LAB_ID}/student/${userId}`);
+            const currentData = await detailResponse.json();
+
+            if (!currentData.ok) {
+                alert('Не удалось получить данные студента');
+                resetBuildButton(btn);
+                return;
+            }
+
+            const currentGithubLink = currentData.github_link || '';
+
+            // Определяем, нужно ли делать force rebuild
+            const shouldForceRebuild = !currentData.build_success ||
+                                      (currentData.github_link && currentData.github_link !== currentGithubLink);
+
+            let url = `/api/task/${LAB_ID}/student/${userId}/build`;
+
+            if (shouldForceRebuild) {
+                url += '?force=true';
+                showNotification('Обнаружена новая ссылка на GitHub → выполняется пересборка...', 'info');
+            } else {
+                showNotification('Сборка проекта...', 'info');
+            }
+
+            const response = await fetch(url, { method: 'POST' });
             const data = await response.json();
 
-            if (data.ok) {
-                // Обновляем ссылку
-                const containerLinkInput = document.getElementById('containerLink');
-                if (data.link) {
-                    let fullLink = data.link;
-                    if (fullLink.startsWith('/')) {
-                        fullLink = window.location.origin + fullLink;
-                    }
-                    containerLinkInput.value = fullLink;
-
-                    // Добавляем кликабельную ссылку
-                    const containerLinkWrapper = document.getElementById('consoleLinkContainer');
-                    containerLinkWrapper.innerHTML = `
-                        <a href="${fullLink}" target="_blank" class="console-link">
-                            🔗 Открыть консоль
-                        </a>
-                    `;
-                }
-
-                // Обновляем кнопку
-                btn.textContent = '✅ Собрано';
-                setTimeout(() => {
-                    btn.textContent = 'Осуществить сборку';
-                    btn.disabled = false;
-                }, 2000);
-
-                showNotification('Контейнер успешно собран и запущен!', 'success');
-            } else {
+            if (!data.ok) {
                 alert(data.error || 'Ошибка при сборке');
-                btn.textContent = 'Осуществить сборку';
-                btn.disabled = false;
+                resetBuildButton(btn);
+                return;
             }
+
+            showNotification('Сборка запущена...', 'info');
+
+            // Обновляем информацию
+            setTimeout(() => {
+                loadStudentDetail(userId);
+            }, 2000);
+
         } catch (err) {
             console.error('Ошибка:', err);
             alert('Ошибка соединения с сервером');
-            btn.textContent = 'Осуществить сборку';
-            btn.disabled = false;
+            resetBuildButton(btn);
         }
+    }
+
+    // Вспомогательная функция для сброса кнопки
+    function resetBuildButton(btn) {
+        btn.disabled = false;
+        btn.textContent = 'Осуществить сборку';
     }
 
     // --- Оценки ---
