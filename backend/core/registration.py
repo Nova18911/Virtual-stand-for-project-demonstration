@@ -56,14 +56,18 @@ def register_api():
         )
         login_id = cur.fetchone()[0]
 
-        cur.execute(
-            "INSERT INTO users (full_name, access_id, login_id) VALUES (%s, %s, %s) RETURNING user_id",
-            (fio, access_id, login_id)
-        )
-        user_id = cur.fetchone()[0]
-
-        # БЛОК АВТОМАТИЧЕСКОЙ ЗАПИСИ УДАЛЕН. 
-        # Теперь студент создается без привязки к курсам.
+        if role == 'teacher':
+            cur.execute(
+                """INSERT INTO users (full_name, access_id, login_id, is_approved)
+                   VALUES (%s, %s, %s, false) RETURNING user_id""",
+                (fio, access_id, login_id)
+            )
+        else:
+            cur.execute(
+                """INSERT INTO users (full_name, access_id, login_id)
+                   VALUES (%s, %s, %s) RETURNING user_id""",
+                (fio, access_id, login_id)
+            )
 
         conn.commit()
         conn.close()
