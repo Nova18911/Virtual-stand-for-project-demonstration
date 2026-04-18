@@ -12,12 +12,10 @@ manager = DockerLifecycleManager()
 
 @app.route('/')
 def index():
-    """Главная страница"""
     return render_template('dashboard.html')
 
 @app.route('/api/containers', methods=['GET'])
 def list_containers():
-    """Получение списка контейнеров"""
     try:
         cursor = manager.db_conn.cursor()
         cursor.execute("""
@@ -42,7 +40,6 @@ def list_containers():
 
 @app.route('/api/containers/start', methods=['POST'])
 def start_container():
-    """Запуск нового контейнера"""
     try:
         data = request.json
         project_id = data['project_id']
@@ -75,7 +72,6 @@ def start_container():
 
 @app.route('/api/containers/<container_id>', methods=['DELETE'])
 def remove_container(container_id):
-    """Удаление контейнера"""
     try:
         success = manager.manual_cleanup(container_id=container_id)
         
@@ -89,7 +85,6 @@ def remove_container(container_id):
 
 @app.route('/api/projects/<int:project_id>/containers', methods=['DELETE'])
 def remove_project_containers(project_id):
-    """Удаление всех контейнеров проекта"""
     try:
         success = manager.manual_cleanup(project_id=project_id)
         return jsonify({'success': success, 'message': 'Контейнеры проекта удалены'})
@@ -99,7 +94,6 @@ def remove_project_containers(project_id):
 
 @app.route('/api/stats', methods=['GET'])
 def get_stats():
-    """Получение статистики"""
     try:
         stats = manager.get_container_stats()
         return jsonify({'success': True, 'stats': stats})
@@ -109,7 +103,6 @@ def get_stats():
 
 @app.route('/api/settings', methods=['GET', 'POST'])
 def manage_settings():
-    """Управление настройками"""
     if request.method == 'GET':
         try:
             cursor = manager.db_conn.cursor()
@@ -145,7 +138,6 @@ def manage_settings():
 
 @app.route('/api/cleanup/run', methods=['POST'])
 def run_cleanup():
-    """Запуск очистки вручную"""
     try:
         thread = threading.Thread(target=manager.run_cleanup_cycle)
         thread.start()
@@ -156,7 +148,6 @@ def run_cleanup():
 
 @app.route('/api/logs', methods=['GET'])
 def get_logs():
-    """Получение логов"""
     try:
         lines = request.args.get('lines', 100, type=int)
         

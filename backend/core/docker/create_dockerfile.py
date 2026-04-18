@@ -1,5 +1,3 @@
-# backend/core/docker/create_dockerfile.py
-
 import os
 import subprocess
 
@@ -8,7 +6,6 @@ def create_dockerfile(repo_path: str, project_type: str, main_file: str) -> dict
     try:
         dockerfile_content = f'''FROM python:3.11-slim-bookworm
 
-# Минимальные зависимости
 RUN apt-get update && apt-get install -y --no-install-recommends \\
     && rm -rf /var/lib/apt/lists/*
 
@@ -25,15 +22,13 @@ CMD ["python", "-u", "{main_file}"]
         with open(os.path.join(repo_path, "Dockerfile"), "w", encoding="utf-8") as f:
             f.write(dockerfile_content)
 
-        print("✅ Создан стабильный Dockerfile (python:3.11-slim-bookworm)")
         return {'success': True}
 
     except Exception as e:
-        print(f"❌ Ошибка создания Dockerfile: {e}")
+        print(f"Ошибка создания Dockerfile: {e}")
         return {'success': False, 'error': str(e)}
 
 def save_requirements_file(repo_path: str, requirements: list):
-    """Создаёт requirements.txt"""
     req_path = os.path.join(repo_path, "requirements.txt")
     try:
         with open(req_path, "w", encoding="utf-8") as f:
@@ -41,13 +36,11 @@ def save_requirements_file(repo_path: str, requirements: list):
                 f.write("\n".join(requirements) + "\n")
             else:
                 f.write("# Нет дополнительных зависимостей\n")
-        print("✅ requirements.txt создан")
     except Exception as e:
-        print(f"⚠️ Ошибка создания requirements.txt: {e}")
+        print(f"Ошибка создания requirements.txt: {e}")
 
 
 def create_dockerignore(repo_path: str):
-    """Создаёт .dockerignore"""
     content = """__pycache__/
 *.pyc
 *.pyo
@@ -68,11 +61,9 @@ README.md
 
 
 def build_docker_image(repo_path: str, image_name: str) -> dict:
-    """Улучшенная сборка с выводом логов в реальном времени"""
-    print(f"🔨 Начинаем сборку образа {image_name}...")
+    print(f"Cборка образа {image_name}...")
 
     try:
-        # Важно: используем shell=True + --progress=plain для Windows
         cmd = f'cd /d "{repo_path}" && docker build --progress=plain -t {image_name} .'
 
         process = subprocess.Popen(
@@ -89,19 +80,19 @@ def build_docker_image(repo_path: str, image_name: str) -> dict:
         for line in process.stdout:
             line = line.strip()
             if line:
-                print("   " + line)          # ← выводим в консоль в реальном времени
+                print("   " + line)
                 output_lines.append(line)
 
         process.wait()
 
         if process.returncode == 0:
-            print(f"✅ Образ {image_name} успешно собран!")
+            print(f"Образ {image_name} успешно собран!")
             return {'success': True, 'output': '\n'.join(output_lines)}
         else:
-            error_text = '\n'.join(output_lines[-30:])  # последние 30 строк
-            print(f"❌ Сборка завершилась с ошибкой (код {process.returncode})")
+            error_text = '\n'.join(output_lines[-30:])
+            print(f"Сборка завершилась с ошибкой (код {process.returncode})")
             return {'success': False, 'error': error_text}
 
     except Exception as e:
-        print(f"❌ Критическая ошибка при сборке: {e}")
+        print(f"Критическая ошибка при сборке: {e}")
         return {'success': False, 'error': str(e)}

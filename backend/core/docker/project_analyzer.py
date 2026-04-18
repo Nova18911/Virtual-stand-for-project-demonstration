@@ -1,17 +1,14 @@
-# backend/core/docker/project_analyzer.py
-
 import os
 import re
 import ast
 from collections import defaultdict
 
-# Популярные пакеты и их имена в импортах
 PACKAGE_MAPPING = {
-    # Основные для анализа данных (самые частые)
+    # Основные для анализа данных
     'pandas': 'pandas',
     'numpy': 'numpy',
 
-    # Визуализация (очень важно для учебных работ)
+    # Визуализация
     'matplotlib': 'matplotlib',
     'seaborn': 'seaborn',
     'plotly': 'plotly',
@@ -31,7 +28,7 @@ PACKAGE_MAPPING = {
     'colorama': 'colorama',
     'tqdm': 'tqdm',
 
-    # Стандартная библиотека Python (не устанавливаем)
+    # Стандартные библиотека Python
     'os': None,
     'sys': None,
     'math': None,
@@ -46,9 +43,6 @@ PACKAGE_MAPPING = {
 
 
 def analyze_project(repo_path: str) -> dict:
-    """
-    Анализирует проект: находит главный файл + автоматически определяет зависимости
-    """
     result = {
         'main_file': None,
         'requirements': [],
@@ -60,7 +54,6 @@ def analyze_project(repo_path: str) -> dict:
         result['error'] = 'Папка репозитория не найдена'
         return result
 
-    # 1. Поиск главного файла
     main_candidates = ['main.py', 'app.py', 'run.py', 'start.py']
     py_files = []
 
@@ -71,7 +64,6 @@ def analyze_project(repo_path: str) -> dict:
                 result['main_file'] = entry.name
                 break
 
-    # Если не нашли по кандидатам — берём первый .py файл
     if not result['main_file'] and py_files:
         result['main_file'] = py_files[0]
 
@@ -81,7 +73,6 @@ def analyze_project(repo_path: str) -> dict:
 
     print(f"✅ Главный файл: {result['main_file']}")
 
-    # 2. Автоматический сбор зависимостей
     dependencies = set()
 
     for py_file in py_files:
@@ -106,20 +97,19 @@ def analyze_project(repo_path: str) -> dict:
                             dependencies.add(PACKAGE_MAPPING[pkg])
 
         except Exception as e:
-            print(f"⚠️ Не удалось проанализировать {py_file}: {e}")
+            print(f"Не удалось проанализировать {py_file}: {e}")
 
     result['requirements'] = sorted(list(dependencies))
 
-    # Принудительно перезаписываем requirements.txt при каждом анализе
     req_path = os.path.join(repo_path, "requirements.txt")
     try:
         with open(req_path, "w", encoding="utf-8") as f:
             if result['requirements']:
                 f.write("\n".join(result['requirements']) + "\n")
-                print(f"📦 Создан requirements.txt: {result['requirements']}")
+                print(f"Создан requirements.txt: {result['requirements']}")
             else:
                 f.write("# Нет автоматически обнаруженных зависимостей\n")
     except Exception as e:
-        print(f"⚠️ Не удалось создать requirements.txt: {e}")
+        print(f"Не удалось создать requirements.txt: {e}")
 
     return result

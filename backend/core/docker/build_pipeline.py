@@ -1,5 +1,3 @@
-# backend/core/docker/build_pipeline.py
-
 from backend.core.connect import get_db_connection
 from backend.core.docker.git_clone import clone_repo, delete_repo
 from backend.core.docker.project_analyzer import analyze_project
@@ -11,9 +9,8 @@ from datetime import datetime
 
 from backend.core.runner import image_exists
 
-
 def build_and_run(github_url: str, project_id: int, image_name: str) -> dict:
-    print(f"\n🚀 СБОРКА КОНСОЛЬНОГО ПРОЕКТА {project_id}")
+    print(f"\nСБОРКА КОНСОЛЬНОГО ПРОЕКТА {project_id}")
 
     clone = clone_repo(github_url)
     if not clone['success']:
@@ -25,15 +22,14 @@ def build_and_run(github_url: str, project_id: int, image_name: str) -> dict:
         if analysis['error']:
             return {'ok': False, 'error': analysis['error']}
 
-        print(f"📄 Основной файл: {analysis['main_file']}")
-        print(f"🎯 Тип проекта: console")
+        print(f"Основной файл: {analysis['main_file']}")
 
         save_requirements_file(repo_path, analysis['requirements'])
         create_dockerignore(repo_path)
 
         dockerfile_result = create_dockerfile(
             repo_path,
-            'console',                    # <-- важно
+            'console',
             analysis['main_file']
         )
         if not dockerfile_result['success']:
@@ -45,7 +41,6 @@ def build_and_run(github_url: str, project_id: int, image_name: str) -> dict:
 
         _save_project_info(project_id, analysis, image_name)
 
-        # Запуск контейнера
         from backend.core.runner import run_container
         container, link = run_container(
             image_name, project_id, 'console', analysis['main_file']
@@ -57,7 +52,7 @@ def build_and_run(github_url: str, project_id: int, image_name: str) -> dict:
         return {'ok': True, 'link': link}
 
     except Exception as e:
-        print(f"❌ Ошибка сборки: {e}")
+        print(f"Ошибка сборки: {e}")
         return {'ok': False, 'error': str(e)}
     finally:
         delete_repo(repo_path)
@@ -89,7 +84,7 @@ def rebuild_project(github_url: str, project_id: int, image_name: str) -> dict:
     try:
         import docker
         client = docker.from_env()
-        if image_exists(image_name):   # image_exists можно импортировать из runner
+        if image_exists(image_name):
             client.images.remove(image_name, force=True)
     except:
         pass

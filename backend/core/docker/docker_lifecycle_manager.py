@@ -16,7 +16,6 @@ from backend.core.connect import get_db_connection
 
 @dataclass
 class ContainerInfo:
-    """Класс для хранения информации о контейнере"""
     container_id: str
     project_id: int
     port: int
@@ -26,7 +25,6 @@ class ContainerInfo:
 
 class DockerLifecycleManager:
     def __init__(self):
-        """Инициализация менеджера"""
         self.client = None
         self.docker_available = False
         self._init_docker_client()
@@ -34,7 +32,6 @@ class DockerLifecycleManager:
         self.logger = self._setup_logging()
         self.running = True
         
-        # Подключение к PostgreSQL
         try:
             self.db_conn = get_db_connection()
             self.logger.info("Подключение к PostgreSQL успешно")
@@ -46,22 +43,14 @@ class DockerLifecycleManager:
         self._init_database()
         
     def _init_docker_client(self):
-        """Инициализация Docker клиента с обработкой ошибок"""
         try:
-            # Проверяем, запущен ли Docker
             self.client = docker.from_env()
-            # Проверяем версию Docker
             version = self.client.version()
             self.docker_available = True
-            print(f"Docker доступен, версия: {version.get('Version', 'unknown')}")
         except Exception as e:
             self.docker_available = False
-            print(f"Предупреждение: Docker не доступен - {e}")
-            print("Функции управления контейнерами будут отключены")
-            print("Для работы с Docker убедитесь, что Docker Desktop запущен")
-    
+
     def _setup_logging(self):
-        """Настройка логирования"""
         logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -73,23 +62,19 @@ class DockerLifecycleManager:
         return logging.getLogger(__name__)
     
     def _setup_signal_handlers(self):
-        """Настройка обработчиков сигналов"""
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
     
     def _signal_handler(self, signum, frame):
-        """Обработчик сигналов завершения"""
         self.logger.info("Получен сигнал завершения. Останавливаем менеджер...")
         self.running = False
         if hasattr(self, 'db_conn') and self.db_conn:
             self.db_conn.close()
     
     def _init_database(self):
-        """Инициализация таблиц в PostgreSQL"""
         try:
             cursor = self.db_conn.cursor()
             
-            # Создание таблицы docker_containers
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS docker_containers (
                     container_id VARCHAR(64) PRIMARY KEY,
@@ -101,7 +86,6 @@ class DockerLifecycleManager:
                 )
             """)
             
-            # Создание таблицы для истории удалений
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS cleanup_history (
                     id SERIAL PRIMARY KEY,
@@ -113,7 +97,6 @@ class DockerLifecycleManager:
                 )
             """)
             
-            # Создание таблицы настроек
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS cleanup_settings (
                     id SERIAL PRIMARY KEY,
@@ -124,7 +107,6 @@ class DockerLifecycleManager:
                 )
             """)
             
-            # Вставка настроек по умолчанию
             cursor.execute("SELECT COUNT(*) FROM cleanup_settings")
             if cursor.fetchone()[0] == 0:
                 cursor.execute("""
@@ -142,7 +124,6 @@ class DockerLifecycleManager:
     
     def register_container(self, container_id: str, project_id: int, 
                           port: int, image_name: str) -> bool:
-        """Регистрация контейнера в базе данных"""
         try:
             cursor = self.db_conn.cursor()
             cursor.execute("""
@@ -165,7 +146,6 @@ class DockerLifecycleManager:
             return False
     
     def get_expired_containers(self, lifetime_hours: int = 24) -> List[ContainerInfo]:
-        """Получение списка контейнеров, которые нужно удалить"""
         try:
             expiration_time = datetime.now() - timedelta(hours=lifetime_hours)
             
@@ -194,7 +174,6 @@ class DockerLifecycleManager:
             return []
     
     def stop_and_remove_container(self, container_info: ContainerInfo) -> bool:
-        """Остановка и удаление контейнера"""
         if not self.docker_available:
             self.logger.warning("Docker недоступен, пропускаем удаление контейнера")
             return False
@@ -202,15 +181,12 @@ class DockerLifecycleManager:
         try:
             container = self.client.containers.get(container_info.container_id)
             
-            # Остановка контейнера
             self.logger.info(f"Останавливаем контейнер {container_info.container_id}")
             container.stop(timeout=10)
             
-            # Удаление контейнера
             self.logger.info(f"Удаляем контейнер {container_info.container_id}")
             container.remove()
             
-            # Обновление статуса в БД
             cursor = self.db_conn.cursor()
             cursor.execute("""
                 UPDATE docker_containers 
@@ -218,7 +194,6 @@ class DockerLifecycleManager:
                 WHERE container_id = %s
             """, (container_info.container_id,))
             
-            # Запись в историю
             cursor.execute("""
                 INSERT INTO cleanup_history 
                 (container_id, image_name, project_id, reason)
@@ -250,7 +225,6 @@ class DockerLifecycleManager:
             return False
     
     def cleanup_unused_images(self, days_old: int = 7) -> Dict[str, int]:
-        """Очистка неиспользуемых образов"""
         if not self.docker_available:
             self.logger.warning("Docker недоступен, пропускаем очистку образов")
             return {'images_removed': 0, 'space_freed': 0}
@@ -263,7 +237,6 @@ class DockerLifecycleManager:
             
             images = self.client.images.list()
             
-            # Получаем список используемых образов
             cursor = self.db_conn.cursor()
             cursor.execute("""
                 SELECT DISTINCT image_name 
@@ -272,7 +245,6 @@ class DockerLifecycleManager:
             """)
             used_images = set(row[0] for row in cursor.fetchall())
             
-            # Текущее время
             now = datetime.now()
             
             for image in images:
@@ -280,30 +252,24 @@ class DockerLifecycleManager:
                 if not tags:
                     continue
                 
-                # Проверяем, используется ли образ
                 in_use = any(tag in used_images for tag in tags)
                 
                 if not in_use:
-                    # Проверяем возраст образа
                     try:
                         created_timestamp = image.attrs['Created']
                         
-                        # Преобразуем в datetime
                         if isinstance(created_timestamp, str):
-                            # Убираем часовой пояс
                             if 'Z' in created_timestamp:
                                 created_timestamp = created_timestamp.replace('Z', '')
                             if 'T' in created_timestamp:
-                                # Парсим ISO формат
                                 date_part, time_part = created_timestamp.split('T')
-                                time_part = time_part.split('.')[0][:8]  # Берем только HH:MM:SS
+                                time_part = time_part.split('.')[0][:8]
                                 created = datetime.strptime(f"{date_part} {time_part}", "%Y-%m-%d %H:%M:%S")
                             else:
                                 created = datetime.strptime(created_timestamp, "%Y-%m-%d %H:%M:%S")
                         else:
                             created = datetime.fromtimestamp(created_timestamp)
                         
-                        # Вычисляем возраст
                         age_days = (now - created).days
                         
                         if age_days > days_old:
@@ -327,7 +293,6 @@ class DockerLifecycleManager:
             return {'images_removed': 0, 'space_freed': 0}
     
     def get_container_stats(self) -> Dict:
-        """Получение статистики по контейнерам"""
         try:
             cursor = self.db_conn.cursor()
             
@@ -367,7 +332,6 @@ class DockerLifecycleManager:
     
     def manual_cleanup(self, container_id: Optional[str] = None, 
                       project_id: Optional[int] = None) -> bool:
-        """Ручная очистка контейнеров"""
         if not self.docker_available:
             self.logger.warning("Docker недоступен, ручная очистка невозможна")
             return False
@@ -423,10 +387,8 @@ class DockerLifecycleManager:
             return False
     
     def run_cleanup_cycle(self):
-        """Выполнение цикла очистки"""
         self.logger.info("Запуск цикла очистки...")
         
-        # Получаем настройки
         cursor = self.db_conn.cursor()
         cursor.execute("""
             SELECT container_lifetime_hours, image_cleanup_enabled
@@ -437,7 +399,6 @@ class DockerLifecycleManager:
         lifetime_hours = settings[0] if settings else 24
         image_cleanup_enabled = settings[1] if settings else True
         
-        # Удаляем просроченные контейнеры
         expired_containers = self.get_expired_containers(lifetime_hours)
         removed_count = 0
         
@@ -447,7 +408,6 @@ class DockerLifecycleManager:
         
         self.logger.info(f"Удалено просроченных контейнеров: {removed_count}")
         
-        # Очищаем неиспользуемые образы
         if image_cleanup_enabled:
             cleanup_stats = self.cleanup_unused_images()
             if cleanup_stats['images_removed'] > 0:
@@ -457,7 +417,6 @@ class DockerLifecycleManager:
                 )
     
     def start_scheduler(self):
-        """Запуск планировщика задач"""
         self.logger.info("Запуск планировщика...")
         
         cursor = self.db_conn.cursor()
@@ -481,7 +440,6 @@ class DockerLifecycleManager:
     def update_settings(self, container_lifetime_hours: int = 24,
                        image_cleanup_enabled: bool = True,
                        check_interval_minutes: int = 5) -> bool:
-        """Обновление настроек очистки"""
         try:
             cursor = self.db_conn.cursor()
             cursor.execute("""

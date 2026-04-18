@@ -1,5 +1,3 @@
-# backend/core/docker/streamer.py  —  Версия с поддержкой input()
-
 import docker
 from flask import Blueprint, Response, render_template, request, jsonify
 from backend.core.connect import get_db_connection
@@ -8,8 +6,7 @@ import queue
 
 streamer_bp = Blueprint('streamer', __name__)
 
-# Глобальное хранилище активных сессий
-active_sessions = {}   # project_id -> {'exec_id': , 'socket': , 'input_queue': , 'thread': }
+active_sessions = {}
 
 
 def get_container_info_by_project(project_id):
@@ -33,7 +30,6 @@ def get_container_info_by_project(project_id):
 
 @streamer_bp.route('/container/<int:project_id>/logs')
 def container_logs(project_id):
-    """SSE с поддержкой вывода и подготовки к вводу"""
     info = get_container_info_by_project(project_id)
     if not info:
         return "Контейнер не найден", 404
@@ -46,9 +42,8 @@ def container_logs(project_id):
             client = docker.from_env()
             container = client.containers.get(container_id)
 
-            yield f"data: 🚀 Запуск программы {main_file}...\n\n"
+            yield f"data: Запуск программы {main_file}...\n\n"
 
-            # Запускаем exec с интерактивным режимом
             exec_id = container.client.api.exec_create(
                 container.id,
                 ['python', '-u', main_file],
@@ -68,7 +63,6 @@ def container_logs(project_id):
                 'running': True
             }
 
-            # Фоновая отправка ввода
             def input_sender():
                 while active_sessions.get(project_id, {}).get('running', False):
                     try:
@@ -81,7 +75,6 @@ def container_logs(project_id):
 
             threading.Thread(target=input_sender, daemon=True).start()
 
-            # Чтение вывода
             while True:
                 try:
                     data = socket.recv(4096)
@@ -94,11 +87,11 @@ def container_logs(project_id):
                 except:
                     break
 
-            yield "data: \n✅ Программа завершила работу\n\n"
+            yield "data: \nПрограмма завершила работу\n\n"
             yield "event: close\ndata: done\n\n"
 
         except Exception as e:
-            yield f"data: ❌ Ошибка: {str(e)}\n\n"
+            yield f"data: Ошибка: {str(e)}\n\n"
         finally:
             if project_id in active_sessions:
                 active_sessions[project_id]['running'] = False
@@ -115,7 +108,6 @@ def container_logs(project_id):
 
 @streamer_bp.route('/container/<int:project_id>/input', methods=['POST'])
 def container_input(project_id):
-    """Приём ввода от пользователя"""
     if project_id not in active_sessions:
         return jsonify({'error': 'Сессия не найдена'}), 404
 
