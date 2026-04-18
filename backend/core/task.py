@@ -6,20 +6,14 @@ from datetime import datetime
 task_bp = Blueprint('task', __name__, url_prefix='/tasks')
 
 def ensure_datetime(date_val):
-    """Преобразует дату из БД в объект datetime. 
-    Если это уже datetime, возвращает его. 
-    Если это строка, пытается распарсить её. 
-    Если парсинг не удался или это None, возвращает текущее время или заглушку."""
     if not date_val:
-        return datetime.now() # Или можно вернуть None, если в шаблоне есть проверка
+        return datetime.now()
     
     if isinstance(date_val, datetime):
         return date_val
     
     if isinstance(date_val, str):
-        # Очищаем строку от лишних пробелов
         date_str = date_val.strip()
-        # Список возможных форматов из разных версий БД
         formats = [
             '%Y-%m-%d %H:%M:%S',
             '%Y-%m-%d %H:%M:%S.%f',
@@ -31,9 +25,7 @@ def ensure_datetime(date_val):
                 return datetime.strptime(date_str[:19] if len(date_str) > 19 else date_str, fmt)
             except (ValueError, TypeError):
                 continue
-    
-    # Если ничего не помогло, возвращаем объект datetime, 
-    # чтобы .strftime() в шаблоне не вызывал ошибку
+
     return datetime.now()
 
 def dict_fetchone(cursor):
@@ -60,7 +52,6 @@ def index(lab_id):
     try:
         cur = conn.cursor()
 
-        # 1. Получаем данные задания
         cur.execute('''
             SELECT l.lab_id, l.name, l.task, l.start_date, l.end_date, l.course_id
             FROM labs l
@@ -71,7 +62,6 @@ def index(lab_id):
         if lab is None:
             return 'Задание не найдено', 404
 
-        # КОРРЕКТИРОВКА ДАТ ДЛЯ JINJA2
         lab['start_date'] = ensure_datetime(lab.get('start_date'))
         lab['end_date'] = ensure_datetime(lab.get('end_date'))
 
@@ -81,7 +71,6 @@ def index(lab_id):
         else:
             course_id = session.get('current_course_id', 1)
 
-        # 2. Данные студента
         project = None
         if role == 'student' and user_id:
             cur.execute('''
@@ -93,7 +82,6 @@ def index(lab_id):
             if project:
                 project['submission_date'] = ensure_datetime(project.get('submission_date'))
 
-        # 3. Список для преподавателя
         students = None
         if role == 'teacher':
             cur.execute('''

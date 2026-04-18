@@ -2,7 +2,6 @@
     let allStudents = [];
     let currentStudent = null;
 
-    // Функция показа уведомлений
     function showNotification(message, type = 'info') {
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
@@ -16,7 +15,6 @@
         }, 3000);
     }
 
-    // --- Загрузка списка студентов ---
     async function loadStudents() {
         const response = await fetch(`/api/task/${LAB_ID}/students`);
         allStudents = await response.json();
@@ -44,7 +42,6 @@
         });
     }
 
-    // --- Загрузка данных студента ---
     window.loadStudentDetail = async function (userId) {
         const response = await fetch(`/api/task/${LAB_ID}/student/${userId}`);
         const data = await response.json();
@@ -53,7 +50,6 @@
 
         currentStudent = data;
 
-        // Подсветка активного студента
         document.querySelectorAll('.student-item').forEach(li => {
             li.classList.toggle('active', parseInt(li.dataset.userId) === userId);
         });
@@ -65,7 +61,6 @@
         document.getElementById('githubLink').value = data.github_link || '';
         document.getElementById('commentInput').value = data.teacher_comment || '';
 
-        // Получаем статус контейнера
         try {
             const statusResponse = await fetch(`/api/task/${LAB_ID}/student/${userId}/container-status`);
             const statusData = await statusResponse.json();
@@ -93,12 +88,10 @@
             document.getElementById('consoleLinkContainer').innerHTML = '';
         }
 
-        // Оценки
         document.querySelectorAll('.grade-btn').forEach(btn => {
             btn.classList.toggle('selected', parseInt(btn.dataset.grade) === data.grade);
         });
 
-        // === Docker блок ===
         const dockerBlock = document.getElementById('dockerBlock');
 
         if (data.build_success) {
@@ -113,16 +106,14 @@
         }
     };
 
-    // --- Сборка контейнера с проверкой изменения ссылки ---
     async function buildContainer(userId) {
         const btn = document.getElementById('buildBtn');
         if (!btn) return;
 
         btn.disabled = true;
-        btn.textContent = '⏳ Проверка...';
+        btn.textContent = 'Проверка...';
 
         try {
-            // Получаем свежие данные студента
             const detailResponse = await fetch(`/api/task/${LAB_ID}/student/${userId}`);
             const currentData = await detailResponse.json();
 
@@ -134,7 +125,6 @@
 
             const currentGithubLink = currentData.github_link || '';
 
-            // Определяем, нужно ли делать force rebuild
             const shouldForceRebuild = !currentData.build_success ||
                                       (currentData.github_link && currentData.github_link !== currentGithubLink);
 
@@ -158,7 +148,6 @@
 
             showNotification('Сборка запущена...', 'info');
 
-            // Обновляем информацию
             setTimeout(() => {
                 loadStudentDetail(userId);
             }, 2000);
@@ -170,13 +159,11 @@
         }
     }
 
-    // Вспомогательная функция для сброса кнопки
     function resetBuildButton(btn) {
         btn.disabled = false;
         btn.textContent = 'Осуществить сборку';
     }
 
-    // --- Оценки ---
     document.getElementById('gradeForm').addEventListener('click', async (e) => {
         if (!e.target.classList.contains('grade-btn')) return;
         if (!currentStudent) return;
@@ -202,7 +189,6 @@
         }
     });
 
-    // --- Комментарий ---
     document.getElementById('saveCommentBtn').addEventListener('click', async () => {
         if (!currentStudent) return;
 
@@ -218,12 +204,11 @@
         const data = await response.json();
         if (data.ok) {
             const btn = document.getElementById('saveCommentBtn');
-            btn.textContent = 'Сохранено ✔';
+            btn.textContent = 'Сохранено';
             setTimeout(() => btn.textContent = 'Сохранить', 2000);
         }
     });
 
-    // --- Поиск ---
     document.getElementById('searchBtn').addEventListener('click', () => {
         const query = document.getElementById('searchInput').value.toLowerCase();
         const filtered = allStudents.filter(s =>

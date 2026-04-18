@@ -1,18 +1,14 @@
-// docker-manager.js
 const API_BASE = 'http://127.0.0.1:5000';
 
-// Load data on page load
 document.addEventListener('DOMContentLoaded', () => {
     refreshData();
     setupNavigation();
     setupSettingsForm();
     loadSettings();
     
-    // Auto-refresh every 30 seconds
     setInterval(refreshData, 30000);
 });
 
-// Setup navigation
 function setupNavigation() {
     const navLinks = document.querySelectorAll('.nav a');
     navLinks.forEach(link => {
@@ -20,16 +16,13 @@ function setupNavigation() {
             e.preventDefault();
             const tab = link.dataset.tab;
             
-            // Update active state
             navLinks.forEach(l => l.classList.remove('active'));
             link.classList.add('active');
             
-            // Hide all tabs
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
             });
             
-            // Show selected tab
             if (tab === 'containers') {
                 document.getElementById('containersTab').classList.add('active');
                 loadContainers();
@@ -47,7 +40,6 @@ function setupNavigation() {
     });
 }
 
-// Setup settings form
 function setupSettingsForm() {
     document.getElementById('settingsForm').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -80,7 +72,6 @@ function setupSettingsForm() {
     });
 }
 
-// Load containers
 async function loadContainers() {
     try {
         const response = await fetch(`${API_BASE}/api/containers`);
@@ -96,7 +87,7 @@ async function loadContainers() {
     } catch (error) {
         console.error('Error:', error);
         const container = document.getElementById('containersList');
-        container.innerHTML = '<div class="empty-state">❌ Ошибка загрузки контейнеров</div>';
+        container.innerHTML = '<div class="empty-state"> Ошибка загрузки контейнеров</div>';
     }
 }
 
@@ -105,7 +96,7 @@ function displayContainers(containers) {
     const container = document.getElementById('containersList');
     
     if (containers.length === 0) {
-        container.innerHTML = '<div class="empty-state">🐳 Нет контейнеров</div>';
+        container.innerHTML = '<div class="empty-state"> Нет контейнеров</div>';
         return;
     }
     
@@ -147,7 +138,6 @@ function displayContainers(containers) {
     container.innerHTML = html;
 }
 
-// Load images
 async function loadImages() {
     try {
         const response = await fetch(`${API_BASE}/api/images`);
@@ -162,16 +152,15 @@ async function loadImages() {
     } catch (error) {
         console.error('Error:', error);
         const container = document.getElementById('imagesList');
-        container.innerHTML = '<div class="empty-state">❌ Ошибка загрузки образов</div>';
+        container.innerHTML = '<div class="empty-state"> Ошибка загрузки образов</div>';
     }
 }
 
-// Display images
 function displayImages(images) {
     const container = document.getElementById('imagesList');
     
     if (images.length === 0) {
-        container.innerHTML = '<div class="empty-state">📦 Нет образов</div>';
+        container.innerHTML = '<div class="empty-state">Нет образов</div>';
         return;
     }
     
@@ -200,7 +189,7 @@ function displayImages(images) {
                 <td><code>${image.id.substring(0, 12)}</code></td>
                 <td class="image-size">${size}</td>
                 <td class="created-date">${created}</td>
-                <td>${image.in_use ? '✅ Да' : '❌ Нет'}</td>
+                <td>${image.in_use ? ' Да' : ' Нет'}</td>
                 <td>
                     ${!image.in_use ? 
                         `<button class="action-btn btn-delete" onclick="deleteImage('${image.id}')">🗑 Удалить</button>` : 
@@ -214,7 +203,6 @@ function displayImages(images) {
     container.innerHTML = html;
 }
 
-// Load logs
 async function loadLogs() {
     const lines = document.getElementById('logLines').value;
     
@@ -225,7 +213,7 @@ async function loadLogs() {
         if (data.success) {
             const logContainer = document.getElementById('logContainer');
             if (data.logs.length === 0) {
-                logContainer.innerHTML = '<div class="empty-state">📝 Логи отсутствуют</div>';
+                logContainer.innerHTML = '<div class="empty-state">Логи отсутствуют</div>';
             } else {
                 logContainer.innerHTML = data.logs.map(log => 
                     `<div class="log-entry">${escapeHtml(log)}</div>`
@@ -240,11 +228,10 @@ async function loadLogs() {
     } catch (error) {
         console.error('Error:', error);
         const container = document.getElementById('logContainer');
-        container.innerHTML = '<div class="empty-state">❌ Ошибка загрузки логов</div>';
+        container.innerHTML = '<div class="empty-state"> Ошибка загрузки логов</div>';
     }
 }
 
-// Load settings
 async function loadSettings() {
     try {
         const response = await fetch(`${API_BASE}/api/settings`);
@@ -261,7 +248,6 @@ async function loadSettings() {
     }
 }
 
-// Load statistics
 async function loadStats() {
     try {
         const response = await fetch(`${API_BASE}/api/stats`);
@@ -286,7 +272,6 @@ async function loadStats() {
     }
 }
 
-// Run container
 async function runContainer() {
     const data = {
         project_id: parseInt(document.getElementById('projectId').value),
@@ -323,7 +308,6 @@ async function runContainer() {
     }
 }
 
-// Delete container
 async function deleteContainer(containerId) {
     if (!confirm('Удалить этот контейнер?')) return;
     
@@ -346,7 +330,6 @@ async function deleteContainer(containerId) {
     }
 }
 
-// Delete image
 async function deleteImage(imageId) {
     if (!confirm('Удалить этот образ?')) return;
     
@@ -369,7 +352,6 @@ async function deleteImage(imageId) {
     }
 }
 
-// View container details
 async function viewContainerDetails(containerId) {
     try {
         const response = await fetch(`${API_BASE}/api/containers/${containerId}`);
@@ -421,7 +403,6 @@ async function viewContainerDetails(containerId) {
     }
 }
 
-// Run cleanup
 async function runCleanup() {
     if (!confirm('Запустить принудительную очистку? Это удалит все просроченные контейнеры и неиспользуемые образы.')) return;
     
@@ -444,7 +425,6 @@ async function runCleanup() {
     }
 }
 
-// Cleanup images
 async function cleanupImages() {
     if (!confirm('Удалить все неиспользуемые образы старше 7 дней?')) return;
     
@@ -467,13 +447,11 @@ async function cleanupImages() {
     }
 }
 
-// Refresh data
 function refreshData() {
     loadStats();
     loadContainers();
 }
 
-// Search containers
 function searchContainers() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     const rows = document.querySelectorAll('#containersList table tbody tr');
@@ -484,7 +462,6 @@ function searchContainers() {
     });
 }
 
-// Reset settings
 function resetSettings() {
     document.getElementById('lifetimeHours').value = 24;
     document.getElementById('cleanupImages').value = '1';
@@ -492,7 +469,6 @@ function resetSettings() {
     document.getElementById('imageAgeDays').value = 7;
 }
 
-// Reset run container form
 function resetRunContainerForm() {
     document.getElementById('projectId').value = '';
     document.getElementById('imageName').value = '';
@@ -500,18 +476,15 @@ function resetRunContainerForm() {
     document.getElementById('containerName').value = '';
 }
 
-// Show run container modal
 function showRunContainerModal() {
     resetRunContainerForm();
     document.getElementById('runContainerModal').style.display = 'flex';
 }
 
-// Close modal
 function closeModal(modalId) {
     document.getElementById(modalId).style.display = 'none';
 }
 
-// Show notification
 function showNotification(title, message, type = 'success') {
     const container = document.getElementById('notificationContainer');
     const notification = document.createElement('div');
@@ -529,7 +502,6 @@ function showNotification(title, message, type = 'success') {
     }, 5000);
 }
 
-// Format bytes
 function formatBytes(bytes) {
     if (bytes === 0) return '0 B';
     const k = 1024;
@@ -538,7 +510,6 @@ function formatBytes(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-// Get status text
 function getStatusText(status) {
     const statuses = {
         'running': 'Активен',
@@ -549,7 +520,6 @@ function getStatusText(status) {
     return statuses[status] || status;
 }
 
-// Escape HTML
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
@@ -557,7 +527,6 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Close modal on outside click
 window.onclick = (event) => {
     if (event.target.classList.contains('modal')) {
         event.target.style.display = 'none';

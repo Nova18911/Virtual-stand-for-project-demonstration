@@ -1,10 +1,7 @@
-// frontend/static/js/container_view.js
-
 let projectId;
 let eventSource = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Получаем projectId из data-атрибута (будем передавать из шаблона)
     projectId = document.getElementById('container-view').dataset.projectId;
 
     const output = document.getElementById('output');
@@ -25,8 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
         eventSource = new EventSource(`/container/${projectId}/logs`);
 
         eventSource.onopen = () => {
-            addLine('✅ Подключено к программе', 'info');
-            statusBadge.textContent = '🟢 Работает';
+            addLine('Подключено к программе', 'info');
+            statusBadge.textContent = 'Работает';
             statusBadge.className = 'status-badge running';
         };
 
@@ -37,8 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         eventSource.addEventListener('close', () => {
-            addLine('✅ Программа завершила работу', 'info');
-            statusBadge.textContent = '🔴 Завершено';
+            addLine('Программа завершила работу', 'info');
+            statusBadge.textContent = 'Завершено';
             statusBadge.className = 'status-badge stopped';
             userInput.disabled = true;
             sendBtn.disabled = true;
@@ -47,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         eventSource.onerror = () => {
             if (eventSource.readyState === EventSource.CLOSED) {
-                addLine('⚠️ Соединение закрыто', 'error');
+                addLine('Соединение закрыто', 'error');
                 statusBadge.className = 'status-badge stopped';
             }
         };
@@ -64,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: `input=${encodeURIComponent(value)}`
         }).catch(err => {
-            addLine(`❌ Ошибка отправки ввода: ${err.message}`, 'error');
+            addLine(`Ошибка отправки ввода: ${err.message}`, 'error');
         });
 
         userInput.value = '';
@@ -78,25 +75,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
 
             if (data.success) {
-                addLine('⏹️ Программа остановлена', 'info');
-                statusBadge.textContent = '🔴 Остановлено';
+                addLine('Программа остановлена', 'info');
+                statusBadge.textContent = 'Остановлено';
                 statusBadge.className = 'status-badge stopped';
                 if (eventSource) eventSource.close();
             } else {
-                addLine(`❌ ${data.message || 'Ошибка остановки'}`, 'error');
+                addLine(`${data.message || 'Ошибка остановки'}`, 'error');
             }
         } catch (e) {
-            addLine(`❌ Ошибка остановки: ${e.message}`, 'error');
+            addLine(`Ошибка остановки: ${e.message}`, 'error');
         }
     }
 
-    // Назначаем обработчики
     sendBtn.addEventListener('click', sendInput);
     userInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') sendInput();
     });
     stopBtn.addEventListener('click', stopContainer);
 
-    // Запуск
     connectToLogs();
 });

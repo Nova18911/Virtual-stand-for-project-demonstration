@@ -11,10 +11,7 @@ def get_courses():
     role = session.get('user_role')
     user_id = session.get('user_id')
 
-    # Получаем ВСЕ курсы из базы
-    # Добавляем проверку доступа прямо в SQL запрос для производительности
     if role == 'teacher':
-        # Для препода: доступ есть, если он teacher_id этого курса
         cursor.execute("""
             SELECT course_id, name, teacher,
                    CASE WHEN teacher_id = %s THEN true ELSE false END as is_enrolled
@@ -22,7 +19,6 @@ def get_courses():
             ORDER BY course_id
         """, (user_id,))
     elif role == 'student':
-        # Для студента: доступ есть, если он есть в таблице course_user
         cursor.execute("""
             SELECT c.course_id, c.name, c.teacher,
                    CASE WHEN cu.user_id IS NOT NULL THEN true ELSE false END as is_enrolled
@@ -31,7 +27,6 @@ def get_courses():
             ORDER BY c.course_id
         """, (user_id,))
     else:
-        # Для админа (всегда true) или гостя (всегда false)
         is_admin = (role == 'admin')
         cursor.execute("""
             SELECT course_id, name, teacher, %s as is_enrolled
@@ -79,8 +74,7 @@ def course_page(course_id):
             if cur.fetchone(): access_allowed = True
         elif role == 'admin':
             access_allowed = True
-    except Exception as e:
-        print(f"Error: {e}")
+
     finally:
         cur.close()
         conn.close()

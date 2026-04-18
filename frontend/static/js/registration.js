@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const passwordInput = document.getElementById('password');
     const roleSelect    = document.getElementById('role');
 
-    // --- Валидаторы ---
     function isValidEmail(email) {
         return /^[\w.\-]+@[\w.\-]+\.\w{2,}$/.test(email.trim());
     }
@@ -19,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return password.length >= 4;
     }
 
-    // --- Показ/скрытие ошибок ---
     function showError(input, message) {
         clearError(input);
         input.classList.add('input-error');
@@ -59,7 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
         box.style.display = 'block';
     }
 
-    // --- Валидация при потере фокуса ---
     emailInput.addEventListener('blur', () => {
         if (!isValidEmail(emailInput.value)) {
             showError(emailInput, 'Введите корректный email (example@mail.ru)');
@@ -84,7 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Отправка формы ---
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -127,7 +123,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.redirect) {
                 window.location.href = data.redirect;
             } else {
-                // Преподаватель — показываем сообщение, скрываем форму
                 form.style.display = 'none';
                 showGlobalSuccess(data.message);
             }

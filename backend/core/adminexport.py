@@ -1,5 +1,4 @@
 from flask import Blueprint, render_template, request, jsonify, send_file
-from backend.core.connect import get_db_connection
 import pg8000
 import json
 import io
@@ -146,8 +145,8 @@ def create_backup():
         data = request.json
         backup_type = data.get('type', 'partial')
         selected_tables = data.get('tables', [])
-        db_type = data.get('db_type', 'PostgreSQL')  # PostgreSQL, MySQL, MSSQL, Oracle
-        file_format = data.get('format', 'SQL')  # SQL или JSON
+        db_type = data.get('db_type', 'PostgreSQL')
+        file_format = data.get('format', 'SQL')
         need_zip = data.get('zip', False)
         filename = data.get('filename', f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
 
@@ -167,9 +166,7 @@ def create_backup():
             table_data = get_table_data(table_name)
             backup_data[table_name] = table_data
 
-        # Выбор формата вывода
         if file_format == 'JSON':
-            # JSON формат (универсальный)
             backup_json = {
                 'metadata': {
                     'created_at': datetime.now().isoformat(),
@@ -184,7 +181,6 @@ def create_backup():
             file_extension = '.json'
             mime_type = 'application/json'
         else:
-            # SQL формат в зависимости от СУБД
             sql_lines = [
                 f"-- {db_type} Database Backup",
                 f"-- Created: {datetime.now().isoformat()}",
@@ -194,7 +190,6 @@ def create_backup():
                 ""
             ]
 
-            # Выбор функции генерации SQL в зависимости от СУБД
             if db_type == 'PostgreSQL':
                 sql_func = generate_postgresql_dump
                 comment_prefix = "--"
@@ -212,7 +207,6 @@ def create_backup():
             file_extension = '.sql'
             mime_type = 'application/sql'
 
-        # Создание ZIP архива если нужно
         if need_zip:
             memory_file = io.BytesIO()
             with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:

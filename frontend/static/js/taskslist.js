@@ -1,6 +1,5 @@
 (function () {
 
-    // ── Загрузка заданий ──────────────────────────────────────────
     async function loadTasks() {
         const response = await fetch(`/api/course/${COURSE_ID}/labs`);
         const labs     = await response.json();
@@ -20,7 +19,6 @@
             const li = document.createElement('li');
             li.className = 'task-item';
 
-            // Кнопка скачивания файла с отображением имени
             let fileBtn = '';
             if (lab.has_file) {
                 const fileName = lab.filename || 'Файл';
@@ -58,7 +56,6 @@
         });
     }
 
-    // Функция для экранирования HTML
     function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>]/g, function(m) {
@@ -69,10 +66,8 @@
         });
     }
 
-    // ── Только для преподавателя ──────────────────────────────────
     if (ROLE === 'teacher') {
 
-        // Функция для установки минимальной даты (сегодня + 1 день)
         function setMinDeadline() {
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
@@ -85,7 +80,6 @@
             if (editInput) editInput.setAttribute('min', minDateStr);
         }
 
-        // ── Модалка: добавить задание ──
         const addModal   = document.getElementById('addTaskModal');
         const openBtn    = document.getElementById('openModalBtn');
         const closeBtn   = document.getElementById('closeModalBtn');
@@ -140,7 +134,6 @@
             }
         });
 
-        // ── Модалка: редактировать задание ──
         const editModal     = document.getElementById('editTaskModal');
         const editCloseBtn  = document.getElementById('editCloseBtn');
         const editCancelBtn = document.getElementById('editCancelBtn');
@@ -217,7 +210,6 @@
             }
         });
 
-        // ── Модалка: добавить студента ──
         const addStudentModal    = document.getElementById('addStudentModal');
         const openAddStudentBtn  = document.getElementById('openAddStudentBtn');
         const closeAddStudentBtn = document.getElementById('closeAddStudentBtn');

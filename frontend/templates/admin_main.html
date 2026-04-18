@@ -30,7 +30,6 @@
 
     <div class="panel">
 
-        <!-- ── Список курсов ── -->
         <div class="courses">
             <div class="courses__label">Курсы</div>
             <div class="courses__list">
@@ -43,7 +42,6 @@
             </div>
         </div>
 
-        <!-- ── Форма курса ── -->
         <div class="info">
             <div class="info__title">Информация о курсе</div>
             <form method="POST" action="{{ url_for('admin_main.course_save') }}">
@@ -92,7 +90,6 @@
 
     </div>
 
-    <!-- ── Подтверждение преподавателей ── -->
     <div class="section-title">Заявки преподавателей</div>
     <div id="notify-message" class="flash" style="display:none;"></div>
     <div id="pending-users">

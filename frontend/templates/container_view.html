@@ -1,4 +1,3 @@
-<!-- frontend/templates/container_view.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -7,7 +6,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/container_view.css') }}">
 </head>
 <body>
-    <!-- Главный контейнер с data-атрибутом для project_id -->
     <div id="container-view" data-project-id="{{ project_id }}">
 
         <div class="page-wrapper">
@@ -31,7 +29,6 @@
 
     </div>
 
-    <!-- Подключаем внешний JS-файл -->
     <script src="{{ url_for('static', filename='js/container_view.js') }}"></script>
 </body>
 </html>

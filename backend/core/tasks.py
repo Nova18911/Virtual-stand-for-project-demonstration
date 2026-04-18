@@ -36,7 +36,6 @@ def course_tasks(course_id):
 
 @tasks_bp.route('/api/course/<int:course_id>/students-not-enrolled')
 def students_not_enrolled(course_id):
-    """Возвращает студентов, которые ещё не записаны на курс."""
     if session.get('user_role') != 'teacher':
         return jsonify({'error': 'Нет доступа'}), 403
 
@@ -63,7 +62,6 @@ def students_not_enrolled(course_id):
 
 @tasks_bp.route('/api/course/<int:course_id>/add-student', methods=['POST'])
 def add_student_to_course(course_id):
-    """Добавляет студента на курс."""
     if session.get('user_role') != 'teacher':
         return jsonify({'ok': False, 'error': 'Нет доступа'}), 403
 
@@ -77,7 +75,6 @@ def add_student_to_course(course_id):
     cursor = conn.cursor()
 
     try:
-        # Проверяем что студент существует и имеет роль student
         cursor.execute("""
             SELECT u.user_id FROM users u
             JOIN roles r ON r.access_id = u.access_id
@@ -87,7 +84,6 @@ def add_student_to_course(course_id):
         if not cursor.fetchone():
             return jsonify({'ok': False, 'error': 'Студент не найден'}), 404
 
-        # Проверяем что ещё не записан
         cursor.execute("""
             SELECT 1 FROM course_user
             WHERE course_id = %s AND user_id = %s

@@ -61,8 +61,6 @@ body {
     margin-bottom: 20px;
 }
 
-/* Панель экспорта — три колонки */
-
 .export-panel {
     display: flex;
     gap: 24px;
@@ -87,7 +85,6 @@ body {
     color: #2d2d2d;
 }
 
-/* Чекбоксы */
 
 .checkbox-label {
     display: flex;
@@ -104,8 +101,6 @@ body {
     height: 15px;
     cursor: pointer;
 }
-
-/* Таблица */
 
 table {
     width: 100%;
@@ -125,8 +120,6 @@ th {
     font-weight: 600;
 }
 
-/* Поля */
-
 select,
 input[type="text"] {
     width: 100%;
@@ -145,7 +138,6 @@ input[type="text"]:focus {
     border-color: #555;
 }
 
-/* Кнопка */
 
 .btn {
     padding: 8px 24px;

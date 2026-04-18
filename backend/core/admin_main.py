@@ -100,7 +100,6 @@ def course_save():
     try:
         cur = conn.cursor()
 
-        # Получаем имя преподавателя по его user_id
         cur.execute('SELECT full_name FROM users WHERE user_id = %s', (int(teacher_id),))
         row = cur.fetchone()
         teacher_name = row[0] if row else ''

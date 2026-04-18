@@ -29,7 +29,6 @@ body {
 
 .page-wrapper { width: 100%; min-height: 100vh; }
 
-/* ── Шапка ── */
 .header {
     padding: 14px 36px;
     background: rgba(255,255,255,0.82);
@@ -52,7 +51,6 @@ body {
     background-clip: text;
 }
 
-/* ── Навигация ── */
 .nav-tabs {
     display: flex;
     gap: 4px;
@@ -79,13 +77,11 @@ body {
     font-weight: 600;
 }
 
-/* ── Layout ── */
 .main-layout {
     display: flex;
     height: calc(100vh - 112px);
 }
 
-/* ── Сайдбар ── */
 .sidebar {
     width: 300px;
     min-width: 260px;
@@ -144,7 +140,6 @@ body {
 
 .search-btn:hover { opacity: 0.88; }
 
-/* ── Список студентов ── */
 .student-list {
     list-style: none;
     overflow-y: auto;
@@ -184,7 +179,6 @@ body {
     padding-left: 9px;
 }
 
-/* ── Панель деталей ── */
 .detail {
     flex: 1;
     padding: 28px 32px;
@@ -202,7 +196,6 @@ body {
     font-style: italic;
 }
 
-/* ── Поля ── */
 .field-row {
     display: flex;
     align-items: center;
@@ -234,7 +227,6 @@ body {
 
 .field-input:focus { border-bottom-color: var(--blue-mid); }
 
-/* ── Docker кнопка ── */
 .btn-docker {
     padding: 9px 22px;
     background: linear-gradient(135deg, var(--blue-deep), var(--blue-mid));
@@ -260,7 +252,6 @@ body {
     cursor: not-allowed;
 }
 
-/* ── Оценки ── */
 .grade-row { align-items: center; }
 
 .grade-form { display: flex; gap: 6px; }
@@ -292,7 +283,6 @@ body {
     box-shadow: 0 3px 8px rgba(37,99,235,0.25);
 }
 
-/* ── Комментарий ── */
 .comment-row {
     align-items: flex-start;
     flex-direction: column;
@@ -338,7 +328,6 @@ body {
     box-shadow: 0 5px 16px rgba(37,99,235,0.28);
 }
 
-/* ── Консольная ссылка ── */
 .console-link {
     display: inline-flex;
     align-items: center;
@@ -356,7 +345,6 @@ body {
 
 .console-link:hover { background: #bbf7d0; }
 
-/* ── Уведомления ── */
 .notification {
     position: fixed;
     top: 20px; right: 20px;

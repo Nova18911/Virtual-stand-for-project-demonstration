@@ -70,8 +70,6 @@ body {
     margin-bottom: 24px;
 }
 
-/* Флеш-сообщения */
-
 .flash {
     padding: 10px 14px;
     border-radius: 4px;
@@ -91,8 +89,6 @@ body {
     border: 1px solid #fca5a5;
 }
 
-/* Строка выбора файла */
-
 .file-row {
     display: flex;
     align-items: center;
@@ -110,15 +106,11 @@ body {
     color: #6b7280;
 }
 
-/* Подсказка */
-
 .hint {
     font-size: 12px;
     color: #9ca3af;
     margin-bottom: 24px;
 }
-
-/* Кнопки */
 
 .btn {
     display: inline-block;

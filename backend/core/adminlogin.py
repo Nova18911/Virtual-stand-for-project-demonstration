@@ -1,5 +1,4 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from backend.core.connect import get_db_connection
 import pg8000
 from backend.core.connect import get_db_connection
 

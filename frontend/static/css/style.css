@@ -87,7 +87,6 @@ h1 {
     letter-spacing: -0.3px;
 }
 
-/* Подзаголовок-подсказка */
 .login-box p.subtitle,
 .login-box > p {
     text-align: center;
@@ -159,7 +158,6 @@ input:focus {
     box-shadow: 0 2px 8px rgba(37,99,235,0.20);
 }
 
-/* Flash сообщения */
 .flash-messages { margin-bottom: 16px; }
 
 .flash-message {
@@ -181,7 +179,6 @@ input:focus {
     border: 1px solid #fca5a5;
 }
 
-/* Ссылка назад */
 .back-link {
     display: block;
     text-align: center;

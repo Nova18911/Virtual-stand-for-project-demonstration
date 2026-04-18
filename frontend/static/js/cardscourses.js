@@ -22,7 +22,6 @@ function renderCards(data) {
     data.forEach(item => {
         const article = document.createElement('article');
 
-        // Визуальное оформление закрытого курса
         if (!item.is_enrolled) {
             article.classList.add('course-locked');
         }
@@ -30,12 +29,10 @@ function renderCards(data) {
         const courseLink = document.createElement('a');
 
         if (item.is_enrolled) {
-            // Доступ есть: обычная ссылка
             courseLink.href = `/course/${item.id}`;
             courseLink.className = 'course-link';
             courseLink.textContent = item.course;
         } else {
-            // Доступа нет: блокируем переход и выводим сообщение
             courseLink.href = '#';
             courseLink.className = 'course-link locked';
             courseLink.textContent = `🔒 ${item.course}`;

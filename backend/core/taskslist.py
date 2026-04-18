@@ -9,15 +9,12 @@ taskslist_bp = Blueprint('taskslist', __name__)
 
 
 def format_date(date_val):
-    """Вспомогательная функция для безопасного форматирования даты,
-    даже если БД возвращает строку вместо объекта datetime"""
     if not date_val:
         return None
     if isinstance(date_val, datetime):
         return date_val.strftime('%d.%m.%Y')
     if isinstance(date_val, str):
         try:
-            # Пробуем распарсить стандартный формат ISO YYYY-MM-DD
             dt = datetime.strptime(date_val[:10], '%Y-%m-%d')
             return dt.strftime('%d.%m.%Y')
         except:
@@ -107,7 +104,6 @@ def get_task(lab_id):
     if not row:
         return jsonify({'ok': False, 'error': 'Задание не найдено.'}), 404
 
-    # Для input type="date" нужен формат YYYY-MM-DD
     raw_date = row[3]
     if isinstance(raw_date, datetime):
         formatted_raw = raw_date.strftime('%Y-%m-%d')
@@ -128,7 +124,6 @@ def get_task(lab_id):
 
 @taskslist_bp.route('/api/task/<int:lab_id>/file', methods=['GET'])
 def download_task_file(lab_id):
-    """Скачивание файла задания (доступно и студентам, и преподавателям)"""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT task_file, task_filename, name FROM labs WHERE lab_id = %s", (lab_id,))
@@ -141,17 +136,13 @@ def download_task_file(lab_id):
 
     file_bytes = bytes(row[0])
 
-    # Получаем имя файла
     if row[1] and row[1] != '':
         filename = row[1]
     else:
-        # Если нет сохраненного имени, используем название задания
         filename = f"{row[2]}.pdf"
 
-    # Кодируем имя файла для HTTP заголовков (поддержка русских символов)
     encoded_filename = quote(filename)
 
-    # Создаем response с правильными заголовками для кириллицы
     response = Response(
         file_bytes,
         mimetype='application/octet-stream',
@@ -188,13 +179,11 @@ def add_task():
     except ValueError:
         return jsonify({'ok': False, 'error': 'Некорректный формат даты.'}), 400
 
-    # Читаем файл и сохраняем его имя
     file_bytes = b''
     filename = None
 
     if file and file.filename:
         file_bytes = file.read()
-        # Сохраняем оригинальное имя файла с расширением
         filename = file.filename
 
     try:
@@ -245,13 +234,11 @@ def edit_task():
         cursor = conn.cursor()
 
         if delete_file:
-            # Удаляем файл
             cursor.execute("""
                 UPDATE labs SET name=%s, task=%s, end_date=%s, task_file=NULL, task_filename=NULL
                 WHERE lab_id=%s
             """, (name, description, deadline, int(lab_id)))
         elif file and file.filename and len(file.filename) > 0:
-            # Обновляем с новым файлом
             file_bytes = file.read()
             filename = file.filename
             cursor.execute("""
@@ -259,7 +246,6 @@ def edit_task():
                 WHERE lab_id=%s
             """, (name, description, deadline, file_bytes, filename, int(lab_id)))
         else:
-            # Обновляем без изменения файла
             cursor.execute("""
                 UPDATE labs SET name=%s, task=%s, end_date=%s
                 WHERE lab_id=%s

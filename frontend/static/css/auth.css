@@ -19,7 +19,6 @@ body {
     overflow: hidden;
 }
 
-/* Декоративные пузыри на фоне */
 body::before {
     content: '';
     position: fixed;
@@ -44,7 +43,6 @@ body::after {
     pointer-events: none;
 }
 
-/* Карточка */
 .auth-card {
     background: rgba(255, 255, 255, 0.80);
     backdrop-filter: blur(18px);
@@ -66,7 +64,6 @@ body::after {
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Логотип / заголовок */
 .auth-title {
     text-align: center;
     font-family: 'Playfair Display', serif;
@@ -80,7 +77,6 @@ body::after {
     background-clip: text;
 }
 
-/* Поля */
 .form-group {
     margin-bottom: 18px;
 }
@@ -118,7 +114,6 @@ body::after {
     background: #fff;
 }
 
-/* Кнопка */
 .btn-login {
     width: 100%;
     padding: 12px;
@@ -147,15 +142,13 @@ body::after {
     opacity: 1;
 }
 
-/* Ссылки (ИСПРАВЛЕНО: удалена кнопка "Забыли пароль" через стили) */
 .auth-links {
     display: flex;
-    justify-content: center; /* Центрируем регистрацию */
+    justify-content: center;
     margin-top: 18px;
     font-size: 13px;
 }
 
-/* Скрываем первую ссылку, если их две (обычно это "Забыли пароль") */
 .auth-links a:first-child:not(:only-child) {
     display: none;
 }
@@ -171,7 +164,6 @@ body::after {
     color: #7c3aed;
 }
 
-/* Флеш сообщения */
 .flash {
     padding: 10px 14px;
     border-radius: 10px;
@@ -182,7 +174,6 @@ body::after {
     border: 1px solid #fca5a5;
 }
 
-/* Ошибки ввода */
 .input-error {
     border-color: #f87171 !important;
     box-shadow: 0 0 0 3px rgba(248,113,113,0.15) !important;
@@ -196,7 +187,6 @@ body::after {
     font-weight: 500;
 }
 
-/* Адаптив */
 @media (max-width: 480px) {
     .auth-card {
         padding: 30px 22px;

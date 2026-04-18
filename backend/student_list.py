@@ -23,7 +23,6 @@ def task_detail(lab_id):
     return render_template('student_list.html', lab=lab)
 
 
-# --- API: список студентов ---
 @task_detail_bp.route('/api/task/<int:lab_id>/students', methods=['GET'])
 def get_students(lab_id):
     conn = get_db_connection()
@@ -44,7 +43,6 @@ def get_students(lab_id):
     return jsonify([{'user_id': row[0], 'full_name': row[1]} for row in students])
 
 
-# --- API: данные студента ---
 @task_detail_bp.route('/api/task/<int:lab_id>/student/<int:student_id>', methods=['GET'])
 def get_student_detail(lab_id, student_id):
     conn = get_db_connection()
@@ -68,7 +66,6 @@ def get_student_detail(lab_id, student_id):
 
     build_info = project_row[4] if project_row else ''
 
-    # Для консольных проектов build_success определяется наличием строки [ОБРАЗ СОЗДАН]
     build_success = bool(build_info and '[ОБРАЗ СОЗДАН]' in build_info)
 
     image_name = None
@@ -97,7 +94,6 @@ def get_student_detail(lab_id, student_id):
     })
 
 
-# --- Проверка существования образа ---
 def image_exists(image_name):
     try:
         client = docker.from_env()
@@ -106,11 +102,10 @@ def image_exists(image_name):
     except docker.errors.ImageNotFound:
         return False
     except Exception as e:
-        print(f"❌ Ошибка проверки образа: {e}")
+        print(f"Ошибка проверки образа: {e}")
         return False
 
 
-# --- Сборка / запуск (только консоль) ---
 @task_detail_bp.route('/api/task/<int:lab_id>/student/<int:student_id>/build', methods=['POST'])
 def build_container_compat(lab_id, student_id):
     from backend.core.docker.build_pipeline import build_and_run
@@ -146,7 +141,6 @@ def build_container_compat(lab_id, student_id):
     return jsonify({'ok': True, 'link': result['link']})
 
 
-# --- Запуск уже собранного контейнера ---
 @task_detail_bp.route('/api/task/<int:lab_id>/student/<int:student_id>/run', methods=['POST'])
 def run_container_api(lab_id, student_id):
     conn = get_db_connection()
@@ -188,7 +182,6 @@ def run_container_api(lab_id, student_id):
     return jsonify({'ok': True, 'link': link, 'message': 'Контейнер запущен'})
 
 
-# --- Остальные API (stop, status, grade, comment, rebuild) — без изменений ---
 @task_detail_bp.route('/api/task/<int:lab_id>/student/<int:student_id>/stop', methods=['POST'])
 def stop_container_api(lab_id, student_id):
     conn = get_db_connection()
@@ -281,7 +274,6 @@ def rebuild_container(lab_id, student_id):
 
     return jsonify({'ok': True, 'link': result['link']})
 
-# --- Обновление ссылки на GitHub (студент может менять) ---
 @task_detail_bp.route('/api/task/<int:lab_id>/student/<int:student_id>/github', methods=['POST'])
 def update_github_link(lab_id, student_id):
     data = request.get_json()
@@ -295,8 +287,8 @@ def update_github_link(lab_id, student_id):
     cursor.execute("""
         UPDATE student_projects 
         SET github_link = %s, 
-            build_info = NULL,      # сбрасываем информацию о сборке
-            grade = NULL            # сбрасываем оценку при смене ссылки
+            build_info = NULL,      
+            grade = NULL            
         WHERE lab_id = %s AND user_id = %s
     """, (new_github_link, lab_id, student_id))
     conn.commit()

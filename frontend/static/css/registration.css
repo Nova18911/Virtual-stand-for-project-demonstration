@@ -48,12 +48,10 @@ body::after {
     pointer-events: none;
 }
 
-/* Скрываем картинку справа */
 .image-container {
     display: none !important;
 }
 
-/* Карточка формы */
 .registration-container {
     background: rgba(255,255,255,0.88);
     backdrop-filter: blur(20px);
@@ -75,7 +73,6 @@ body::after {
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Заголовок */
 h1 {
     font-family: 'Playfair Display', serif;
     font-size: 28px;
@@ -89,7 +86,6 @@ h1 {
     letter-spacing: -0.3px;
 }
 
-/* Строки формы */
 .form-row {
     display: flex;
     gap: 16px;
@@ -137,7 +133,6 @@ input:focus, select:focus {
     background: var(--white);
 }
 
-/* Select стрелка */
 select {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%232563eb' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
@@ -146,7 +141,6 @@ select {
     cursor: pointer;
 }
 
-/* Кнопка */
 .button-container {
     display: flex;
     justify-content: center;
@@ -178,7 +172,6 @@ select {
     box-shadow: 0 2px 8px rgba(37,99,235,0.20);
 }
 
-/* Flash сообщения */
 .flash {
     padding: 10px 14px;
     border-radius: 10px;
@@ -195,7 +188,6 @@ select {
     border-color: #86efac;
 }
 
-/* Ошибки валидации */
 .input-error {
     border-color: var(--error) !important;
     box-shadow: 0 0 0 3px rgba(239,68,68,0.10) !important;

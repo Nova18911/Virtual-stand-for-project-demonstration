@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS users (
         ON DELETE CASCADE
 );
 
--- Курсы (добавлено поле teacher_id)
+-- Курсы
 CREATE TABLE IF NOT EXISTS courses (
     course_id  SERIAL PRIMARY KEY,
     name       VARCHAR(50)  NOT NULL UNIQUE,
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS courses (
         ON DELETE SET NULL
 );
 
--- Лабораторные работы (добавлено поле task_filename)
+-- Лабораторные работы
 CREATE TABLE IF NOT EXISTS labs (
     lab_id        SERIAL PRIMARY KEY,
     name          VARCHAR(50) NOT NULL UNIQUE,
@@ -132,16 +132,12 @@ CREATE INDEX IF NOT EXISTS idx_student_projects_lab_id        ON student_project
 CREATE INDEX IF NOT EXISTS idx_labs_course_id                 ON labs(course_id);
 CREATE INDEX IF NOT EXISTS idx_course_user_user_id            ON course_user(user_id);
 
--- ===== ТЕСТОВЫЕ ДАННЫЕ =====
-
--- Роли
 INSERT INTO roles (access_rights) VALUES
     ('admin'),
     ('teacher'),
     ('student')
 ON CONFLICT (access_rights) DO NOTHING;
 
--- Логины и пароли
 INSERT INTO passwords (login, password) VALUES
     ('admin@vstand.ru',      'admin123'),
     ('samodelkin@vstand.ru', 'teach001'),
@@ -153,7 +149,6 @@ INSERT INTO passwords (login, password) VALUES
     ('novikov@vstand.ru',    'stud005')
 ON CONFLICT (login) DO NOTHING;
 
--- Пользователи
 INSERT INTO users (full_name, access_id, login_id)
 SELECT 'Администратор',
        (SELECT access_id FROM roles WHERE access_rights = 'admin'),
@@ -218,7 +213,6 @@ WHERE NOT EXISTS (
     SELECT 1 FROM users WHERE login_id = (SELECT login_id FROM passwords WHERE login = 'novikov@vstand.ru')
 );
 
--- Курсы (с заполненным teacher_id)
 INSERT INTO courses (name, teacher, teacher_id) VALUES
     ('МДК 07.02', 'Самоделкин Павел Андреевич',
      (SELECT user_id FROM users WHERE full_name = 'Самоделкин Павел Андреевич')),
@@ -226,7 +220,6 @@ INSERT INTO courses (name, teacher, teacher_id) VALUES
      (SELECT user_id FROM users WHERE full_name = 'Жилова Юлия Андреевна'))
 ON CONFLICT (name) DO NOTHING;
 
--- Лабораторные работы
 INSERT INTO labs (name, course_id, task, start_date, end_date)
 SELECT 'Лабораторная работа №1',
        (SELECT course_id FROM courses WHERE name = 'МДК 07.02'),
@@ -267,7 +260,6 @@ SELECT 'Практическая №2',
        '2026-03-10 23:59:59'
 WHERE NOT EXISTS (SELECT 1 FROM labs WHERE name = 'Практическая №2');
 
--- Запись студентов на курсы
 INSERT INTO course_user (course_id, user_id)
 SELECT c.course_id, u.user_id
 FROM courses c, users u
@@ -275,7 +267,6 @@ JOIN roles r ON r.access_id = u.access_id
 WHERE r.access_rights = 'student'
 ON CONFLICT (course_id, user_id) DO NOTHING;
 
--- Работы студентов
 INSERT INTO student_projects (user_id, lab_id, github_link, grade, teacher_comment, grade_date)
 SELECT
     (SELECT user_id FROM users u JOIN passwords p ON u.login_id = p.login_id WHERE p.login = 'ivanov@vstand.ru'),

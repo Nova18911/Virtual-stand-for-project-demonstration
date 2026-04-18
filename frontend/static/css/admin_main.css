@@ -86,8 +86,6 @@ body {
     align-items: flex-start;
 }
 
-/* Список курсов */
-
 .courses {
     width: 320px;
     flex-shrink: 0;
@@ -126,8 +124,6 @@ body {
     background: #e8effe;
     font-weight: 600;
 }
-
-/* Форма */
 
 .info {
     flex: 1;
@@ -191,7 +187,6 @@ body {
     color: #aaa;
     cursor: default;
 }
-/* ── Заявки преподавателей ── */
 .section-title {
     font-size: 16px;
     font-weight: 600;

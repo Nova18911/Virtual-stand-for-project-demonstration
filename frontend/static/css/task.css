@@ -25,7 +25,6 @@ body {
     color: var(--text-dark);
 }
 
-/* ── Шапка ── */
 .header {
     padding: 14px 36px;
     background: rgba(255,255,255,0.82);
@@ -48,7 +47,6 @@ body {
     background-clip: text;
 }
 
-/* ── Хлебные крошки ── */
 .breadcrumb {
     display: flex;
     align-items: center;
@@ -77,13 +75,11 @@ body {
 
 .breadcrumb__sep { color: var(--blue-light); }
 
-/* ── Основной контент ── */
 .main {
     padding: 32px 36px;
     max-width: 760px;
 }
 
-/* ── Шапка задания ── */
 .task-header {
     display: flex;
     justify-content: space-between;
@@ -137,7 +133,6 @@ body {
     color: var(--text-dark);
 }
 
-/* ── Метки секций ── */
 .section-label {
     font-size: 11px;
     font-weight: 700;
@@ -147,7 +142,6 @@ body {
     margin: 22px 0 10px;
 }
 
-/* ── Описание ── */
 .task__description {
     background: rgba(255,255,255,0.85);
     border: 1px solid rgba(191,219,254,0.55);
@@ -160,7 +154,6 @@ body {
     box-shadow: 0 2px 6px rgba(37,99,235,0.04);
 }
 
-/* ── Поле ответа ── */
 .answer-row {
     display: flex;
     align-items: center;
@@ -214,7 +207,6 @@ body {
     border-color: var(--blue-mid);
 }
 
-/* ── Оценка ── */
 .grade-row {
     display: flex;
     align-items: center;
@@ -243,7 +235,6 @@ body {
     cursor: default;
 }
 
-/* ── Комментарий ── */
 .task__comment {
     width: 100%;
     border: 1.5px solid var(--blue-border);
@@ -269,7 +260,6 @@ body {
     cursor: default;
 }
 
-/* ── Кнопка сохранить ── */
 .btn-save {
     margin-top: 12px;
     padding: 9px 28px;
@@ -290,7 +280,6 @@ body {
     box-shadow: 0 5px 16px rgba(37,99,235,0.28);
 }
 
-/* ── Flash ── */
 .flash {
     font-size: 13px;
     color: var(--success);
@@ -301,7 +290,6 @@ body {
     margin-top: 8px;
 }
 
-/* ── Карточка студента (преподаватель) ── */
 .student-card {
     background: rgba(255,255,255,0.85);
     border: 1px solid rgba(191,219,254,0.55);

@@ -1,5 +1,3 @@
-# backend/core/docker/runner.py
-
 import docker
 from datetime import datetime
 from backend.core.connect import get_db_connection
@@ -7,11 +5,9 @@ from backend.core.connect import get_db_connection
 
 def run_container(image_name, project_id, project_type='console', main_file='main.py'):
     try:
-        print(f"🔧 Запуск контейнера: {image_name}")
-
         client = docker.from_env()
 
-        client.images.get(image_name)  # проверка существования
+        client.images.get(image_name)
 
         container = client.containers.run(
             image_name,
@@ -22,9 +18,7 @@ def run_container(image_name, project_id, project_type='console', main_file='mai
             command=["tail", "-f", "/dev/null"]
         )
 
-        print(f"✅ Контейнер запущен: {container.id[:12]}")
-
-        # Сохранение в БД
+        print(f"Контейнер запущен: {container.id[:12]}")
         conn = get_db_connection()
         cursor = conn.cursor()
 
@@ -55,7 +49,7 @@ def run_container(image_name, project_id, project_type='console', main_file='mai
         return container, link
 
     except Exception as e:
-        print(f"❌ Ошибка запуска контейнера: {e}")
+        print(f"Ошибка запуска контейнера: {e}")
         import traceback
         traceback.print_exc()
         return None, None
@@ -83,15 +77,14 @@ def get_container_info(project_id):
             'status': row[1],
             'project_type': row[2],
             'main_file': row[3],
-            'link': f"/container/{project_id}/view"   # только консоль
+            'link': f"/container/{project_id}/view"
         }
     except Exception as e:
-        print(f"❌ Ошибка получения информации о контейнере: {e}")
+        print(f"Ошибка получения информации о контейнере: {e}")
         return None
 
 
 def stop_container_by_project(project_id):
-    # (оставляем без изменений — работает и для консоли)
     try:
         container_info = get_container_info(project_id)
         if not container_info:
@@ -117,7 +110,7 @@ def stop_container_by_project(project_id):
 
         return True, "Контейнер остановлен"
     except Exception as e:
-        print(f"❌ Ошибка остановки: {e}")
+        print(f"Ошибка остановки: {e}")
         return False, str(e)
 
 
@@ -129,5 +122,5 @@ def image_exists(image_name):
     except docker.errors.ImageNotFound:
         return False
     except Exception as e:
-        print(f"❌ Ошибка проверки образа: {e}")
+        print(f"Ошибка проверки образа: {e}")
         return False
