@@ -55,7 +55,7 @@ README.md
     try:
         with open(os.path.join(repo_path, ".dockerignore"), "w", encoding="utf-8") as f:
             f.write(content)
-        print("✅ .dockerignore создан")
+        print(".dockerignore создан")
     except:
         pass
 
