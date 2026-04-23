@@ -78,15 +78,3 @@ def _save_project_info(project_id: int, analysis: dict, image_name: str):
     finally:
         if cursor: cursor.close()
         if conn: conn.close()
-
-
-def rebuild_project(github_url: str, project_id: int, image_name: str) -> dict:
-    try:
-        import docker
-        client = docker.from_env()
-        if image_exists(image_name):
-            client.images.remove(image_name, force=True)
-    except:
-        pass
-
-    return build_and_run(github_url, project_id, image_name)

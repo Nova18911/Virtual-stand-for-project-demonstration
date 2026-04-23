@@ -23,19 +23,6 @@ def run_container(image_name, project_id, project_type='console', main_file='mai
         cursor = conn.cursor()
 
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS docker_containers (
-                container_id VARCHAR(64) PRIMARY KEY,
-                project_id INTEGER NOT NULL,
-                image_name VARCHAR(255) NOT NULL,
-                started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                status VARCHAR(20) DEFAULT 'running',
-                project_type VARCHAR(20) DEFAULT 'console',
-                main_file VARCHAR(255)
-            )
-        """)
-        conn.commit()
-
-        cursor.execute("""
             INSERT INTO docker_containers 
                 (container_id, project_id, image_name, status, project_type, main_file)
             VALUES (%s, %s, %s, 'running', %s, %s)
