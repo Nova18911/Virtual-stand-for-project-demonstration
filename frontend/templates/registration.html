@@ -41,10 +41,20 @@
                 <div class="form-group">
                     <label for="role">Выберите роль</label>
                     <select id="role" name="role" required>
-                        <option value="student" {{ 'selected' if role == 'student' else '' }}>Студент</option>
-                        <option value="teacher" {{ 'selected' if role == 'teacher' else '' }}>Преподаватель</option>
+                        <option value="student"> {{ 'selected' if role == 'student' else '' }}>Студент</option>
+                        <option value="teacher"> {{ 'selected' if role == 'teacher' else '' }}>Преподаватель</option>
                     </select>
                 </div>
+            </div>
+
+            <div class="consent-row">
+                <label class="consent-label">
+                    <input type="checkbox" id="consent" name="consent">
+                    <span>Я согласен(-на) с политикой обработки персональных данных</span>
+                </label>
+                <span class="field-error" id="consent-error" style="display:none;">
+                    Необходимо поставить отметку
+                </span>
             </div>
 
             <div class="button-container">
