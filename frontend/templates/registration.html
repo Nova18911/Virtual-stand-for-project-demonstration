@@ -7,7 +7,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/registration.css') }}">
 </head>
 <body>
-    <div class="registration-container">
+    <!-- Форма регистрации (по умолчанию видна) -->
+    <div class="registration-container" id="registration-form">
         <h1>Регистрация</h1>
 
         {% for category, msg in get_flashed_messages(with_categories=true) %}
@@ -51,6 +52,17 @@
                 <button type="submit" class="submit-btn">Зарегистрироваться</button>
             </div>
         </form>
+    </div>
+
+    <!-- Экран подтверждения (скрыт по умолчанию) -->
+    <div class="confirmation-container" id="confirmation-screen" style="display: none;">
+        <div class="confirmation-icon">✓</div>
+        <h2 class="confirmation-title">Заявка получена</h2>
+        <p class="confirmation-text">
+            Спасибо за регистрацию! Ваша заявка на роль преподавателя отправлена администратору на рассмотрение. 
+            В скором времени она будет просмотрена и вы получите результат.
+        </p>
+        <a href="{{ url_for('auth.login') }}" class="confirmation-button">На страницу входа</a>
     </div>
 
     <div class="image-container">
