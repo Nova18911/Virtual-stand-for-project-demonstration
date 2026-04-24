@@ -1,9 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const form          = document.querySelector('form');
-    const emailInput    = document.getElementById('email');
-    const fioInput      = document.getElementById('fio');
-    const passwordInput = document.getElementById('password');
-    const roleSelect    = document.getElementById('role');
+    const form               = document.querySelector('form');
+    const emailInput         = document.getElementById('email');
+    const fioInput           = document.getElementById('fio');
+    const passwordInput      = document.getElementById('password');
+    const roleSelect         = document.getElementById('role');
+    const registrationForm   = document.getElementById('registration-form');
+    const confirmationScreen = document.getElementById('confirmation-screen');
 
     // --- Валидаторы ---
     function isValidEmail(email) {
@@ -47,16 +49,10 @@ document.addEventListener('DOMContentLoaded', () => {
         box.style.display = 'block';
     }
 
-    function showGlobalSuccess(message) {
-        let box = document.getElementById('global-error');
-        if (!box) {
-            box = document.createElement('div');
-            box.id = 'global-error';
-            form.prepend(box);
-        }
-        box.className = 'flash success';
-        box.textContent = message;
-        box.style.display = 'block';
+    // --- Показать экран подтверждения для преподавателя ---
+    function showConfirmationScreen() {
+        registrationForm.style.display = 'none';
+        confirmationScreen.style.display = 'block';
     }
 
     // --- Валидация при потере фокуса ---
@@ -127,9 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.redirect) {
                 window.location.href = data.redirect;
             } else {
-                // Преподаватель — показываем сообщение, скрываем форму
-                form.style.display = 'none';
-                showGlobalSuccess(data.message);
+                showConfirmationScreen();
             }
 
         } catch (err) {

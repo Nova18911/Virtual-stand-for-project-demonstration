@@ -76,6 +76,6 @@ def register_api():
         return jsonify({'ok': False, 'error': f'Ошибка при регистрации: {e}'}), 500
 
     if role == 'teacher':
-        return jsonify({'ok': True, 'redirect': None, 'message': 'Заявка отправлена. Ожидайте одобрения администратором.'})
+        return jsonify({'ok': True, 'redirect': None}), 200
     else:
-        return jsonify({'ok': True, 'redirect': url_for('auth.login')})
+        return jsonify({'ok': True, 'redirect': url_for('auth.login')}), 200
